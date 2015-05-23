@@ -25,6 +25,8 @@ GbsMacrosDir = os.path.join(dirname, 'macros')
 
 
 import common.i18n as i18n
+import json
+from common.utils import GobstonesException
 
 import lang.gbs_io
 import lang.gbs_parser
@@ -38,6 +40,7 @@ import lang.gbs_infer
 import lang.gbs_compiler
 import lang.gbs_board
 import lang.gbs_optimizer
+from lang.board.fmt_json import JsonBoardFormat
 
 def setGrammar(lang_version):
     if lang_version == GobstonesOptions.LangVersion.Gobstones:
@@ -68,6 +71,7 @@ class GobstonesOptions(object):
 class GobstonesRun(object):
     def __init__(self):
         self.initialize()
+    
     def initialize(self, tree=None, compiled_program=None, initial_board=None, final_board=None, runnable=None, result=None):
         self.initial_board = initial_board
         self.final_board = final_board
@@ -76,6 +80,7 @@ class GobstonesRun(object):
         self.runnable = runnable
         self.result = result
         return self
+    
     def merge(self, other):
         return GobstonesRun().initialize(self.tree or other.tree, 
                             self.compiled_program or other.compiled_program,
@@ -83,6 +88,15 @@ class GobstonesRun(object):
                             self.final_board or other.final_board,
                             self.runnable or other.runnable, 
                             self.result or other.result)
+    
+    def json(self):
+        return json.dumps({
+            "initial_board" : JsonBoardFormat().dump_to_dict(self.initial_board),
+            "final_board": JsonBoardFormat().dump_to_dict(self.final_board),
+            "result" : self.result,
+            "compiled_program": repr(self.compiled_program),
+        })
+        
         
 class Gobstones(object):
     
@@ -94,7 +108,6 @@ class Gobstones(object):
             
         # Compiler pipeline methods
         self.explode_macros = lang.gbs_mexpl.mexpl
-        self.parse = lang.gbs_parser.parse_string_try_prelude
         self.lint = lang.gbs_lint.lint
         self.check_live_variables = lang.gbs_liveness.check_live_variables
         self.typecheck = lang.gbs_infer.typecheck
@@ -106,6 +119,11 @@ class Gobstones(object):
             self.make_runnable = lang.gbs_vm.VmCompiledRunnable
             
     
+    def parse(self, program_text, filename):
+        if program_text == "":
+            raise GobstonesException(i18n.i18n("Cannot execute an empty program"))
+        return lang.gbs_parser.parse_string_try_prelude(program_text, filename)
+            
     @classmethod
     def random_board(cls, size=None):
         if size is None:
@@ -157,7 +175,7 @@ class Gobstones(object):
     def run(self, filename, program_text, initial_board):
         gbs_run = self.compile(filename, program_text)
         return gbs_run.merge(self.run_object_code(gbs_run.compiled_program, initial_board))
-
+    
 
 """ Utilities """
 

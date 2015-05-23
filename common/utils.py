@@ -44,24 +44,35 @@ VERSION = 2, 0, "0dev"
 def version_number():
     return '%s.%s.%s' % VERSION
 
-class SourceException(Exception):
-    def __init__(self, msg, area):
+
+class GobstonesException(Exception):
+    def __init__(self, msg):
         self.msg = msg
+
+
+class SourceException(GobstonesException):
+    def __init__(self, msg, area):
+        super(SourceException, self).__init__(msg)
         self.area = area
+        
     def __repr__(self):
         s = ''
         if self.area:
             s += '\n%s\n' % (self.area,)
         s += '%s\n' % (indent(self.msg),)
         return s
+    
     def error_type(self):
         return 'Error'
+
 
 class StaticException(SourceException):
     pass
 
+
 class DynamicException(SourceException):
     pass
+
 
 def trim(x): 
     return x.strip(' \t\r\n')

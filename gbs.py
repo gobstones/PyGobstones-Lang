@@ -88,6 +88,7 @@ class GbsOptions(object):
         '--silent',
         '--optimize',
         '--interactive',
+        '--output-type X',
         '--gobstones3'
     ]
     
@@ -171,29 +172,32 @@ class GbsOptions(object):
             raise OptionsException(i18n.i18n('File %s does not exist') % (file,))
 
 def print_run(gbs_run, options):
-    if options['print-ast']:
-        LOGGER.info(gbs_run.tree.show_ast(show_liveness=False))
-    if options['pprint']:
-        LOGGER.info(lang.pretty_print(gbs_run.tree))
-    if options['print-asm']:
-        LOGGER.info(gbs_run.compiled_program)
-    if not options['asm']:
-        if options['print-input']:
-            LOGGER.info(gbs_run.initial_board)
-        if options['print-board']:
-            LOGGER.info(gbs_run.final_board)
-        if options['print-retvals']:
-            for var, val in gbs_run.result:
-                LOGGER.info('%s -> %s' % (var, val))
-            if not options['print-board']:
-                LOGGER.info('OK')
-    if options['jit']:
-        if options['print-jit']:
-            LOGGER.info(gbs_run.runnable.jit_code())
-        if options['print-native']:
-            LOGGER.info('## Native code')
-            LOGGER.info(gbs.run.runnable.native_code())
-            LOGGER.info('## End of native code')
+    if options['output-type'] == 'json':
+        LOGGER.info(gbs_run.json())
+    else:
+        if options['print-ast']:
+            LOGGER.info(gbs_run.tree.show_ast(show_liveness=False))
+        if options['pprint']:
+            LOGGER.info(lang.pretty_print(gbs_run.tree))
+        if options['print-asm']:
+            LOGGER.info(gbs_run.compiled_program)
+        if not options['asm']:
+            if options['print-input']:
+                LOGGER.info(gbs_run.initial_board)
+            if options['print-board']:
+                LOGGER.info(gbs_run.final_board)
+            if options['print-retvals']:
+                for var, val in gbs_run.result:
+                    LOGGER.info('%s -> %s' % (var, val))
+                if not options['print-board']:
+                    LOGGER.info('OK')
+        if options['jit']:
+            if options['print-jit']:
+                LOGGER.info(gbs_run.runnable.jit_code())
+            if options['print-native']:
+                LOGGER.info('## Native code')
+                LOGGER.info(gbs.run.runnable.native_code())
+                LOGGER.info('## End of native code')
 
 def persist_run(gbs_run, options):
     if options['asm']:
