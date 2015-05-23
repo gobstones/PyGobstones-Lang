@@ -24,6 +24,8 @@ from common.utils import hsv
 ES = {
 
 # lexer errors
+  "Cannot execute an empty program":
+    'No es posible ejecutar un programa vacío',
   'Malformed input - unrecognized symbol: "%s"':
     'Entrada mal formada - símbolo no reconocido: "%s"',
   'Malformed input - unrecognized symbol':

@@ -26,6 +26,8 @@ GbsMacrosDir = os.path.join(dirname, 'macros')
 
 import common.i18n as i18n
 
+from common.utils import GobstonesException
+
 import lang.gbs_io
 import lang.gbs_parser
 import lang.gbs_mexpl
@@ -94,7 +96,6 @@ class Gobstones(object):
             
         # Compiler pipeline methods
         self.explode_macros = lang.gbs_mexpl.mexpl
-        self.parse = lang.gbs_parser.parse_string_try_prelude
         self.lint = lang.gbs_lint.lint
         self.check_live_variables = lang.gbs_liveness.check_live_variables
         self.typecheck = lang.gbs_infer.typecheck
@@ -106,6 +107,11 @@ class Gobstones(object):
             self.make_runnable = lang.gbs_vm.VmCompiledRunnable
             
     
+    def parse(self, program_text, filename):
+        if program_text == "":
+            raise GobstonesException(i18n.i18n("Cannot execute an empty program"))
+        return lang.gbs_parser.parse_string_try_prelude(program_text, filename)
+            
     @classmethod
     def random_board(cls, size=None):
         if size is None:

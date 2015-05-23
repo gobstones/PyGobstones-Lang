@@ -24,7 +24,7 @@ class GUIExecutionAPI(lang.ExecutionAPI):
         self.comm.send('LOG', msg)    
 
 
-class XGobstonesWorker(ProgramWorker):
+class GobstonesWorker(ProgramWorker):
 
     def prepare(self):
         self.api = GUIExecutionAPI(self.communicator)                
@@ -32,14 +32,14 @@ class XGobstonesWorker(ProgramWorker):
     def start(self, filename, program_text, initial_board_string, run_mode):
         board = tools.board_format.from_string(initial_board_string)
         
-        if run_mode == XGobstonesWorker.RunMode.ONLY_CHECK:
+        if run_mode == GobstonesWorker.RunMode.ONLY_CHECK:
             options = lang.GobstonesOptions()
         else:
             options = lang.GobstonesOptions()
         self.gobstones = lang.Gobstones(options, self.api)
         
         try:
-            if run_mode == XGobstonesWorker.RunMode.FULL:
+            if run_mode == GobstonesWorker.RunMode.FULL:
                 self.success(self.gobstones.run(filename, program_text, board))
             else:
                 # Parse gobstones script
@@ -62,8 +62,9 @@ class XGobstonesWorker(ProgramWorker):
             self.communicator.send('OK', (tools.board_format.to_string(gbs_run.final_board), gbs_run.result))
     
     def failure(self, exception):
-        if hasattr(exception, 'msg'):
+        if hasattr(exception, 'area'):
             self.communicator.send('FAIL', (exception.__class__, (exception.msg, exception.area)))
+        elif hasattr(exception, 'msg'):
+            self.communicator.send('FAIL', (exception.__class__, (exception.msg, )))
         else:
-            raise exception
-
+            self.communicator.send('FAIL', (common.utils.GobstonesException, (str(exception),)))
