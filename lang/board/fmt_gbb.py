@@ -28,13 +28,20 @@ def is_numeric(x):
 class GbbBoardFormat(lang.board.basic.BoardFormat):
   "Simple human-friendly board format."
 
-  def dump(self, board, f, style='verbose', **kwargs):
+  def dump(self, board, f=None, style='verbose', **kwargs):
     if style == 'verbose':
-      self.dump_with_translator(board, f, self.verbose_translator)
+      output = self.dump_with_translator(board, self.verbose_translator)
     elif style == 'compact':
-      self.dump_with_translator(board, f, self.compact_translator)
+      output = self.dump_with_translator(board, self.compact_translator)
     else:
       assert False
+    
+    if not f is None:
+        f.write(output)
+        
+    return output   
+      
+    
 
   def verbose_translator(self, s):
     return s
@@ -50,10 +57,10 @@ class GbbBoardFormat(lang.board.basic.BoardFormat):
     else:
       return s[0]
 
-  def dump_with_translator(self, board, f, translate):
+  def dump_with_translator(self, board, translate):
     w, h = board.size
-    f.write('GBB/1.0\r\n')
-    f.write('%s %i %i\r\n' % (translate('size'), w, h))
+    output = 'GBB/1.0\r\n'
+    output += '%s %i %i\r\n' % (translate('size'), w, h)
     for x in range(w):
       for y in range(h):
         cell = []
@@ -63,10 +70,11 @@ class GbbBoardFormat(lang.board.basic.BoardFormat):
           col = lang.gbs_builtins.Color(coli).name()
           cell.append('%s %i' % (translate(col), cant))
         if cell == []: continue
-        f.write('%s %i %i %s\r\n' % (translate('cell'), x, y, ' '.join(cell)))
+        output += '%s %i %i %s\r\n' % (translate('cell'), x, y, ' '.join(cell))
     y, x = board.head
-    f.write('%s %i %i\r\n' % (translate('head'), x, y))
-    f.write('%%\r\n')
+    output += '%s %i %i\r\n' % (translate('head'), x, y)
+    output += '%%\r\n'
+    return output
 
   def load(self, board, f):
 
