@@ -32,6 +32,7 @@ table.gbs_board {
   border-collapse: collapse;
   font-family: Verdana, helvetica;
   font-size: $FONT_SIZE;
+  display: inline-block;
 }
 .gbs_board td {
   margin: 0;
