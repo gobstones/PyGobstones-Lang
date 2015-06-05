@@ -27,25 +27,26 @@ class HtmlBoardFormat(lang.board.basic.BoardFormat):
   def gbs_board_style(self, size='relative', board_size=(9, 9)):
     style = """
 table.gbs_board {
-  border: black solid 1px;
+  border-style: none;
+  border: solid black 0px;
   border-spacing: 0;
   border-collapse: collapse;
-  font-family: Verdana, helvetica;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: $FONT_SIZE;
   display: inline-block;
+  vertical-align: top;
 }
 .gbs_board td {
   margin: 0;
   padding: 2px;
-  border: solid #a52a2a 1px;
-  background: #ddd;
+  border: solid #888 1px;
   width: $WIDTH;
   height: $HEIGHT;
 }
 .gbs_board td.gh { /* position of the header in the board */
   margin: 0;
   padding: 2px;
-  border: dashed #440 3px;
+  border: dotted #440 3px;
   background: #dd8;
   width: $WIDTH;
   height: $HEIGHT;
@@ -54,43 +55,78 @@ table.gbs_board {
   text-align: center;
   vertical-align: middle;
   border-style: none;
-  background: #fff;
+  border: solid black 0px;
+  background: #ddd;
   width: $HALF_WIDTH;
 }
 .gbs_board td.lh { /* labels at the top / bottom */
   text-align: center;
   vertical-align: middle;
   border-style: none;
-  background: #fff;
+  border: solid black 0px;
+  background: #ddd;
   height: $HALF_HEIGHT;
 }
 .gbs_board td.lx { /* corner */
   border-style: none;
-  background: #fff;
+  border: solid black 0px;
+  background: #ddd;
   width: $HALF_WIDTH;
   height: $HALF_HEIGHT;
 }
+.gbs_board td.top_left {
+  -webkit-border-top-left-radius: 10px;
+  -moz-border-top-left-radius: 10px;
+  border-top-left-radius: 10px;
+}
+.gbs_board td.top_right {
+  -webkit-border-top-right-radius: 10px;
+  -moz-border-top-right-radius: 10px;
+  border-top-right-radius: 10px;
+}
+.gbs_board td.bottom_left {
+  -webkit-border-bottom-left-radius: 10px;
+  -moz-border-bottom-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+.gbs_board td.bottom_right {
+  -webkit-border-bottom-right-radius: 10px;
+  -moz-border-bottom-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
 .gbs_board table.gc { /* cell table */
-  border: none;
-  border-spacing: 2px;
-  border-collapse: separate;
+  border-style: none;
+  border: solid black 0px;
+}
+.gbs_board .gc tr {
+  border-style: none;
+  border: 0px;
 }
 .gbs_board .gc td {
-  border: none;
+  border-style: none;
+  border: solid black 0px;
   width: $HALF_WIDTH;
   height: $HALF_HEIGHT;
   text-align: center;
-  vertical-align: middle;
   color: black;
-  font-family: Verdana, helvetica;
-  font-size: $FONT_SIZE;
 }
-.gbs_board td.A { background: #88f; border: solid 1px #008; }
-.gbs_board td.N { background: #aaa; border: solid 1px #222; }
-.gbs_board td.R { background: #f88; border: solid 1px #800; }
-.gbs_board td.V { background: #8f8; border: solid 1px #080; }
-.gbs_board td.O { background: none; } /* empty */
-    """
+.gbs_board .gc td div {
+  line-height: 2;
+}
+.gbs_board div.A { background: #88f; border: solid 1px #008; }
+.gbs_board div.N { background: #aaa; border: solid 1px #222; }
+.gbs_board div.R { background: #f88; border: solid 1px #800; }
+.gbs_board div.V { background: #8f8; border: solid 1px #080; }
+.gbs_board div.O { width: 20px; height: 20px; background: none; } /* empty */
+.gbs_stone {
+  font-weight: bold;
+    font-size: 8pt;
+    width: 20px;
+    height: 20px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+}"""
     font_size = '9pt'
     if size == 'relative':
       tot_width = 100.0
@@ -170,8 +206,7 @@ table.gbs_board {
 
   def dump(self, board, f, **kwargs):
     f.write('<style type="text/css">')
-    #f.write(self.gbs_board_style(size=50, board_size=board.size))
-    f.write(self.gbs_board_style(size=30, board_size=board.size))
+    f.write(self.gbs_board_style(size=70, board_size=board.size))
     f.write('</style>\n\n')
     f.write(self.render(board))
 
