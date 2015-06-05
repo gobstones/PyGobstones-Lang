@@ -181,16 +181,16 @@ table.gbs_board {
       for x in range(w):
         def cell_for(coli):
           cant = board.cells[y][x].num_stones(coli) 
-          if cant == 0: return '<td class="O">&nbsp;</td>'
+          if cant == 0: return '<td><div class="O"></div></td>'
           col = lang.gbs_builtins.Color(coli).name()
           return '<td><div class="gbs_stone %s"><span>%i</span></div></td>' % (col[0], cant)
 
         if board.head == (y, x) and draw_head:
-          out.write('    <td class="gh">\n')
+          out.write('    <td class="gc gh">\n')
         else:
-          out.write('    <td>\n')
+          out.write('    <td class="gc">\n')
 
-        out.write('      <table class="gc">\n')
+        out.write('      <table>\n')
         out.write('        <tr>%s%s</tr>\n' % (cell_for(1), cell_for(0)))
         out.write('        <tr>%s%s</tr>\n' % (cell_for(2), cell_for(3)))
         out.write('      </table>\n')
