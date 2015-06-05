@@ -206,7 +206,7 @@ table.gbs_board {
 
   def dump(self, board, f, **kwargs):
     f.write('<style type="text/css">')
-    f.write(self.gbs_board_style(size=70, board_size=board.size))
+    f.write(self.gbs_board_style(size=30, board_size=board.size))
     f.write('</style>\n\n')
     f.write(self.render(board))
 
