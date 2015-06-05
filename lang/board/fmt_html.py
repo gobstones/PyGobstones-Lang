@@ -183,7 +183,7 @@ table.gbs_board {
           cant = board.cells[y][x].num_stones(coli) 
           if cant == 0: return '<td class="O">&nbsp;</td>'
           col = lang.gbs_builtins.Color(coli).name()
-          return '<td class="%s">%i</td>' % (col[0], cant)
+          return '<td><div class="gbs_stone %s"><span>%i</span></div></td>' % (col[0], cant)
 
         if board.head == (y, x) and draw_head:
           out.write('    <td class="gh">\n')
