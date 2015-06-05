@@ -165,16 +165,16 @@ table.gbs_board {
     w, h = board.size
     out = common.utils.StringIO()
 
-    def row_titles():
+    def row_titles(border):
       out.write('<tr>')
-      out.write('<td class="lx">&nbsp;</td>')
+      out.write('<td class="lx ' + border + '_left"></td>')
       for x in range(w):
         out.write('<td class="lh">%u</td>' % (x,))
-      out.write('<td class="lx">&nbsp;</td>')
+      out.write('<td class="lx ' + border + '_right"></td>')
       out.write('</tr>\n')
 
-    out.write('<table class="gbs_board" cellpadding="0" cellspacing="0">\n')
-    row_titles()
+    out.write('<table class="gbs_board">\n')
+    row_titles('top')
     for y in common.utils.seq_reversed(range(h)):
       out.write('  <tr>\n')
       out.write('    <td class="lv">%u</td>\n' % (y,))
@@ -198,7 +198,7 @@ table.gbs_board {
         out.write('    </td>\n')
       out.write('    <td class="lv">%u</td>\n' % (y,))
       out.write('  </tr>\n')
-    row_titles()
+    row_titles('bottom')
     out.write('</table>\n')
     res = out.getvalue()
     out.close()
