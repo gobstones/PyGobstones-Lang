@@ -1649,8 +1649,8 @@ def mk_record_from(global_state, type, fields, from_record):
     else:  
         return mk_record(global_state, type, fields, from_record.bindings)
 
-def projection(global_state, record, field_name):
-    if isinstance(record, GbsObject):
+def projection(global_state, record, field_name):    
+    if not isinstance(record, GbsRecordObject) and isinstance(record, GbsObject):
         record = record.value
     
     if not isinstance(record, GbsObject):
@@ -1658,6 +1658,9 @@ def projection(global_state, record, field_name):
                                      % (i18n.i18n(poly_typeof(record)),))
         raise GbsRuntimeException(msg, global_state.area())
     
+    if isinstance(record, GbsRecordObject):
+        record = record.value
+        
     try:
         return unwrap_value(record[field_name])
     except Exception as exception:

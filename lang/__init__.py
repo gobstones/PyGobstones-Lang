@@ -19,8 +19,9 @@
 import os
 
 dirname = os.path.dirname(__file__)
-GbsGrammarDir = os.path.join(dirname, "grammar")
-GbsGrammarFile = os.path.join(GbsGrammarDir, 'xgbs_grammar.bnf')
+GrammarDir = os.path.join(dirname, "grammar")
+GbsGrammarFile = os.path.join(GrammarDir, 'gbs_grammar.bnf')
+XGbsGrammarFile = os.path.join(GrammarDir, 'xgbs_grammar.bnf')
 GbsMacrosDir = os.path.join(dirname, 'macros')
 
 
@@ -42,13 +43,6 @@ import lang.gbs_board
 import lang.gbs_optimizer
 from lang.board.fmt_json import JsonBoardFormat
 
-def setGrammar(lang_version):
-    if lang_version == GobstonesOptions.LangVersion.Gobstones:
-        lang.GbsGrammarFile = os.path.join(GbsGrammarDir, 'gbs_grammar.bnf')
-    else:
-        lang.GbsGrammarFile = os.path.join(GbsGrammarDir, 'xgbs_grammar.bnf')
-    lang.gbs_parser.setup(lang.GbsGrammarFile)
-
 """ Gobstones API classes """
 
 class ExecutionAPI(lang.gbs_io.InteractiveApi):
@@ -60,13 +54,19 @@ class GobstonesOptions(object):
         Gobstones = "Gobstones3.0"
         XGobstones = "XGobstones"
     LINT_MODES = ['lax', 'strict']
-    def __init__(self, lang_version=LangVersion.XGobstones, lint_mode="lax", check_liveness=False, check_types=False, jit=False, optimize=False):
+    def __init__(self, lang_version=LangVersion.Gobstones, lint_mode="lax", check_liveness=False, check_types=False, jit=False, optimize=False):
         self.lint_mode = lint_mode
         self.check_liveness = check_liveness
         self.check_types = check_types
         self.jit = jit
         self.optimize = optimize
         self.lang_version = lang_version
+        
+    def get_lang_grammar(self):
+        if self.lang_version == self.LangVersion.Gobstones:
+            return GbsGrammarFile
+        else:
+            return XGbsGrammarFile
     
 class GobstonesRun(object):
     def __init__(self):
@@ -104,8 +104,6 @@ class Gobstones(object):
         self.api = api
         self.options = options
 
-        lang.setGrammar(self.options.lang_version)        
-            
         # Compiler pipeline methods
         self.explode_macros = lang.gbs_mexpl.mexpl
         self.lint = lang.gbs_lint.lint
@@ -122,7 +120,8 @@ class Gobstones(object):
     def parse(self, program_text, filename):
         if program_text == "":
             raise GobstonesException(i18n.i18n("Cannot execute an empty program"))
-        return lang.gbs_parser.parse_string_try_prelude(program_text, filename)
+
+        return lang.gbs_parser.parse_string_try_prelude(program_text, filename, grammar_file=self.options.get_lang_grammar())
             
     @classmethod
     def random_board(cls, size=None):

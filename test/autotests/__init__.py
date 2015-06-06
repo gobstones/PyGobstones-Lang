@@ -2,59 +2,18 @@ import itertools
 import random
 import functools
 from test_logger import log
-from test import TestCase, GobstonesTest, run_gobstones
+from test_utils import *
+from GobstonesRunner import run_gobstones
+from TestCase import TestCase
+from GobstonesTest import GobstonesTest
 
 randint = lambda x: random.randint(0,x-1)
-
-def read_file(fn):
-    f = open(fn, 'r')
-    s = f.read()
-    f.close()
-    return s
-
-def write_file(fn, s):
-    f = open(fn, "w")
-    f.write(s)
-    f.close()
     
-def copy_file(fn, fnnew):
-    write_file(fnnew, read_file(fn))
-
-def temp_test_file(codestr):
-    fn = "./examples/" + str(id(codestr)) + ".gbs"
-    write_file(fn, codestr)
-    return fn
-    
-def unzip(l):
-    return [list(t) for t in zip(*l)]
-
-def group(lst, n):
-    res = []
-    sublst = []
-    for x in lst:
-      sublst.append(x)
-      if len(sublst) == n:
-          res.append(sublst)
-          sublst = []
-    if len(sublst) > 0:
-        res.append(sublst)
-    return res
-
 def randomList(generator, max_size=16):
     return [generator(i) for i in range(randint(max_size) + 4)]
 
 def randomIntList(max_size=16, max_number=99):
     return randomList(lambda i: randint(max_number), max_size)
-
-def flatten(lst):
-    res = []
-    for x in lst:
-        if isinstance(x, list):
-            res.extend(flatten(x))
-        else:
-            res.append(x)
-    return res
-
 
 def nats(start, end):
     if (start < end):
@@ -364,6 +323,9 @@ class AutoTestCase(TestCase):
     
     def __init__(self):
         super(AutoTestCase, self).__init__("AutoTestCase")
+        self.name = "Automatic Test Cases for XGobstones"
+    
+    def prepare(self):
         copy_file("./autotests/Biblioteca.gbs", "./examples/Biblioteca.gbs")
     
     def get_gobstones_tests(self):

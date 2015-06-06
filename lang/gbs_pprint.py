@@ -19,7 +19,7 @@
 #### Not-quite-pretty printing
 
 import lang.gbs_def_helper as def_helper
-from lang.bnf_parser import Token
+from lang.parser.Token import Token
 
 def llen(s):
   return len(s.split('\n')[-1])

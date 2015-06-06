@@ -19,7 +19,7 @@
 #---------------------------------------------------------------------
 
 import lang.ast
-from lang.bnf_parser import Token
+from lang.parser.Token import Token
 
 def unpack_definition(def_):
     return def_.children

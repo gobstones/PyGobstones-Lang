@@ -3,6 +3,7 @@ import re
 import os
 import sys
 import subprocess
+import math
 
 def delete_files_in_dir(dir, exceptions=[]):
     for f in os.listdir(dir):
@@ -69,6 +70,22 @@ def read_file_lines(fn):
     f.close
     return ls
 
+def write_file(fn, s):
+    f = open(fn, "w")
+    f.write(s)
+    f.close()
+
+def copy_file(fn, fnnew):
+    write_file(fnnew, read_file(fn))
+
+def temp_test_file(codestr):
+    fn = "./examples/" + str(id(codestr)) + ".gbs"
+    write_file(fn, codestr)
+    return fn
+    
+def unzip(l):
+    return [list(t) for t in zip(*l)]
+
 def first_half(lst): return lst[:len(lst) / 2]
 def second_half(lst): return lst[len(lst) / 2:]
 
@@ -97,3 +114,9 @@ def all_slicings(xs):
     for s in all_slicings(xs[1:]):
       yield [[xs[0]]] + s
       yield [[xs[0]] + s[0]] + s[1:]
+      
+def ifloor(f):
+    return int(math.floor(f))
+
+def iceil(f):
+    return int(math.ceil(f))

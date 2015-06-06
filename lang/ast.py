@@ -469,15 +469,17 @@ class ASTBuilder(object):
         else:
             fields = _make_list_expression(expr_construct[2])
             
+        result = None
+            
         if constructor_type.children[1].value == 'Arreglo':
-            return ASTNode(['funcCall',
+            result = ASTNode(['funcCall',
                             lang.bnf_parser.Token('lowerid', '_mkArray', pos_b, pos_e),
                             ASTNode([constructor_type,
                                      fields], pos_b, pos_e),                                                        
                             ], pos_b, pos_e)
         else:
             if not (len(expr_construct[2].children) > 0 and expr_construct[2].children[0] == 'recordSuchAs'):
-                return ASTNode(['constructor',
+                result = ASTNode(['constructor',
                             lang.bnf_parser.Token('lowerid', '_construct', pos_b, pos_e),
                             ASTNode([constructor_type,
                                      fields],
@@ -485,7 +487,7 @@ class ASTBuilder(object):
                                     pos_e),
                             ], pos_b, pos_e)
             else:
-                return ASTNode(['constructor',
+                result = ASTNode(['constructor',
                             lang.bnf_parser.Token('lowerid', '_construct_from', pos_b, pos_e),
                             ASTNode([constructor_type,
                                      fields,
@@ -493,7 +495,7 @@ class ASTBuilder(object):
                                     pos_b, 
                                     pos_e),
                             ], pos_b, pos_e)
-                
+        return result
             
     
     def _expand_action_proccall_assignvarname(self, subtrees, _):

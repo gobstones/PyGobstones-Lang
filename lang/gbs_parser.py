@@ -24,6 +24,7 @@ import lang.gbs_builtins
 import common.i18n as i18n
 from common.utils import *
 import lang.grammar.i18n
+from language.implementation.lang import GobstonesOptions, XGbsGrammarFile
 
 #### Parser of Gobstones programs.
 ####
@@ -203,18 +204,19 @@ class GbsAnalyzer(lang.bnf_parser.Analyzer):
     def __init__(self, grammar, warn=std_warn):
         lang.bnf_parser.Analyzer.__init__(self, GbsLexer, GbsParser, bnf_contents=grammar, warn=warn)
 
-def setup(grammar_file):
+def create_analizer(grammar_file):
     bnf = lang.grammar.i18n.translate(read_file(grammar_file))
-    lang.gbs_parser.Analyzer = GbsAnalyzer(bnf)
+    return GbsAnalyzer(bnf)
 
-def check_grammar_conflicts():
+def check_grammar_conflicts(grammar_file):
     """Checks if the BNF grammar has any conflict (an LL(1) prediction
        with two productions)."""
-    Analyzer.parser.check_conflicts()
+    create_analizer(grammar_file).parser.check_conflicts()
 
-def parse_string(string, filename='...', toplevel_filename=None):
+def parse_string(string, filename='...', toplevel_filename=None, grammar_file=XGbsGrammarFile):
     "Parse a string and return an abstract syntax tree."
-    parsing_stream = Analyzer.parse(string, filename)
+    analyzer = create_analizer(grammar_file)
+    parsing_stream = analyzer.parse(string, filename)
     start_pos = common.position.Position(string, filename)
     tree = lang.ast.ASTBuilder(start_pos).build_ast_from(parsing_stream)
     tree.source_filename = filename
@@ -232,8 +234,8 @@ def prelude_for_file(filename):
     else:
         return None
 
-def parse_string_try_prelude(string, filename, toplevel_filename=None):
-    main_program = parse_string(string, filename, toplevel_filename)
+def parse_string_try_prelude(string, filename, toplevel_filename=None, grammar_file=XGbsGrammarFile):
+    main_program = parse_string(string, filename, toplevel_filename, grammar_file)
 
     prelude_filename = prelude_for_file(filename)
     if prelude_filename is not None:
@@ -250,10 +252,10 @@ def parse_string_try_prelude(string, filename, toplevel_filename=None):
 
     return main_program
 
-def parse_file(filename):
+def parse_file(filename, grammar_file=XGbsGrammarFile):
     "Parse a file and return an abstract syntax tree."
-    return parse_string_try_prelude(read_file(filename), filename)
+    return parse_string_try_prelude(read_file(filename), filename, grammar_file)
 
-def token_stream(string):
-    return Analyzer.lexer.pure_tokenize(string)
+def token_stream(string, grammar_file):
+    return create_analizer(grammar_file).lexer.pure_tokenize(string)
 

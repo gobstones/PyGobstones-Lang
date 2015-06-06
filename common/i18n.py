@@ -497,6 +497,8 @@ Opciones:
   [--from] tablero.{gbb,gbt,tex}  Ejecuta el programa en el tablero dado
   --to tablero.{gbb,gbt,tex}      Guarda el resultado en el tablero dado
   --size <ancho> <alto>           Tamaño del tablero generado
+  --language gobstones            Utiliza el interprete de Gobstones 3.0
+  --language xgobstones           Utiliza el interprete de XGobstones 1.0
   --pprint                        Imprime el código fuente
   --print-ast                     Imprime el árbol sintáctico
   --print-asm                     Imprime el código de la máquina virtual

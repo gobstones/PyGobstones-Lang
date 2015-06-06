@@ -3,37 +3,17 @@ import os
 import os.path
 import importlib
 import inspect
+from GobstonesRunner import run_gobstones
+from TestCase import TestCase
+from GobstonesTest import GobstonesTest
 from test_logger import log
 from test_utils import read_file_lines, is_module, parent_dir, module_dir, run_cmd, delete_files_in_dir, dir_has_tests
+import autotestsGbs3
 import autotests
 
 def cleanup():
     clean_dir = os.path.join(parent_dir(__file__), "examples")
     delete_files_in_dir(clean_dir, ["README"])
-
-def run_gobstones(filename, board_file):    
-    result = os.popen("./run_gobstones.sh %s %s" % (filename, board_file)).read()        
-    result = result.split('\n')
-    while len(result) > 0 and result[-1] == '': result = result[:-1]
-    if len(result) == 0 or result[-1] != 'OK':
-        log("\n".join(result))
-        return 'ERROR', {}
-    else:
-        result = result[:-1]
-        dic = []
-        var, val = "", ""
-        for res in result:
-            if res.count("->") > 0:
-                dic.append((var.strip(' \t\r\n'), val.strip(' \t\r\n')))
-                var, val = res.split('->')                
-            else:
-                val += "\n" + res
-        dic.append((var.strip(' \t\r\n'), val.strip(' \t\r\n')))
-        if len(dic) > 1:
-            dic = dic[1:]
-        else:
-            dic = []
-        return 'OK', dic
 
 class TestException(Exception):
     pass
@@ -127,46 +107,6 @@ class GobstonesFileTest(GobstonesTest):
         def check_assert(self, results):
             pass
                     
-                
-class TestCase(object):
-    
-    def __init__(self, testcase_name):
-        self.name = testcase_name
-        self.passed = 0
-        self.failed = 0
-        self.errors = 0    
-
-    def __repr__(self):
-        output = "TestCase: %s, " % self.name
-        if self.errors > 0:
-            output += "ERROR."
-        elif self.failed > 0:
-            output += "FAILED."
-        else:
-            output += "OK."
-        return output
-    
-    def run(self):
-        tests = self.get_gobstones_tests()
-        self.result = {"PASSED":0, "FAILED":0, "ERROR":0}
-        for test in tests:
-            self.setup()
-            res = test.run()
-            if res == "FAILED":
-                print "Failed test '%s'" % (test.name(),)
-            self.result[res] += 1
-            self.teardown()
-        
-        self.passed = self.result["PASSED"]
-        self.failed = self.result["FAILED"]
-        self.errors = self.result["ERROR"]
-
-    def setup(self):
-        pass
-        
-    def teardown(self):
-        pass
-
 class FileTestCase(TestCase):
         
     def get_gobstones_tests(self):
@@ -186,17 +126,18 @@ class Tester(object):
         failed = 0
         errors = 0
         for test_case in test_cases:
+            test_case.prepare()
             test_case.run()
             print repr(test_case)
             passed += test_case.passed
             failed += test_case.failed
             errors += test_case.errors
+            cleanup()
             
         print "Total:\n--passed: %s\n--failed: %s\n--errors: %s\n" % (passed, failed, errors)
-        cleanup()
         
     def get_test_cases(self):
-        return self.get_file_test_cases() + [autotests.AutoTestCase()]
+        return self.get_file_test_cases() + [autotests.AutoTestCase(), autotestsGbs3.AutoTestCaseGbs3()]
         
     def get_file_test_cases(self):
         PATH = os.path.split(os.path.realpath(__file__))[0]

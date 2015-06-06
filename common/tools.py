@@ -16,7 +16,6 @@
 #
 
 
-import lang.gbs_parser
 import lang.gbs_mexpl
 import lang.gbs_lint
 import lang.gbs_liveness
@@ -35,9 +34,6 @@ class Tools():
 tools = Tools()
 tools.BoardViewerGeometry = "480x480"
 tools.DefaultBoardSize = 'random'
-tools.tokenize = lang.gbs_parser.token_stream
-tools.parse_file = lang.gbs_parser.parse_file
-tools.parse_string_try_prelude = lang.gbs_parser.parse_string_try_prelude
 tools.mexpl = lang.gbs_mexpl.mexpl
 tools.lint = lang.gbs_lint.lint
 tools.check_live_variables = lang.gbs_liveness.check_live_variables

@@ -23,6 +23,7 @@ import common.i18n as i18n
 import common.utils
 import common.logtools
 import lang
+import logging
 from common.utils import SourceException
 
 LOGGER = common.logtools.get_logger('gbs-console')
@@ -89,7 +90,7 @@ class GbsOptions(object):
         '--optimize',
         '--interactive',
         '--output-type X',
-        '--gobstones3'
+        '--language X'
     ]
     
     def __init__(self, argv):
@@ -137,7 +138,9 @@ class GbsOptions(object):
             if k == 'lint':
                 options[k] = self.maybe(options, k, 'strict')
             elif k == 'style':
-                options[k] = self.maybe(options, k, 'verbose')            
+                options[k] = self.maybe(options, k, 'verbose')     
+            elif k == 'language':
+                options[k] = self.maybe(options, k, 'xgobstones')       
             elif isinstance(v, list) and len(v) <= 1:
                 options[k] = self.maybe(options, k)
     
@@ -233,7 +236,11 @@ class ConsoleInteractiveAPI(lang.ExecutionAPI):
 
 def run_filename(filename, options):
     
-    if not options["gobstones3"]:
+    if not options["language"] in ['gobstones', 'xgobstones']:
+        report_error("Options Error", "Language %s is not supported by this interpreter." % (options["language"],))
+        usage(2)
+        
+    if options["language"] == 'xgobstones':
         lang_version = lang.GobstonesOptions.LangVersion.XGobstones
     else:
         lang_version = lang.GobstonesOptions.LangVersion.Gobstones
@@ -279,6 +286,10 @@ def main():
         except SourceException as exception:
             report_program_error(exception.error_type(), exception.msg, exception.area)
             sys.exit(1)
+        except Exception as exception:
+            report_error("Python Error: ", "Failed to execute %s file." % (options['src'],))
+            logging.exception(str(exception))
+            sys.exit(3)
             
         print_run(gbs_run, options)
         persist_run(gbs_run, options)

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
+from language.implementation.lang import XGbsGrammarFile
 
 """Tokenizer and parser for LL(1) grammars.
 The grammar is read in BNF format from a text file.
@@ -23,8 +24,10 @@ import re
 
 import common.position
 import common.i18n as i18n
-
 import common.utils
+
+from lang.parser.Token import Token
+
 from common.utils import (
     set_new, set_add_change, set_add, seq_sorted
 )
@@ -40,56 +43,12 @@ class ParserException(common.utils.StaticException):
         "Return the error type of these exceptions."
         return i18n.i18n('Syntax error')
 
+
 def is_nonterminal(string):
     """Returns true if the string represents a nonterminal,
     which must be of the form <...>"""
     return len(string) > 2 and string[0] == '<' and string[-1] == '>'
 
-class Token(common.position.ProgramElement):
-    "Represents a token (terminal symbol in the grammar)."
-
-    def __init__(self, type_, value, pos_begin, pos_end):
-        common.position.ProgramElement.__init__(self)
-        self.type = type_
-        self.value = value
-        self.pos_begin = pos_begin
-        self.pos_end = pos_end
-
-    def type_description(cls, tok_type):
-        """Return the human-readable description of a token type,
-        for displaying errors."""
-        return i18n.Token_type_descriptions.get(tok_type, '"' + tok_type + '"')
-    type_description = classmethod(type_description)
-
-    def __repr__(self):
-        if self.type in ['EOF', 'BOF']:
-            return Token.type_description(self.type)
-        else:
-            if len(self.value) > 0 and self.value[0] == '"':
-                quoted = self.value
-            else:
-                quoted = '"' + self.value + '"'
-            if self.type in i18n.Token_type_descriptions:
-                return '%s %s' % (Token.type_description(self.type), quoted)
-            else:
-                return '%s' % (quoted,)
-
-    def description(self):
-        """Return the human-readable description of a token."""
-        return repr(self)
-
-    def has_children(self):
-        """A token has no children."""
-        return False
-
-    def show_ast(self, indent=0, **_):
-        """Display the Token as a leaf AST."""
-        return '    ' * indent + self.value
-
-    def negate(self):
-        """Negate a token (should represent a numeric value)."""
-        assert self.type == 'num'
-        return Token(self.type, '-' + self.value, self.pos_begin, self.pos_end)
 
 def fake_bof():
     """Return a dummy token. Useful for reporting errors that
