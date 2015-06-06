@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-from language.implementation.lang import XGbsGrammarFile
+from lang.grammar import XGbsGrammarFile
 
 """Tokenizer and parser for LL(1) grammars.
 The grammar is read in BNF format from a text file.
@@ -194,7 +194,7 @@ class Parser(object):
         first_set = set_new()
         self._build_first_seq(first_set, alpha)
         return first_set
-  
+
     def _build_follow(self):
         "Builds a table that associates each nonterminal with its FOLLOW set."
         self._follow = {}
@@ -239,7 +239,7 @@ class Parser(object):
         EOF is in FOLLOW(A) iff <start> =>* ...A"""
         return self._follow[nonterm]
 
-    def _fill_table(self, nonterminal, terminal, production): 
+    def _fill_table(self, nonterminal, terminal, production):
         """Adds the given production to the entry (nonterminal, terminal) of
         the parsing table."""
         key = (nonterminal, terminal)
@@ -275,7 +275,7 @@ class Parser(object):
     def parse_error(self, top, _previous_token, token):
         "Raises a ParserException describing a parse error."
         if is_nonterminal(top):
-            follow = self._followups(top) 
+            follow = self._followups(top)
         else:
             follow = [Token.type_description(top)]
         if len(follow) == 1:
@@ -343,7 +343,7 @@ def remove_comment_in_line(line):
     return line.split(BNF_COMMENT_SEQ)[0]
 
 def remove_comments(contents):
-    "Remove comments from string."       
+    "Remove comments from string."
     return '\n'.join([
         remove_comment_in_line(line) for line in contents.split('\n')
     ])
@@ -358,7 +358,7 @@ def _bnf_escape(contents):
 
 def _bnf_unescape(contents):
     "Translate escape sequences into the original strings."
-    for original, escaped, translate_to_escaped in Analyzer.Escape_sequences: 
+    for original, escaped, translate_to_escaped in Analyzer.Escape_sequences:
         contents = contents.replace(escaped, original)
     return contents
 
@@ -441,7 +441,7 @@ class Analyzer(object):
         # ( original, escaped, translate_to_escaped)
         ("||", BNF_ESCAPE_SEQ + "(OR)", True),
         ("#", BNF_ESCAPE_SEQ + "(PYCOMMENT)", True),
-        ("|", BNF_ESCAPE_SEQ + "(CASE-SEPARATOR)", False)        
+        ("|", BNF_ESCAPE_SEQ + "(CASE-SEPARATOR)", False)
     ]
 
     def parse(self, string, filename='...'):
@@ -449,4 +449,3 @@ class Analyzer(object):
         purposes only (the file is not read)."""
         token_stream = self.lexer.tokenize(string, filename)
         return self.parser.parse(token_stream)
-

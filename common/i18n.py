@@ -681,6 +681,8 @@ Options:
   [--from] board.{gbb,gbt,tex}  Run the program in the given board file
   --to board.{gbb,gbt,tex}      Save the result in the given board file
   --size <width> <height>       Size of the input board when randomized
+  --language gobstones          Uses the Gobstones 3.0's interpreter
+  --language xgobstones         Uses the XGobstones 1.0's interpreter
   --pprint                      Pretty print source code
   --print-ast                   Print the abstract syntax tree
   --print-asm                   Print the code for the virtual machine

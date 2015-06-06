@@ -24,7 +24,8 @@ import lang.gbs_builtins
 import common.i18n as i18n
 from common.utils import *
 import lang.grammar.i18n
-from language.implementation.lang import GobstonesOptions, XGbsGrammarFile
+from lang.gbs_api import GobstonesOptions
+from lang.grammar import XGbsGrammarFile
 
 #### Parser of Gobstones programs.
 ####
@@ -175,7 +176,7 @@ class GbsLexer(lang.bnf_parser.Lexer):
             previous_token = tok
 
     def warn_if_similar_to_reserved(self, value, area):
-        tl = value.lower() 
+        tl = value.lower()
         if tl in self.reserved_lower and self.reserved_lower[tl] != value:
             raise GbsParserException(i18n.i18n('Found: %s\nMaybe should be: %s') % (
                                 value, self.reserved_lower[tl]), area)
@@ -258,4 +259,3 @@ def parse_file(filename, grammar_file=XGbsGrammarFile):
 
 def token_stream(string, grammar_file):
     return create_analizer(grammar_file).lexer.pure_tokenize(string)
-
