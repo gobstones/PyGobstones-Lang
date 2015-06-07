@@ -61,7 +61,7 @@ class Gobstones(object):
             self.make_runnable = lang.gbs_vm.VmCompiledRunnable
 
 
-    def parse(self, program_text, filename):
+    def _parse(self, program_text, filename):
         if program_text == "":
             raise GobstonesException(i18n.i18n("Cannot execute an empty program"))
 
@@ -87,14 +87,18 @@ class Gobstones(object):
         # Check types [TODO]
         # self.typecheck(tree, self.options.check_types)
 
-    def compile(self, filename, program_text):
+    def parse(self, filename, program_text):
         # Parse gobstones script
         self.api.log(i18n.i18n('Parsing.'))
-        tree = self.parse(program_text, filename)
+        tree = self._parse(program_text, filename)
         assert tree
         # Explode macros
         self.api.log(i18n.i18n('Exploding program macros.'))
         self.explode_macros(tree)
+        return GobstonesRun().initialize(tree)
+
+    def compile(self, filename, program_text):
+        gbs_run = self.parse(filename, program_text)
         # Check semantics, liveness and types
         self.check(tree)
         # Optimize program
@@ -103,8 +107,8 @@ class Gobstones(object):
             lang.gbs_optimizer.optimize(tree)
         # Compile program
         self.api.log(i18n.i18n('Compiling.'))
-        compiled_program = self.compile_program(tree)
-        return GobstonesRun().initialize(tree, compiled_program)
+        gbs_run.compiled_program = self.compile_program(tree)
+        return gbs_run
 
     def run_object_code(self, compiled_program, initial_board):
         # Make runnable

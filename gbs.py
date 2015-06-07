@@ -24,11 +24,12 @@ import common.utils
 import common.logtools
 import lang
 import logging
+import json
 from common.utils import SourceException
 
 LOGGER = common.logtools.get_logger('gbs-console')
 
-def report_error(errtype, msg):    
+def report_error(errtype, msg):
     LOGGER.error('%s:\n' % (errtype,))
     LOGGER.error('%s\n' % (common.utils.indent(msg),))
 
@@ -50,7 +51,7 @@ def get_initial_board(options):
     return board
 
 def usage(ret=1):
-    msg = i18n.i18n('I18N_gbs_usage') 
+    msg = i18n.i18n('I18N_gbs_usage')
     msg = msg.replace('<PROG>', sys.argv[0])
     LOGGER.error(msg)
     sys.exit(ret)
@@ -84,6 +85,7 @@ class GbsOptions(object):
         '--style X',
         '--version',
         '--license',
+        '--target X',
         '--help',
         '--profile',
         '--silent',
@@ -92,32 +94,32 @@ class GbsOptions(object):
         '--output-type X',
         '--language X'
     ]
-    
+
     def __init__(self, argv):
         if len(argv) == 1:
             argv.append('--help')
         opts = common.utils.parse_options(GbsOptions.SWITCHES, argv)
         if not opts:
             raise OptionsException()
-        self.arguments, self.options = opts        
+        self.arguments, self.options = opts
         self.options = self.build(self.options)
-         
+
     def __getitem__(self, i):
         return self.options[i]
-    
+
     def merge(self, opts1, opts2):
         opts_merge = {}
         keys = set(opts1.keys() + opts2.keys())
         for k in keys:
             opts_merge[k] = opts1[k] or opts2[k]
         return opts_merge
-    
+
     def maybe(self, options, key, else_=None):
         if not key in options.keys() or options[key] == [] or options[key] is None:
             return else_
         else:
             return options[key][0]
-        
+
     def build(self, options):
         if len(self.arguments) not in [0, 1, 2] and not options['src']:
             raise OptionsException()
@@ -127,29 +129,31 @@ class GbsOptions(object):
                 raise OptionsException()
             else:
                 options['from'] = self.arguments[1]
-                    
+
         if len(self.arguments) >= 1:
             if options['src']:
                 raise OptionsException()
             else:
                 options['src'] = self.arguments[0]
-        
+
         for k,v in options.items():
             if k == 'lint':
                 options[k] = self.maybe(options, k, 'strict')
             elif k == 'style':
-                options[k] = self.maybe(options, k, 'verbose')     
+                options[k] = self.maybe(options, k, 'verbose')
+            elif k == 'target':
+                options[k] = self.maybe(options, k, 'run')
             elif k == 'language':
-                options[k] = self.maybe(options, k, 'xgobstones')       
+                options[k] = self.maybe(options, k, 'xgobstones')
             elif isinstance(v, list) and len(v) <= 1:
                 options[k] = self.maybe(options, k)
-    
+
         self.check(options)
         if options['size']:
             options['size'] = [int(x) for x in options['size']]
 
         return options
-    
+
     def check(self, options):
         if options['src']:
             self.check_file_exists(options['src'])
@@ -159,7 +163,7 @@ class GbsOptions(object):
             raise OptionsException(i18n.i18n('%s is not a valid lint option.') % (options['lint'],))
         if not self.check_size(options['size']):
             raise OptionsException(i18n.i18n('Size %s is not a valid size. Positive integers expected.') % (str(options['size']),))
-        
+
     def check_size(self, size):
         if size:
             width, height = size
@@ -175,7 +179,9 @@ class GbsOptions(object):
             raise OptionsException(i18n.i18n('File %s does not exist') % (file,))
 
 def print_run(gbs_run, options):
-    if options['output-type'] == 'json':
+    if options['print-ast'] and options['output-type'] == 'json':
+        LOGGER.info(gbs_run.tree.json())
+    elif options['output-type'] == 'json':
         LOGGER.info(gbs_run.json())
     else:
         if options['print-ast']:
@@ -207,9 +213,9 @@ def persist_run(gbs_run, options):
         f = open(options['asm'], 'w')
         w = lang.gbs_vm_serializer.dump(gbs_run.compiled_program, f, style=options['style'])
         f.close()
-        
+
     if options['to'] and gbs_run.final_board:
-       f = open(options['to'], 'w') 
+       f = open(options['to'], 'w')
        fmt = options['to'].split('.')[-1]
        fmt = fmt.lower()
        if fmt not in lang.board.formats.AvailableFormats:
@@ -235,20 +241,22 @@ class ConsoleInteractiveAPI(lang.ExecutionAPI):
             LOGGER.info(msg)
 
 def run_filename(filename, options):
-    
+
     if not options["language"] in ['gobstones', 'xgobstones']:
         report_error("Options Error", "Language %s is not supported by this interpreter." % (options["language"],))
         usage(2)
-        
+
     if options["language"] == 'xgobstones':
         lang_version = lang.GobstonesOptions.LangVersion.XGobstones
     else:
         lang_version = lang.GobstonesOptions.LangVersion.Gobstones
-        
+
     gbs_opts = lang.GobstonesOptions(lang_version, options['lint'], options['liveness'], options['typecheck'], options['jit'], options['optimize'])
     gobstones = lang.Gobstones(gbs_opts, ConsoleInteractiveAPI(options))
-    
-    if filename.lower().endswith('.gbo'):
+
+    if options['target'] == 'parse':
+        gbs_run = gobstones.parse(filename, open(filename).read())
+    elif filename.lower().endswith('.gbo'):
         object_file = open(filename)
         compiled_program = lang.gbs_vm_serializer.load(object_file)
         object_file.close()
@@ -261,7 +269,7 @@ def run_filename(filename, options):
     else:
         gbs_run = gobstones.run(filename, open(filename).read(), get_initial_board(options))
     return gbs_run
-        
+
 def main():
     try:
         options = GbsOptions(sys.argv)
@@ -279,7 +287,7 @@ def main():
     elif options['license']:
         LOGGER.info(common.utils.read_file(common.LicenseFile))
         sys.exit(0)
-        
+
     if options['src']:
         try:
             gbs_run = run_filename(options['src'], options)
@@ -290,9 +298,9 @@ def main():
             report_error("Python Error: ", "Failed to execute %s file." % (options['src'],))
             logging.exception(str(exception))
             sys.exit(3)
-            
+
         print_run(gbs_run, options)
         persist_run(gbs_run, options)
-    
+
 if __name__ == '__main__':
     main()

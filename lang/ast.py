@@ -25,6 +25,7 @@ import common.utils
 import lang.bnf_parser
 import lang.gbs_builtins
 import copy
+import json
 
 def fix_string_literal(node):
     if node.children[1].type == 'string':
@@ -68,17 +69,17 @@ def _is_range_expr(node):
 def _make_range_generator(expr_range):
     pos_b = expr_range.pos_begin
     pos_e = expr_range.pos_end
-    
+
     if len(expr_range.children) == 4:
         first, second, _, last = expr_range.children
     elif len(expr_range.children) == 3:
         first, _, last = expr_range.children
         second = ASTNode(['literal',
-                          lang.bnf_parser.Token('symbol', 'NoSecondElementForRange', pos_b, pos_e)], 
+                          lang.bnf_parser.Token('symbol', 'NoSecondElementForRange', pos_b, pos_e)],
                           pos_b, pos_e)
     else:
         assert False
-        
+
     return ASTNode(['funcCall',
                    lang.bnf_parser.Token('lowerid', '_range', pos_b, pos_e),
                    ASTNode([first, last, second], pos_b, pos_e)
@@ -105,7 +106,7 @@ def _make_list_expression(expr_list):
                            ], pos_b, pos_e)
         ret = ASTNode(['listop',
                        lang.bnf_parser.Token('lowerid', '++', pos_b, pos_e),
-                       exp_list, 
+                       exp_list,
                        ret], pos_b, pos_e)
     return ret
 
@@ -144,7 +145,7 @@ class ASTNode(common.position.ProgramElement):
 
     def __init__(self, children, pos_begin, pos_end):
         common.position.ProgramElement.__init__(self)
-        
+
         # A node is represented by a list
         # - its first element is a label
         # - the remaining elements are the actual children
@@ -214,6 +215,22 @@ this node by the static analysis tool.
                 '}'
             ])
         return live_in, live_out
+
+    def json(self, sort_keys=True, indent=2):
+        """ Returns a JSON representation of the ASTNode """
+        return json.dumps(self.dict(), sort_keys=sort_keys, indent=indent)
+
+    def dict(self):
+        """ Returns a dict representation of the ASTNode """
+        return { "children" : [self.child_to_dict(child) for child in self.children],
+                 "position_begin" : str(self.pos_begin),
+                 "position_end"   : str(self.pos_end) }
+
+    def child_to_dict(self, child):
+        if isinstance(child, ASTNode):
+            return child.dict()
+        else:
+            return str(child)
 
     def show_ast(self, indent=0, show_liveness=False):
         """Return a string, result of pretty printing the full
@@ -353,7 +370,7 @@ class ASTBuilder(object):
         """Expands the constructor arguments"""
         pos_b = self._pos_begin(subtrees)
         pos_e = self._pos_end(subtrees)
-        
+
         # Fields assocs and a given record expression
         if subtrees[2].children[0] == 'funcCall':
             return ASTNode(['recordSuchAs',
@@ -367,18 +384,18 @@ class ASTBuilder(object):
             firstf = ASTNode(['funcCall',
                               lang.bnf_parser.Token('lowerid', '_mk_field', pos_b, pos_e),
                               ASTNode([ASTNode(['literal',
-                                                symbol_tok], 
-                                                pos_b, pos_e), 
-                                       subtrees[2].children[1]], 
-                                      pos_b, 
+                                                symbol_tok],
+                                                pos_b, pos_e),
+                                       subtrees[2].children[1]],
+                                      pos_b,
                                       pos_e)],
                              pos_b,
                              pos_e,)
             return ASTNode([firstf] + subtrees[3].children,
                            pos_b,
                            pos_e)
-    
-    
+
+
     def _expand_action_concatenate(self, subtrees, action):
         """Expands a ++ action: concatenate synthetized results."""
         value = []
@@ -402,9 +419,9 @@ class ASTBuilder(object):
         """Expands a LIST action, creating a list expression,
         of the form: cons(x1, ... cons(xN, nil) ...), or reducing
         list generators like ".." from [x1..x2] to x1..x2; or
-        [x1,x2..x3] to x1,x2..x3        
+        [x1,x2..x3] to x1,x2..x3
         """
-        
+
         expanded = self._expand_action_part(subtrees, action[1])
         if _is_range_expr(expanded):
             return _make_range_generator(expanded)
@@ -413,16 +430,16 @@ class ASTBuilder(object):
 
     def _expand_action_right_is_symbol(self, subtrees, action):
         """ Expand a RISSYMBOL action to build a symbol from right expression """
-        def expand_right_as_symbol(node):        
-            if node.children[1].value != '.':            
+        def expand_right_as_symbol(node):
+            if node.children[1].value != '.':
                 node = self._expand_action_symbol(node.children, action)
             else:
                 node.children[2] = expand_right_as_symbol(node.children[2])
             return node
-        
+
         if not subtrees[2] is None:
              subtrees[2].children[2] = expand_right_as_symbol(subtrees[2].children[2])
-        
+
         expanded = _infixl(subtrees, ['INFIXL'] + action[1:])
         return expanded
 
@@ -455,27 +472,27 @@ class ASTBuilder(object):
                 ['literal', subtrees[1]],
                 self._pos_begin(subtrees),
                 self._pos_end(subtrees)))
-            
+
 
     def _make_construct_expression(self, expr_construct):
         pos_b = self._pos_begin(expr_construct)
         pos_e = self._pos_end(expr_construct)
         constructor_type = ASTNode(['type', expr_construct[1]], pos_b, pos_e)
-        
+
         from_value = None
         if len(expr_construct[2].children) > 0 and expr_construct[2].children[0] == 'recordSuchAs':
             fields = _make_list_expression(expr_construct[2].children[2])
-            from_value = expr_construct[2].children[1] 
+            from_value = expr_construct[2].children[1]
         else:
             fields = _make_list_expression(expr_construct[2])
-            
+
         result = None
-            
+
         if constructor_type.children[1].value == 'Arreglo':
             result = ASTNode(['funcCall',
                             lang.bnf_parser.Token('lowerid', '_mkArray', pos_b, pos_e),
                             ASTNode([constructor_type,
-                                     fields], pos_b, pos_e),                                                        
+                                     fields], pos_b, pos_e),
                             ], pos_b, pos_e)
         else:
             if not (len(expr_construct[2].children) > 0 and expr_construct[2].children[0] == 'recordSuchAs'):
@@ -483,7 +500,7 @@ class ASTBuilder(object):
                             lang.bnf_parser.Token('lowerid', '_construct', pos_b, pos_e),
                             ASTNode([constructor_type,
                                      fields],
-                                    pos_b, 
+                                    pos_b,
                                     pos_e),
                             ], pos_b, pos_e)
             else:
@@ -492,12 +509,12 @@ class ASTBuilder(object):
                             ASTNode([constructor_type,
                                      fields,
                                      from_value],
-                                    pos_b, 
+                                    pos_b,
                                     pos_e),
                             ], pos_b, pos_e)
         return result
-            
-    
+
+
     def _expand_action_proccall_assignvarname(self, subtrees, _):
         """Expands a procCall/assignVarName, transforming "procCall/assignVarName"
         action into either a "procCall" or a "assignVarName" node."""
@@ -507,41 +524,41 @@ class ASTBuilder(object):
             params = proccall.children[2]
             var = content[1]
             if len(var.children) < 3:
-                var.children = var.children + [ASTNode([], self._pos_begin(subtrees), self._pos_end(subtrees))]            
-            params.children.insert(0, var)         
-            content[2].annotations['explicit_board'] = True   
+                var.children = var.children + [ASTNode([], self._pos_begin(subtrees), self._pos_end(subtrees))]
+            params.children.insert(0, var)
+            content[2].annotations['explicit_board'] = True
             return content[2]
-        else:            
+        else:
             return ASTNode(
                 content,
                 self._pos_begin(subtrees),
                 self._pos_end(subtrees))
-        
+
     def _expand_action_procedure_def(self, subtrees, _):
-        """Expands a procedure definition inserting inout parameter to 
+        """Expands a procedure definition inserting inout parameter to
         params list."""
         procname = subtrees[3]
         params = subtrees[4]
         proctype = subtrees[5]
         body = subtrees[6]
         procVar = subtrees[2]
-        
+
         result = ASTNode(
             ['procedure', procname, params, body, proctype],
             self._pos_begin(subtrees),
             self._pos_end(subtrees))
         result.annotations["varProc"] = procVar
-        
+
         if not procVar is None:
-            params.children.insert(0, procVar.children[1])            
-                
-        return result 
-        
+            params.children.insert(0, procVar.children[1])
+
+        return result
+
     def _expand_action_entrypoint_def(self, subtrees, _):
-        """Expands a procedure definition inserting inout parameter to 
+        """Expands a procedure definition inserting inout parameter to
         params list."""
-        
-        if isinstance(subtrees[1], lang.bnf_parser.Token) and subtrees[1].value == 'interactive':        
+
+        if isinstance(subtrees[1], lang.bnf_parser.Token) and subtrees[1].value == 'interactive':
             epvar = subtrees[2]
             epname = subtrees[1]
             body = subtrees[5]
@@ -559,7 +576,7 @@ class ASTBuilder(object):
             self._pos_end(subtrees))
         result.annotations["varProc"] = epvar
         return result
-    
+
     def _expand_action_varname_funccall(self, subtrees, _):
         """Expands a varName/funcCall, transforming "varName/funcCall"
         action into either a "varName" or a "funcCall" node."""
@@ -596,7 +613,7 @@ first children.
         prods = []
         trees = []
         for event, symbol, expansion in parsing_stream:
-            is_consume = event == 'CONSUME' 
+            is_consume = event == 'CONSUME'
             is_empty_produce = event == 'PRODUCE' and expansion.rule == ('',)
             if is_consume or is_empty_produce:
                 if is_consume:
@@ -623,4 +640,3 @@ first children.
                 prods.append((expansion.action, list(expansion.rule)))
                 trees.append([symbol])
         assert False
-

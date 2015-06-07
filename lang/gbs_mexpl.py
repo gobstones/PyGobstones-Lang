@@ -23,7 +23,7 @@ import lang
 #### Macro exploding of Gobstones programs.
 
 class GbsMacroExploder(object):
-        
+
     def _load_implementation(self, implementation_filename, reserved_token_names=None):
         """ Parses a file with the required implementation and replaces the
         reserved token names with user-innaccesible names """
@@ -31,13 +31,14 @@ class GbsMacroExploder(object):
         for token_name in reserved_token_names:
             defhelper.recursive_replace_token(implementation_program, token_name, "_" + token_name)
         return implementation_program
-    
+
     def explode(self, program_tree):
         entrypoint_tree = defhelper.find_def(program_tree.children[2], defhelper.is_entrypoint_def)
-        self.explicit_board = len(entrypoint_tree.children[2].children) != 0
-        """ Explodes program macros """
-        self._explode_interactive(program_tree)
-    
+        if not entrypoint_tree is None:
+            self.explicit_board = len(entrypoint_tree.children[2].children) != 0
+            """ Explodes program macros """
+            self._explode_interactive(program_tree)
+
     def _explode_interactive(self, program_tree):
         """ Replaces interactive macro with it's implementation in the program tree """
         interactive = defhelper.find_def(program_tree.children[2], defhelper.is_interactive_def)
@@ -50,13 +51,13 @@ class GbsMacroExploder(object):
             if self.explicit_board:
                 refParam = interactive.children[2].children[0].value
                 defhelper.recursive_replace_token(implementation_program, "t", refParam)
-            
+
             interactive_impl = defhelper.find_def(implementation_program.children[2], defhelper.is_entrypoint_def)
             interactive_impl_case = defhelper.recursive_find_node(interactive_impl, functools.partial(defhelper.is_node, 'case'))
             interactive_impl_case.children = [interactive_impl_case.children[0], interactive_impl_case.children[1]]
             interactive_impl_case.children.append(defhelper.get_def_body(interactive))
             defhelper.set_def_body(interactive, defhelper.get_def_body(interactive_impl))
             defhelper.set_def_token_name(interactive, 'program')
-  
+
 def mexpl(tree):
     GbsMacroExploder().explode(tree);
