@@ -96,9 +96,9 @@
 <def>  ::= function <funcName> <params> <funcTypeDecl> <procFuncBody>
              @ function  $2 $3 $5 $4
          | program <procTypeDecl> <procFuncBody>
-             @ entrypoint $1 [] $3 $2
+             @ entrypoint $1 [] $3 $2 None
          | interactive program <procTypeDecl> <interactiveBody>
-             @ entrypoint $1 [] $4 $3
+             @ entrypoint $1 [] $4 $3 None
          | procedure <procName> <params> <procTypeDecl> <procFuncBody>
              @ procedure $2 $3 $5 $4
         ;;

@@ -21,8 +21,8 @@ import random
 
 import common.utils
 import common.i18n as i18n
-import lang.board.formats
-import lang.board.basic
+import lang.board.formats as formats
+from lang.board.BoardFormatException import BoardFormatException
 import lang.gbs_builtins
 
 class SelfDestructionException(Exception):
@@ -348,21 +348,19 @@ class Board(object):
         "Randomize the board."
         self.randomize_contents()
 
-    def dump(self, f, fmt=lang.board.formats.DefaultFormat, **kwargs):
+    def dump(self, f, fmt=formats.DefaultFormat, **kwargs):
         "Dump the board to the file handle `f` in the given format."
-        if fmt in lang.board.formats.AvailableFormats:
-            lang.board.formats.AvailableFormats[fmt]().dump(self, f, **kwargs)
+        if fmt in formats.AvailableFormats:
+            formats.AvailableFormats[fmt]().dump(self, f, **kwargs)
         else:
-            raise lang.board.basic.BoardFormatException(
-                'Board file format unrecognized: %s' % (fmt,))
+            raise BoardFormatException('Board file format unrecognized: %s' % (fmt,))
 
-    def load(self, f, fmt=lang.board.formats.DefaultFormat):
+    def load(self, f, fmt=formats.DefaultFormat):
         "Load the board from the file handle `f` in the given format."
-        if fmt in lang.board.formats.AvailableFormats:
-            lang.board.formats.AvailableFormats[fmt]().load(self, f)
+        if fmt in formats.AvailableFormats:
+            formats.AvailableFormats[fmt]().load(self, f)
         else:
-            raise lang.board.basic.BoardFormatException(
-                'Board file format unrecognized: %s' % (fmt,))
+            raise BoardFormatException('Board file format unrecognized: %s' % (fmt,))
 
     def clone(self):
         "Return a copy of this board."
@@ -399,7 +397,7 @@ class Board(object):
                 self.cells[y][x] = other.cells[y][x].clone()
 
     def __repr__(self):
-        gbt_format = lang.board.formats.AvailableFormats['gbt']()
+        gbt_format = formats.AvailableFormats['gbt']()
         out = gbt_format.numbered_contents(self)
         return '\n'.join(out)
 
@@ -431,7 +429,7 @@ class Board(object):
 def load_board_from(filename):
     """Load the board from the given filename, attempting to
     recognize the format by the file extension."""
-    fmt = lang.board.formats.format_for(filename)
+    fmt = formats.format_for(filename)
     board = Board((1, 1))
     f = open(filename, 'r')
     board.load(f, fmt)
@@ -441,7 +439,7 @@ def load_board_from(filename):
 def dump_board_to(board, filename, style='verbose'):
     """Dump the board into the given filename, attempting to
     recognize the format by the file extension."""
-    fmt = lang.board.formats.format_for(filename)
+    fmt = formats.format_for(filename)
     f = open(filename, 'w')
     board.dump(f, fmt, style=style)
     f.close()

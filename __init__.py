@@ -29,11 +29,11 @@ class GobstonesWorker(ProgramWorker):
     def prepare(self):
         self.api = GUIExecutionAPI(self.communicator)                
     
-    def start(self, filename, program_text, initial_board_string, run_mode):
+    def start(self, filename, program_text, initial_board_string, run_mode, gobstones_version="xgobstones"):
         board = tools.board_format.from_string(initial_board_string)
         
         if run_mode == GobstonesWorker.RunMode.ONLY_CHECK:
-            options = lang.GobstonesOptions()
+            options = lang.GobstonesOptions(lang_version=gobstones_version)
         else:
             options = lang.GobstonesOptions()
         self.gobstones = lang.Gobstones(options, self.api)

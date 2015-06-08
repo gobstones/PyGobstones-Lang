@@ -32,7 +32,6 @@ import lang.gbs_mexpl
 import lang.gbs_lint
 import lang.gbs_liveness
 import lang.gbs_vm
-import lang.jit.gbs_jit
 import lang.gbs_pprint
 import lang.gbs_infer
 import lang.gbs_compiler

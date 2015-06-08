@@ -563,9 +563,15 @@ class ASTBuilder(object):
             epname = subtrees[1]
             body = subtrees[5]
         else:
-            epvar = subtrees[1]
-            epname = subtrees[2]
-            body = subtrees[4]
+            if len(subtrees) == 5: # We are parsing XGobstones
+                epvar = subtrees[1]
+                epname = subtrees[2]
+                body = subtrees[4]
+            else: # We are parsing Gobstones
+                epvar = None
+                epname = subtrees[1]
+                body = subtrees[3]
+                
         params = ASTNode([],self._pos_begin(subtrees), self._pos_end(subtrees))
         eptype = None
         if not epvar is None and len(epvar.children) != 0:
