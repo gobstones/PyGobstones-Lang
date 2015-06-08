@@ -99,6 +99,7 @@ class Gobstones(object):
 
     def compile(self, filename, program_text):
         gbs_run = self.parse(filename, program_text)
+        tree = self._parse(program_text, filename)
         # Check semantics, liveness and types
         self.check(tree)
         # Optimize program
