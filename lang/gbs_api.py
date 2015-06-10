@@ -30,13 +30,14 @@ class GobstonesOptions(object):
         Gobstones = "Gobstones3.0"
         XGobstones = "XGobstones"
     LINT_MODES = ['lax', 'strict']
-    def __init__(self, lang_version=LangVersion.Gobstones, lint_mode="lax", check_liveness=False, check_types=False, jit=False, optimize=False):
+    def __init__(self, lang_version=LangVersion.Gobstones, lint_mode="lax", check_liveness=False, check_types=False, jit=False, optimize=False, allow_recursion=False):
         self.lint_mode = lint_mode
         self.check_liveness = check_liveness
         self.check_types = check_types
         self.jit = jit
         self.optimize = optimize
         self.lang_version = lang_version
+        self.allow_recursion = allow_recursion
 
     def get_lang_grammar(self):
         if self.lang_version == self.LangVersion.Gobstones:

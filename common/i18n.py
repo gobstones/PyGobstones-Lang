@@ -108,6 +108,10 @@ ES = {
     'La definición del procedimiento Main debe ser la última del programa.',
   'There should be an entry point (Main procedure or program block).':
     'El programa debería tener un punto de entrada (procedimiento Main o bloque program).',
+  'Recursion is not allowed':
+    'No está permitido el uso de recursión',
+    'Invocation chain':
+        'Cadena de invocaciones',
   # Records
     'Repeated assignment for field "%s".':
         'Asignación repetida para el campo "%s".',
@@ -499,6 +503,7 @@ Opciones:
   --size <ancho> <alto>           Tamaño del tablero generado
   --language gobstones            Utiliza el interprete de Gobstones 3.0
   --language xgobstones           Utiliza el interprete de XGobstones 1.0
+  --recursion                     Habilitar la recursión
   --pprint                        Imprime el código fuente
   --print-ast                     Imprime el árbol sintáctico
   --print-asm                     Imprime el código de la máquina virtual
@@ -683,6 +688,7 @@ Options:
   --size <width> <height>       Size of the input board when randomized
   --language gobstones          Uses the Gobstones 3.0's interpreter
   --language xgobstones         Uses the XGobstones 1.0's interpreter
+  --recursion                   Allow recursion
   --pprint                      Pretty print source code
   --print-ast                   Print the abstract syntax tree
   --print-asm                   Print the code for the virtual machine

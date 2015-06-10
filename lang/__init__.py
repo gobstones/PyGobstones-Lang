@@ -79,7 +79,7 @@ class Gobstones(object):
     def check(self, tree):
         # Check semantics
         self.api.log(i18n.i18n('Performing semantic checks.'))
-        self.lint(tree, strictness=self.options.lint_mode)
+        self.lint(tree, strictness=self.options.lint_mode, allow_recursion=self.options.allow_recursion)
         # Check liveness
         if self.options.check_liveness:
             self.check_live_variables(tree)

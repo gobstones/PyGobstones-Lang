@@ -92,7 +92,8 @@ class GbsOptions(object):
         '--optimize',
         '--interactive',
         '--output-type X',
-        '--language X'
+        '--language X',
+        '--recursion'
     ]
 
     def __init__(self, argv):
@@ -251,7 +252,8 @@ def run_filename(filename, options):
     else:
         lang_version = lang.GobstonesOptions.LangVersion.Gobstones
 
-    gbs_opts = lang.GobstonesOptions(lang_version, options['lint'], options['liveness'], options['typecheck'], options['jit'], options['optimize'])
+    gbs_opts = lang.GobstonesOptions(lang_version, options['lint'], options['liveness'], options['typecheck'], options['jit'], options['optimize'],
+                                     allow_recursion=options["recursion"])
     gobstones = lang.Gobstones(gbs_opts, ConsoleInteractiveAPI(options))
 
     if options['target'] == 'parse':
