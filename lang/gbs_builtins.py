@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
+from curses.ascii import ascii
 
 """Definition of Gobstones builtin functions, procedures and constants."""
 
@@ -1316,10 +1317,12 @@ class KeyConstantBuilder:
     def build_key_constant(self, keyname, value):
         return BuiltinConstant(keyname, GbsIntType(), value)
     
-    def build_ascii_key_constants_in_range(self, prefix, min, max):
+    def build_ascii_key_constants_in_range(self, prefix, min, max, name_builder=None):
         keys = []
+        if name_builder is None:
+            name_builder = lambda ascii_code:chr(ascii_code)
         for ascii_code in range(min, max + 1):
-             keys.append(self.build_key_constant(prefix + '_' + str.upper(chr(ascii_code)), ascii_code))
+             keys.append(self.build_key_constant(prefix + '_' + str.upper(name_builder(ascii_code)), ascii_code))
         return keys     
     
     def build_ascii_key_constants(self):
@@ -1330,6 +1333,8 @@ class KeyConstantBuilder:
         keys.extend(self.build_ascii_key_constants_in_range("K", 97, 122))
         # Build SHILF_A .. SHIFT_Z key constants
         keys.extend(self.build_ascii_key_constants_in_range("K_SHIFT", 65, 90))
+        
+        keys.extend(self.build_ascii_key_constants_in_range("K_CTRL_", 1, 26, lambda ascii_code: chr(ascii_code + 96)))
         return keys
     
     def build_special_key_constants(self):
@@ -1338,7 +1343,6 @@ class KeyConstantBuilder:
                 self.build_key_constant(i18n.i18n("K_ARROW_UP"), GobstonesKeys.ARROW_UP),
                 self.build_key_constant(i18n.i18n("K_ARROW_RIGHT"), GobstonesKeys.ARROW_RIGHT),
                 self.build_key_constant(i18n.i18n("K_ARROW_DOWN"), GobstonesKeys.ARROW_DOWN),
-                self.build_key_constant('K_CTRL_D', 4),
                 self.build_key_constant('K_ENTER', 13),
                 self.build_key_constant('K_SPACE', 32),
                 self.build_key_constant('K_DELETE', 46),
