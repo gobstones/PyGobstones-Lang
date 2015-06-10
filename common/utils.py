@@ -50,6 +50,38 @@ class GobstonesException(Exception):
         self.msg = msg
 
 
+class GobstonesExecutionReport(object):
+
+    def __init__(self, message):
+        self.message = message
+    
+    def report_type(self):
+        return "Generic"
+
+
+class GobstonesWarning(GobstonesExecutionReport):
+    
+    def __init__(self, message):
+        super(GobstonesExecutionReport, self).__init__(message)
+
+    def report_type(self):
+        return "Warning"
+
+
+class SourceWarning(GobstonesWarning):
+
+    def __init__(self, message, area):
+        super(GobstonesWarning, self).__init__(message)
+        self.area = area
+
+    def __repr__(self):
+        s = ''
+        if self.area:
+            s += '\n%s\n' % (self.area,)
+        s += '%s\n' % (indent(self.msg),)
+        return s
+
+
 class SourceException(GobstonesException):
     def __init__(self, msg, area):
         super(SourceException, self).__init__(msg)

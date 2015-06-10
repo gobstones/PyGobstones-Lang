@@ -69,6 +69,8 @@ NORMALIZE_ID = {
 }
 
 ##
+class GbsLintWarning(SourceWarning):
+    pass
 
 class GbsLintException(StaticException):
     def error_type(self):
@@ -752,6 +754,7 @@ class GbsSemanticChecker(object):
     def check_while(self, tree):
         self.check_expression(tree.children[1])
         self.check_block(tree.children[2])
+        self.check_nesting_constrains(tree.children[2])
 
     def check_case(self, tree):
         self.check_expression(tree.children[1])
@@ -786,6 +789,7 @@ class GbsSemanticChecker(object):
     def check_repeat(self, tree):
         self.check_expression(tree.children[1]) # times
         self.check_block(tree.children[2]) # body
+        self.check_nesting_constrains(tree.children[2])
 
     def check_foreach(self, tree):
         varname = tree.children[1].value
@@ -794,6 +798,7 @@ class GbsSemanticChecker(object):
         self.symbol_table.set_immutable(varname)
         self.check_expression(tree.children[2]) # list
         self.check_block(tree.children[3]) # body
+        self.check_nesting_constrains(tree.children[3])
         self.symbol_table.unset_immutable(varname)
 
     def check_repeatWith(self, tree):
@@ -804,7 +809,14 @@ class GbsSemanticChecker(object):
         self.check_expression(tree.children[2].children[1]) # from
         self.check_expression(tree.children[2].children[2]) # to
         self.check_block(tree.children[3]) # body
+        self.check_nesting_constrains(tree.children[3])
         self.symbol_table.unset_immutable(varname)
+
+    def check_nesting_constrains(self, block):
+        child = recursive_find_node(block, lambda node: node in ["foreach", "while", "repeat"])
+        if not child is None:
+            raise GbsLintException(i18n.i18n("Repetition nesting is not allowed"), common.position.ProgramAreaNear(block))
+            
 
     def check_return(self, tree):
         self.check_tuple(tree.children[1])

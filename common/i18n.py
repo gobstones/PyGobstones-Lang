@@ -100,18 +100,20 @@ ES = {
     'El comando THROW_ERROR sólo acepta cadenas.\nPor ejemplo: THROW_ERROR("rompiste todo")',
 
 # lint errors
-  'Semantic error':
-    'Error en el programa',
-  'Empty program':
-    'El programa está vacío.',
-  'The Main procedure should be the last definition':
-    'La definición del procedimiento Main debe ser la última del programa.',
-  'There should be an entry point (Main procedure or program block).':
-    'El programa debería tener un punto de entrada (procedimiento Main o bloque program).',
-  'Recursion is not allowed':
-    'No está permitido el uso de recursión',
+    'Semantic error':
+        'Error en el programa',
+    'Empty program':
+        'El programa está vacío.',
+    'The Main procedure should be the last definition':
+        'La definición del procedimiento Main debe ser la última del programa.',
+    'There should be an entry point (Main procedure or program block).':
+        'El programa debería tener un punto de entrada (procedimiento Main o bloque program).',
+    'Recursion is not allowed':
+        'No está permitido el uso de recursión',
     'Invocation chain':
         'Cadena de invocaciones',
+    'Repetition nesting is not allowed':
+        'La anidación de repeticiones no está permitida',
   # Records
     'Repeated assignment for field "%s".':
         'Asignación repetida para el campo "%s".',

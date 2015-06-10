@@ -5,19 +5,35 @@
 # Test equality on lists
 #
 
+function testEqualityListsWithMin(prev, rMin) {
+	passed := True
+	prev2 := prev
+	foreach rMax in [20, 33..101] {
+		(passedInt, prev2) := testEqualityListsWithMax(prev2, rMin, rMax)
+		passed.Assert(passedInt)
+	}
+	return(passed, prev2)
+}
+
+function testEqualityListsWithMax(prev, rMin, rMax) {
+	passed := True
+	prev2 := prev
+	foreach rStep in [1,2,3,4,5,10,11,13] {
+		xs := rangeS(rMin, rMax, rStep)
+		passed.Assert(xs == rangeS(rMin, rMax, rStep))
+		prev2 := prev2 ++ [0]				
+		passed.Assert(xs /= prev)
+		prev2 := xs  
+	}
+	return(passed, prev2)
+}
+
 function testEqualityLists() {
 	passed := True
 	prev := [1, 1]
 	foreach rMin in [1, 4, 10, 13, 20] {
-		foreach rMax in [20, 33..101] {
-			foreach rStep in [1,2,3,4,5,10,11,13] {
-				xs := rangeS(rMin, rMax, rStep)
-				passed.Assert(xs == rangeS(rMin, rMax, rStep))
-				prev := prev ++ [0]				
-				passed.Assert(xs /= prev)
-				prev := xs  
-			}
-		}
+		(passedInt, prev) := testEqualityListsWithMin(prev, rMin)
+		passed.Assert(passedInt)
 	}	
 	return(passed)
 }
@@ -36,17 +52,25 @@ function mkTuple(first, second) {
 	return(Tuple(first <- first, second <- second))
 }
 
+function testEqRecsWithN(prev, n) {
+	passed := True
+	prev2 := prev
+	foreach d in [minDir()..maxDir()] {			
+		tp1 := mkTuple(n, d)
+		passed.Assert(tp1 == mkTuple(n, d))			
+		prev2.first := first(prev) + 100
+		passed.Assert(tp1 /= prev)						
+		prev2 := tp1
+	}
+	return(passed, prev2)
+}
+
 function testEqRecs() {
 	prev := mkTuple(0, Este)
 	passed := True
-	foreach n in [1,7..101] {		
-		foreach d in [minDir()..maxDir()] {			
-			tp1 := mkTuple(n, d)
-			passed.Assert(tp1 == mkTuple(n, d))			
-			prev.first := first(prev) + 100
-			passed.Assert(tp1 /= prev)						
-			prev := tp1
-		}		 
+	foreach n in [1,7..101] {
+		 (p, prev) := testEqRecsWithN(prev, n)		
+		 passed.Assert(p)
 	}
 	return(passed)
 }
@@ -64,12 +88,18 @@ function mkTupleT(first, second) {
 	return(TupleT(first <- first, second <- second))
 }
 
+function testSameFieldsRecsWithN(n) {
+	passed := True
+	foreach d in [minDir()..maxDir()] {						
+		passed.Deny(mkTupleT(n, d) == mkTuple(n, d))										
+	}		 
+	return(passed)
+}
+
 function testSameFieldRecs() {
 	passed := True
-	foreach n in [1,7..101] {		
-		foreach d in [minDir()..maxDir()] {						
-			passed.Deny(mkTupleT(n, d) == mkTuple(n, d))										
-		}		 
+	foreach n in [1,7..101] {
+		passed.Assert(testSameFieldsRecsWithN(n))		
 	}
 	return(passed)
 }
