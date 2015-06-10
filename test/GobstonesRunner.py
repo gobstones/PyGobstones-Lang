@@ -4,7 +4,7 @@ import os
 class GobstonesRunner(object):
     
     def run(self, filename, board_file):
-        result = os.popen("./run_gobstones.sh %s %s" % (filename, board_file)).read()        
+        result = os.popen(os.path.dirname(__file__) + "/run_gobstones.sh %s %s" % (filename, board_file)).read()        
         result = result.split('\n')
         while len(result) > 0 and result[-1] == '': result = result[:-1]
         if len(result) == 0 or result[-1] != 'OK':

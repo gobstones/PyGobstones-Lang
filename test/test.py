@@ -90,7 +90,9 @@ class GobstonesFileTest(GobstonesTest):
             else:
                 board = os.path.join(module_dir(self), self.filename[:-4] + ".gbb") 
         else:
-            board = os.path.join(parent_dir(__file__), "boards/empty.gbb")
+            board = module_dir(self) + "/boards/empty.gbb"
+        if not os.path.exists(board):
+            raise Exception("Board file does not exist")
         results = run_gobstones(self.filename, board)
         if results[0] == "OK":
             passed = True
@@ -137,10 +139,10 @@ class Tester(object):
         print "Total:\n--passed: %s\n--failed: %s\n--errors: %s\n" % (passed, failed, errors)
         
     def get_test_cases(self):
-        return self.get_file_test_cases() + [autotests.AutoTestCase(), autotestsGbs3.AutoTestCaseGbs3()]
+        return self.get_file_test_cases() + [autotests.XGbsAutoTestCase(), autotestsGbs3.AutoTestCaseGbs3()]
         
     def get_file_test_cases(self):
-        PATH = os.path.split(os.path.realpath(__file__))[0]
+        PATH = os.path.dirname(__file__)
         return [self.get_module_testcase(f) for f in os.listdir(PATH) if not os.path.isfile(os.path.join(PATH, f)) and is_module(f) and dir_has_tests(f)]
 
     def get_module_testcase(self, m):

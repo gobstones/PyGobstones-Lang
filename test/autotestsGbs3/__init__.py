@@ -1,84 +1,22 @@
 import itertools
 import functools
-import random
 from test_logger import log
 from test_utils import *
 from GobstonesRunner import run_gobstones
 from TestCase import TestCase
 from GobstonesTest import GobstonesTest
-import math
-
-randint = lambda x: random.randint(0,x-1)
-
-def randomList(generator, max_size=16):
-    return [generator(i) for i in range(randint(max_size) + 4)]
-
-def randomIntList(max_size=16, max_number=99):
-    return randomList(lambda i: randint(max_number), max_size)
-
-def nats(start, end):
-    if (start < end):
-        return list(range(start, end+1))
-    else:
-        l = list(range(end, start+1))
-        l.reverse()
-        return l
-    
-BINOPS = {
-    "+": lambda x, y: x + y,
-    "-": lambda x, y: x - y,
-    "*": lambda x, y: x * y,
-    "div": lambda x, y: x / y,
-    "mod": lambda x, y: x % y,
-}
-    
-binop = lambda op, x, y: BINOPS[op](x,y)
-
-# Gbs syntax
-
-isEmpty = lambda xs: len(xs) == 0
-head = lambda xs: xs[0]
-tail = lambda xs: xs[1:]
-
-# Test scripts
-
-def combine_args(args):
-    prod = itertools.product(*args.values())
-    return [dict(zip(args.keys(),pargs)) for pargs in prod]    
-    
-class Operation(object):
-  def __init__(self, nretvals, code, replace={}):
-    self.nretvals = nretvals
-    for k, v in replace.items():
-      code = code.replace('@' + k, str(v))
-    self.code = code
-    
-class TestScript(object):
-    
-    def __init__(self, possible_args):
-        self.cases = combine_args(possible_args)
-    
-    def build_tests(self):
-        return [self.build_test(c) for c in self.cases]
-    
-    def build_test(self, args):
-        return (Operation(self.nretvals(), self.gbs_code(), args), self.py_func(args))
-    
-    def nretvals(self):
-        return 1
-    
-    def gbs_code(self):
-        return "Skip"
-    
-    def py_func(self, args):
-        return functools.partial(self.pyresult, args)
-    
-    def py_code(self, args):
-        pass
+from AutoGobstonesTest import AutoGobstonesTest
+from AutoTestCase import AutoTestCase
+from TestOperation import TestOperation
+from test_utils import *
+from TestScript import TestScript
     
 # Tests
 
-class TestForeachSeq(TestScript):
+class GbsTestScript(TestScript):
+    pass
+
+class TestForeachSeq(GbsTestScript):
     def __init__(self):
         numbers = randomList(lambda i: "[" + ",".join(map(str, randomIntList(10))) + "]", 5)
         super(TestForeachSeq, self).__init__({"numbers": numbers})
@@ -101,7 +39,7 @@ class TestForeachSeq(TestScript):
             res = res*10 + n
         return res 
 
-class TestRepeat(TestScript):
+class TestRepeat(GbsTestScript):
     def __init__(self):
         super(TestRepeat, self).__init__({"times": randomIntList(5, 20)})
     
@@ -119,7 +57,7 @@ class TestRepeat(TestScript):
     def pyresult(self, args):
         return args["times"]
 
-class TestForeachWithRangeIterations(TestScript):
+class TestForeachWithRangeIterations(GbsTestScript):
     
     def __init__(self):
         super(TestForeachWithRangeIterations, self).__init__({"start_val": [1, 7, 11,21], "end_val": [21,5,13]})
@@ -141,7 +79,7 @@ class TestForeachWithRangeIterations(TestScript):
         else:
             return 0
         
-class TestForeachWithRangeAndDeltaIterations(TestScript):
+class TestForeachWithRangeAndDeltaIterations(GbsTestScript):
      
     def __init__(self):
         super(TestForeachWithRangeAndDeltaIterations, self).__init__({"start_val": [0, 7, 11,21], "end_val": [21,5,13], "delta": [1,-1,2,-2,3,-3]})
@@ -171,81 +109,44 @@ class TestForeachWithRangeAndDeltaIterations(TestScript):
             return iceil((start+1 - end)/abs(delta))
             
     
-TESTS_GROUPS = group(flatten([cls().build_tests() for cls in TestScript.__subclasses__()]), 128)
+TESTS_GROUPS = group(flatten([cls().build_tests() for cls in GbsTestScript.__subclasses__()]), 128)
+TEST_DIR = os.path.dirname(os.path.dirname(__file__))
+THIS_TEST_DIR = os.path.dirname(__file__)
 
-def program_for(exprs):
-  variables = []
-  def expr_eval(i, e):
-    if isinstance(e, Operation):
-      if e.nretvals == 1: 
-        variables.append('x_%i' % (i,))
-        return 'x_%i := f0_%i()' % (i, i,)
-      else:
-        vs = ['x_%i_%i' % (i, j) for j in range(e.nretvals)]
-        variables.extend(vs)
-        return '(%s) := f0_%i()' % (','.join(vs), i,)
-    else:
-      variables.append('x_%i' % (i,))
-      return 'x_%i := %s' % (i, e)
-  R = range(len(exprs))
-  prog = []
-  for i, e in zip(R, exprs):
-    if isinstance(e, Operation):
-      prog.append('function f0_%i() {' % (i,))
-      prog.append(e.code)
-      prog.append('}')
-  prog.append('program {')
-  prog.append(''.join(['  %s\n' % (expr_eval(i, e),) for i, e in zip(R, exprs)]))
-  prog.append('  return (%s)\n' % (', '.join(variables),))
-  prog.append('}\n')
-  return '\n'.join(prog)
-
-
-def eqValue(gbsv, pyv):
-    return gbsv == str(pyv)
-
-
-class AutoGobstonesTest(GobstonesTest):
-
-    def __init__(self, gbscode, pyfuncs):
-        self.gbscode = gbscode
-        self.pyfuncs = pyfuncs
-        
-    def run(self):
-        results = run_gobstones(temp_test_file(self.gbscode), "./boards/empty.gbb")
-        if results[0] == "OK":
-            gbsres = results[1]
-            pyres = []
-            for f in self.pyfuncs:
-                pyr = f()
-                if isinstance(pyr, tuple):
-                    pyres += list(pyr)
-                else:
-                    pyres.append(pyr)
-                    
-            if len(pyres) == len(gbsres):
-                for gbsval, pyval in zip(unzip(gbsres)[1], pyres):
-                    if not eqValue(gbsval, pyval):
-                        return "FAILED"
-                return "PASSED"
-            else:
-                return "FAILED"            
-        else:
-            return results[0]
-        
-
-class AutoTestCaseGbs3(TestCase):
+class AutoTestCaseGbs3(AutoTestCase):
     
     def __init__(self):
-        super(AutoTestCaseGbs3, self).__init__("AutoTestCase")
-        self.name = "Automatic Test Cases for Gobstones 3"
+        super(AutoTestCaseGbs3, self).__init__("Automatic Test Cases for Gobstones 3")
     
     def prepare(self):
-        copy_file("./autotestsGbs3/Biblioteca.gbs", "./examples/Biblioteca.gbs")
+        copy_file(THIS_TEST_DIR + "/Biblioteca.gbs", TEST_DIR + "/examples/Biblioteca.gbs")
     
-    def get_gobstones_tests(self):
-        tests = []
-        for tgroup in TESTS_GROUPS:
-            ops, pyfs = unzip(tgroup) 
-            tests.append(AutoGobstonesTest(program_for(ops), pyfs))
-        return tests        
+    def get_test_groups(self):
+        return TESTS_GROUPS
+    
+    def program_for(self, gobstones_operations):  
+        variables = []
+        def expr_eval(i, e):
+            if isinstance(e, TestOperation):
+                if e.nretvals == 1: 
+                    variables.append('x_%i' % (i,))
+                    return 'x_%i := f0_%i()' % (i, i,)
+                else:
+                    vs = ['x_%i_%i' % (i, j) for j in range(e.nretvals)]
+                    variables.extend(vs)
+                    return '(%s) := f0_%i()' % (','.join(vs), i,)
+            else:
+                variables.append('x_%i' % (i,))
+                return 'x_%i := %s' % (i, e)
+        R = range(len(gobstones_operations))
+        prog = []
+        for i, e in zip(R, gobstones_operations):
+            if isinstance(e, TestOperation):
+                prog.append('function f0_%i() {' % (i,))
+                prog.append(e.code)
+                prog.append('}')
+        prog.append('program {')
+        prog.append(''.join(['  %s\n' % (expr_eval(i, e),) for i, e in zip(R, gobstones_operations)]))
+        prog.append('  return (%s)\n' % (', '.join(variables),))
+        prog.append('}\n')
+        return '\n'.join(prog)

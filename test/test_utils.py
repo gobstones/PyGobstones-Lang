@@ -4,6 +4,11 @@ import os
 import sys
 import subprocess
 import math
+import itertools
+import random
+
+def eqValue(gbsv, pyv):
+    return gbsv == str(pyv)
 
 def delete_files_in_dir(dir, exceptions=[]):
     for f in os.listdir(dir):
@@ -35,7 +40,7 @@ def parent_dir(f):
     return os.path.split(os.path.realpath(f))[0]
 
 def module_dir(obj):
-    return os.path.split(sys.modules[obj.__module__].__file__)[0]
+    return os.path.dirname(__file__)
 
 def dir_has_tests(dir):
     for fn in os.listdir(os.path.join(parent_dir(__file__), dir)):
@@ -79,7 +84,7 @@ def copy_file(fn, fnnew):
     write_file(fnnew, read_file(fn))
 
 def temp_test_file(codestr):
-    fn = "./examples/" + str(id(codestr)) + ".gbs"
+    fn = os.path.dirname(__file__) + "/examples/" + str(id(codestr)) + ".gbs"
     write_file(fn, codestr)
     return fn
     
@@ -120,3 +125,45 @@ def ifloor(f):
 
 def iceil(f):
     return int(math.ceil(f))
+
+randint = lambda x: random.randint(0,x-1)
+
+def randomList(generator, max_size=16):
+    return [generator(i) for i in range(randint(max_size) + 4)]
+
+def randomIntList(max_size=16, max_number=99):
+    return randomList(lambda i: randint(max_number), max_size)
+
+def nats(start, end):
+    if (start < end):
+        return list(range(start, end+1))
+    else:
+        l = list(range(end, start+1))
+        l.reverse()
+        return l
+    
+BINOPS = {
+    "+": lambda x, y: x + y,
+    "-": lambda x, y: x - y,
+    "*": lambda x, y: x * y,
+    "div": lambda x, y: x / y,
+    "mod": lambda x, y: x % y,
+}
+    
+binop = lambda op, x, y: BINOPS[op](x,y)
+
+# Gbs syntax
+
+isEmpty = lambda xs: len(xs) == 0
+head = lambda xs: xs[0]
+tail = lambda xs: xs[1:]
+
+# Test scripts
+
+def combine_args(args):
+    prod = itertools.product(*args.values())
+    return [dict(zip(args.keys(),pargs)) for pargs in prod]    
+
+COLORS = ["Azul", "Negro", "Rojo", "Verde"]
+DIRS = ["Norte", "Este", "Sur", "Oeste"]
+BOOLS = ["True", "False"]
