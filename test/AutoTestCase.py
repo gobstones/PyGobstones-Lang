@@ -20,5 +20,5 @@ class AutoTestCase(TestCase):
         tests = []
         for tgroup in self.get_test_groups():
             ops, pyfs = unzip(tgroup) 
-            tests.append(AutoGobstonesTest(self.program_for(ops), pyfs))
+            tests.append(AutoGobstonesTest(self.program_for(ops), pyfs, self.gobstones_parameters()))
         return tests

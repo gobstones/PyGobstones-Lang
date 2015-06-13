@@ -5,12 +5,13 @@ import os
 
 class AutoGobstonesTest(GobstonesTest):
 
-    def __init__(self, gbscode, pyfuncs):
+    def __init__(self, gbscode, pyfuncs, gbsparams=""):
         self.gbscode = gbscode
         self.pyfuncs = pyfuncs
+        self.gbsparams = gbsparams
         
     def run(self):
-        results = run_gobstones(temp_test_file(self.gbscode), os.path.dirname(__file__)+"/boards/empty.gbb")
+        results = run_gobstones(temp_test_file(self.gbscode), os.path.dirname(__file__)+"/boards/empty.gbb", self.gbsparams)
         if results[0] == "OK":
             gbsres = results[1]
             pyres = []

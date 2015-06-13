@@ -16,9 +16,17 @@ class TestCase(object):
             output += "OK."
         return output
     
+    def get_gobstones_tests(self):
+        "Get Test Case's tests"
+        return []
+    
     def prepare(self):
         "Prepare the testcase to run."
         pass
+    
+    def gobstones_parameters(self):
+        "Parameters for language implementation"
+        return ""
     
     def run(self):
         tests = self.get_gobstones_tests()

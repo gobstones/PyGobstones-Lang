@@ -3,7 +3,7 @@ INTERP=python    # for the standard Python implementation
 #INTERP=python2.3  # 2.3 version
 #INTERP=pypy      # PyPy
 TEST_DIR="$( dirname "${BASH_SOURCE[0]}" )"
-GBS_OPTS="--no-liveness --no-print-board"
+GBS_OPTS="--no-liveness --no-print-board "$3
 
 ## Interpret directly
 $INTERP $TEST_DIR/../gbs.py $GBS_OPTS $1 --from $2 --silent #2>/dev/null

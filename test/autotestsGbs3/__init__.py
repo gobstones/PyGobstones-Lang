@@ -121,6 +121,9 @@ class AutoTestCaseGbs3(AutoTestCase):
     def prepare(self):
         copy_file(THIS_TEST_DIR + "/Biblioteca.gbs", TEST_DIR + "/examples/Biblioteca.gbs")
     
+    def gobstones_parameters(self):
+        return "--language gobstones"
+    
     def get_test_groups(self):
         return TESTS_GROUPS
     
