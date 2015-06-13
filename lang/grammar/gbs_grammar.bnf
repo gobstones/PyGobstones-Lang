@@ -124,7 +124,7 @@
 <simplecmd> ::= Skip                        @ Skip None
               | THROW_ERROR ( string )             @ THROW_ERROR $3
               | <procCall>
-              | <varName> := <gexp>         @ assignVarName   $1 $3
+              | <l-value> := <gexp>         @ assignVarName   $1 [] $3
               | <varTuple1> := <funcCall>   @ assignVarTuple1 $1 $3
              ;;
 
@@ -134,7 +134,7 @@
             | switch ( <gexp> ) to <branches>     @ case $3 $6
             | while ( <gexp> ) <blockcmd>       @ while $3 $5
             | repeat ( <gexp> ) <blockcmd>          @ repeat $3 $5
-            | foreach <varName> in <rangeOrSeq> <blockcmd>
+            | foreach <varName> in <gexpList> <blockcmd>
                 @ foreach $2 $4 $5
             | <blockcmd>
            ;;
@@ -147,14 +147,32 @@
           | else <blockcmd>   @ $2
          ;;
 
-<rangeOrSeq> ::= [ <gexp> <,gexp?> <rangeOrSeq1> ] @ rangeOrEnum $2 $5 $3
-              ;;
-<rangeOrSeq1> ::= , <gexps+>    @ ++ [enum] $2
-                 | .. <gexp>     @ range $2
-               ;;
-<,gexp?> ::= <EMPTY> @ None
-           | , <gexp> @ $2
-         ;;
+## lists
+<gexpList>     ::= [ <lgexps*> ]    @ LIST $2 ;;
+                
+<lgexps*>  ::= <EMPTY>              @ []
+            | <lgexps1> ;;
+
+<lgexps1>  ::= <gexp> <lgexps2> 	@ ++ [$1] $2 ;;
+
+<lgexps2>  ::= <..lgexp>			@ $1
+			 | , <gexp> <lgexps3>	@ ++ [$2] $3
+			 | <EMPTY>			@ []
+		   ;;
+
+<lgexps3>  ::= <..lgexp>		@ $1
+			 | , <lgexps+>		@ $2
+			 | <EMPTY>			@ []
+		   ;;		   
+			 
+<,lgexps*> ::= <EMPTY>				@ []
+		     | , <lgexps+>			@ $2
+		   ;;
+		   
+<lgexps+>  ::= <gexp> <,lgexps*> 	@ ++ [$1] $2 ;; 
+
+<..lgexp> ::= .. <gexp>   		 	@ range_to $2 ;;
+
 
 <branches> ::= <branch> <;?> <branches>    @ ++ [$1] $3
              | <defaultBranch>             @ [$1]
@@ -207,7 +225,9 @@
           | ( <gexp> )              @ atom $2
         ##| <list_gexp>             @ LIST $1
          ;;
-<varFuncName> ::= lowerid ;;
+<varFuncName> ::= <variable> ;;
+<variable> 	  ::= <varName> @ $1 [];;
+<l-value>	  ::= <varName> @ varName $1;;
 
 ## lists
 ## <list_gexp> ::= [ <gexps*> ]        @ $2 ;;

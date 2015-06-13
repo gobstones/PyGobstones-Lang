@@ -201,7 +201,7 @@
           | <varFuncName> <args?>               @ varName/funcCall $1 $2
           | <literal> <cstrcArgs?>              @ literal/construct $1 $2
           | ( <gexp> )                          @ atom $2
-          | <gexpList>                          @ LIST $1
+          | <gexpList>                          @ $1
           | match ( <gexp> ) to <expBranch+>    @ match $3 $6
          ;;
 
@@ -219,7 +219,7 @@
 <defExpBranch>  ::= _ -> <gexp>         @ defaultBranch $3 ;;
  
 ## lists
-<gexpList>     ::= [ <lgexps*> ]    @ $2 ;;
+<gexpList>     ::= [ <lgexps*> ]    @ LIST $2 ;;
                 
 <lgexps*>  ::= <EMPTY>              @ []
             | <lgexps1> ;;
