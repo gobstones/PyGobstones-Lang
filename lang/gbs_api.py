@@ -49,7 +49,7 @@ class GobstonesRun(object):
     def __init__(self):
         self.initialize()
 
-    def initialize(self, tree=None, compiled_program=None, initial_board=None, final_board=None, runnable=None, result=None):
+    def initialize(self, tree=None, compiled_program=None, initial_board=None, final_board=None, runnable=None, result=[]):
         self.initial_board = initial_board
         self.final_board = final_board
         self.tree = tree
