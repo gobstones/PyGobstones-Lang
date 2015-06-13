@@ -1650,6 +1650,12 @@ def mk_record(global_state, type, fields, bindings={}):
         if not fieldname in get_fields(type, type_def):
             msg = global_state.backtrace(i18n.i18n('Field "%s" is not a valid field for record of type "%s"') % (fieldname, type_name))
             raise GbsRuntimeException(msg, global_state.area()) 
+        
+    for fieldname in get_fields(type, type_def):
+        if not fieldname in Set([f.value[0] for f in fields] + bindings.keys()):
+            msg = global_state.backtrace(i18n.i18n('Field "%s" of type "%s" must have a value') % (fieldname, type_name))
+            raise GbsRuntimeException(msg, global_state.area())
+        
     try:
         _bindings = {}
         for k in bindings.keys():

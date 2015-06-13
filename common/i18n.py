@@ -334,6 +334,8 @@ ES = {
         'El registro no posee un campo llamado "%s"\nLos campos disponibles en este registro son: %s',
         'Field "%s" is not a valid field for record of type "%s"':
             'El campo "%s" no es un campo válido para un registro de tipo "%s"',
+        'Field "%s" of type "%s" must have a value':
+            'El campo "%s" del tipo "%s" debe tener un valor',
     'Concatenation between lists with different inner type.':
         'Concatenación entre listas con diferente tipo interno.',
     '"%s" is not a valid field.':
