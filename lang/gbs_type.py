@@ -18,6 +18,7 @@
 import common.position
 import common.i18n as i18n
 from common.utils import *
+from lang.gbs_def_helper import type_defs
 
 #### Represent Gobstones types. Provides a type unification algorithm.
 
@@ -61,11 +62,11 @@ class GbsBoolType(GbsBasicType):
 class GbsIntType(GbsBasicType):
   def __init__(self):
     self._name = i18n.i18n('Int')
-    
+
 class GbsSymbolType(GbsBasicType):
   def __init__(self):
     self._name = i18n.i18n('Symbol')
-    
+
 class GbsStringType(GbsBasicType):
   def __init__(self):
     self._name = i18n.i18n('String')
@@ -82,7 +83,7 @@ class GbsTypeVar(GbsType):
     self.name = name
   def representant(self):
     if self._indirection is None:
-      return self 
+      return self
     else:
       return self._indirection.representant()
   def point_to(self, other_type):
@@ -205,21 +206,19 @@ class GbsArrayType(GbsType):
         return isinstance(type, GbsArrayType) and self._inner_type.is_subtype_of(type._inner_type)
     kind_arity = 1
 
-# Records  
+# Records
 
 class GbsFieldType(GbsBasicType):
     def __init__(self):
         self._name = i18n.i18n('Field')
 
+
 class GbsRecordType(GbsType):
+    
     def __init__(self, name=None, fields={}):
         self.name = name
         self.fields = fields
-    def instantiate(self, subst=None):
-        inst_fields = {}
-        for fn, ft in self.fields.items():
-            inst_fields[fn] = ft.instantiate(subst)
-        return GbsRecordType(inst_fields)
+
     def is_subtype_of(self, type):
         if isinstance(type, GbsRecordType):
             for field_name in type.fields.keys():
@@ -232,28 +231,34 @@ class GbsRecordType(GbsType):
             return True
         else:
             return False
+
     def occurs(self, var):
         for ft in self.fields.values():
             if ft.occurs(var):
                 return True
         return False
+    
     def instantiate(self, subst=None):
         new_fields = {}
         for fname, ftype in self.fields.items():
             new_fields[fname] = ftype.instantiate(subst)
         return GbsRecordType(self.name, new_fields)
+    
     def fields_repr(self):
         return ', '.join([fn + ':' + repr(ft) for fn, ft in self.fields.items()])
+    
     def __repr__(self):
         if self.name is None:
             return 'Record(' + self.fields_repr() + ')'
         else:
             return self.name
+    
     def freevars(self):
         res = set_new([])
         for ft in self.fields.values():
           set_extend(res, ft.freevars())
         return res
+
 
 class GbsRecordTypeVar(GbsRecordType):
     def __init__(self, fields={}):
@@ -295,7 +300,7 @@ class GbsVariantType(GbsType):
             rep = 'Variant' + '(' + ' | '.join(self.cases.keys()) + ')'
         else:
             rep = self.name
-        return rep 
+        return rep
     def is_subtype_of(self, type):
         if isinstance(type, GbsVariantType) and len(self.cases) <= len(type.cases):
             for cname in self.cases.keys():
@@ -325,9 +330,9 @@ class GbsVariantType(GbsType):
         return res
 ## EntryPoint
 
-class GbsEntryPointType(GbsType):  
+class GbsEntryPointType(GbsType):
   def __repr__(self):
-    return 'entrypoint'  
+    return 'entrypoint'
   def instantiate(self, subst=None):
     return GbsEntryPointType()
 
@@ -432,68 +437,140 @@ BasicTypes = {
 ComposedTypes = {
 }
 
+UserDefinedTypes = {
+}
+
 SpecialTypes = {
   i18n.i18n('Procedure'): GbsProcedureType,
   i18n.i18n('Function'): GbsFunctionType,
   i18n.i18n('EntryPoint'): GbsEntryPointType,
-  i18n.i18n('Forall'): GbsForallType,    
+  i18n.i18n('Forall'): GbsForallType,
 }
 
+
 class TypeParser:
-  "Class to build a type expression from an abstract syntax tree."
-  def __init__(self, context):
-    self.typevars = {}
-    self.context = self.only_types(context)
-  def only_types(self, ctx):
-      return dict([(k, v) for k, v in ctx.items() if isinstance(v, GbsType) and not v.__class__ in SpecialTypes.values()])
-  def parse_declaration(self, tree):
-    if tree.children[0] == 'procType':
-      return self.parse_procedure(tree)
-    else:
-      return self.parse_function(tree)
-  def parse_procedure(self, tree):
-    return GbsProcedureType(self.parse_tuple(tree.children[1]))
-  def parse_function(self, tree):
-    return GbsFunctionType(self.parse_tuple(tree.children[1]),
-                           self.parse_tuple(tree.children[2]))
-  def parse_tuple(self, tree):
-    return GbsTupleType([self.parse_atom(t) for t in tree.children])
-  def parse_atom(self, tree):
-    if tree.children[0] == 'type':
-      tok = tree.children[1]
-      args = tree.children[2]
-      if args is None:
-        args = []
-      else:
-        args = [self.parse_atom(a) for a in args.children]
-      if tok.value in BasicTypes:
-          t = BasicTypes[tok.value]
-          if t.kind_arity != len(args):
-            msg = i18n.i18n('type "%s" expects %u parameters, but receives %u') % (
-                      tok.value, t.kind_arity, len(args))
-            area = common.position.ProgramAreaNear(tok)
-            raise GbsTypeSyntaxException(msg, area)
-          return t(*args)
-      else:
-          if tok.value in self.context.keys():
-              return self.context[tok.value]
-          else:
-              """[TODO] Translate """
-              msg = i18n.i18n('Undefined type "%s".') % (tok.value,)
-              area = common.position.ProgramAreaNear(tok)
-              raise GbsTypeSyntaxException(msg, area)
-    elif tree.children[0] == 'typeVar':
-      tok = tree.children[1]
-      if tok.value in self.typevars:
-        return self.typevars[tok.value]
-      else:
-        fresh = GbsTypeVar(tok.value)
-        self.typevars[tok.value] = fresh
-        return fresh
+    "Class to build a type expression from an abstract syntax tree."
+
+    def __init__(self, context):
+        self.typevars = {}
+        self.context = self.only_types(context)
+
+    def only_types(self, ctx):
+        return dict([(k, v) for k, v in ctx.items() if isinstance(v, GbsType) and not v.__class__ in SpecialTypes.values()])
+
+    def parse_declaration(self, tree):
+        if tree.children[0] == 'procType':
+            return self.parse_procedure(tree)
+        else:
+            return self.parse_function(tree)
+        
+    def parse_procedure(self, tree):
+        return GbsProcedureType(self.parse_tuple(tree.children[1]))
+
+    def parse_function(self, tree):
+        return GbsFunctionType(self.parse_tuple(tree.children[1]),
+                               self.parse_tuple(tree.children[2]))
+
+    def parse_tuple(self, tree):
+        return GbsTupleType([self.parse_atom(t) for t in tree.children])
+
+    def parse_atom(self, tree):
+        if tree.children[0] == 'type':
+            tok = tree.children[1]
+            args = tree.children[2]
+            if args is None:
+                args = []
+            else:
+                args = [self.parse_atom(a) for a in args.children]
+            if tok.value in BasicTypes:
+                t = BasicTypes[tok.value]
+                if t.kind_arity != len(args):
+                    msg = i18n.i18n('type "%s" expects %u parameters, but receives %u') % (
+                          tok.value, t.kind_arity, len(args))
+                    area = common.position.ProgramAreaNear(tok)
+                    raise GbsTypeSyntaxException(msg, area)
+                return t(*args)
+            else:
+                if tok.value in self.context.keys():
+                    return self.context[tok.value]
+                else:
+                    """[TODO] Translate """
+                    msg = i18n.i18n('Undefined type "%s".') % (tok.value,)
+                    area = common.position.ProgramAreaNear(tok)
+                    raise GbsTypeSyntaxException(msg, area)
+        elif tree.children[0] == 'typeVar':
+            tok = tree.children[1]
+            if tok.value in self.typevars:
+                return self.typevars[tok.value]
+            else:
+                fresh = GbsTypeVar(tok.value)
+                self.typevars[tok.value] = fresh
+                return fresh
 
 def parse_type_declaration(tree, global_context):
-  decl = TypeParser(global_context).parse_declaration(tree)
-  return GbsForallType(decl.freevars().keys(), decl)
+    decl = TypeParser(global_context).parse_declaration(tree)
+    return GbsForallType(decl.freevars().keys(), decl)
+
+
+class TypeBuilder(object):
+    
+    def build_record_type(self, name, fields):
+        record = GbsRecordType(name)
+        record.fields = self.build_record_fields(fields)
+        return record
+    
+    def build_record_fields(self, fields_tree):
+        fields = {}
+        for field in fields_tree.children:
+            fname = field.children[1].children[1].value
+            fields[fname] = GbsTypeVar()
+        return fields
+    
+    def build_variant_type(self, name, cases):
+        variant = GbsVariantType(name)
+        variant.cases = self.build_variant_cases(variant, cases)
+        return variant
+
+    def build_variant_cases(self, variant, cases_tree):
+        cases = {}
+        for case in cases_tree.children:
+            _, cname, cbody = case.children
+            fields = {}
+            if not cbody is None:
+                fields = self.build_record_fields(cbody)
+            cases[cname.value] = GbsRecordType(cname.value, fields)
+        return cases
+
+    def get_type_info(self, tree):
+        _, name, type_detail = tree.children
+        type_class = type_detail.children[0]
+        cases_or_fields = type_detail.children[1]
+        return name.value, type_class, cases_or_fields
+    
+    def build_type(self, tree):
+        """ Initializes User-Defined Type """
+        name, type_class, cases_or_fields = self.get_type_info(tree)
+        if type_class == 'variant':
+            result = self.build_variant_type(name, cases_or_fields)
+        elif type_class == 'record':
+            result = self.build_record_type(name, cases_or_fields)
+        else:
+            assert False
+        return result
+
+def build_types(program_tree):
+    builder = TypeBuilder()
+    types = []
+    for type_def in type_defs(program_tree.children[2]):
+        types.append(builder.build_type(type_def))
+    return types
+
+def set_user_defined_types(types):
+    for type in types:
+        UserDefinedTypes[type.name] = type
+
+def build_user_defined_types(program_tree):
+    set_user_defined_types(build_types(program_tree))
 
 ## Unification algorithm
 
@@ -596,7 +673,7 @@ def unify(x, y):
             raise UnificationFailedException(x, y)
     elif isinstance(x, GbsRecordType):
         if isinstance(y, GbsRecordType):
-            """[TODO] Improve """ 
+            """[TODO] Improve """
             if (x.name is None or y.name is None) and x.is_subtype_of(y):
                 pass
             elif x.name == y.name:
@@ -616,7 +693,7 @@ def unify(x, y):
         else:
             raise UnificationFailedException(x, y)
     elif isinstance(x, GbsVariantType):
-        if isinstance(y, GbsVariantType): 
+        if isinstance(y, GbsVariantType):
             if (x.name is None or y.name is None) and x.is_subtype_of(y):
                 pass
             elif x.name == y.name:
@@ -633,4 +710,3 @@ def unify(x, y):
             raise UnificationFailedException(x, y)
     else:
       assert False
-

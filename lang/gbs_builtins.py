@@ -21,7 +21,9 @@ from curses.ascii import ascii
 import sys
 import functools
 import common.utils as utils
+from lang.gbs_type import UserDefinedTypes, GbsVariantType
 from lang.gbs_io import GobstonesKeys
+from sets import Set
 
 explicit_builtins = True
 
@@ -1632,6 +1634,22 @@ def mk_field(global_state, symbol, value):
     return GbsFieldObject((symbol, value), 'Field')
 
 def mk_record(global_state, type, fields, bindings={}):
+    type_name = type.split("::")[0]
+    type_def = UserDefinedTypes[type_name]
+    
+    def get_fields(type, type_def):
+        if isinstance(type_def, GbsVariantType):
+            fields = type_def.cases[type.split("::")[1]].fields.keys()
+        elif isinstance(type_def, GbsRecordType):
+            fields = type_def.fields.keys()
+        else:
+            assert False
+        return fields
+    
+    for fieldname in Set([f.value[0] for f in fields] + bindings.keys()):
+        if not fieldname in get_fields(type, type_def):
+            msg = global_state.backtrace(i18n.i18n('Field "%s" is not a valid field for record of type "%s"') % (fieldname, type_name))
+            raise GbsRuntimeException(msg, global_state.area()) 
     try:
         _bindings = {}
         for k in bindings.keys():

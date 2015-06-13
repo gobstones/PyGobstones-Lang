@@ -332,6 +332,8 @@ ES = {
         'Función \'%s\' aplicable solamente en %s',
     'The record doesn\'t have a field named "%s"\nThe available field names for this record are: %s':
         'El registro no posee un campo llamado "%s"\nLos campos disponibles en este registro son: %s',
+        'Field "%s" is not a valid field for record of type "%s"':
+            'El campo "%s" no es un campo válido para un registro de tipo "%s"',
     'Concatenation between lists with different inner type.':
         'Concatenación entre listas con diferente tipo interno.',
     '"%s" is not a valid field.':

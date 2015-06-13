@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
+from lang.gbs_type import build_types
 
 "Gobstones compiler from source ASTs to virtual machine code."
 
@@ -56,6 +57,7 @@ class GbsCompiler(object):
         self.module_handler = None
         self._current_def_name = None
         self.constructor_of_type = {"Arreglo":"Arreglo"}
+        self.types = []
 
     def compile_program(self, tree, module_prefix='', explicit_board=None):
         """Given an AST for a full program, compile it to virtual machine
@@ -63,6 +65,7 @@ code, returning an instance of lang.gbs_vm.GbsCompiledProgram.
 The Main module should be given the empty module prefix ''.
 Every other module should be given the module name as a prefix.
 """
+        self.types += lang.gbs_type.build_types(tree)    
         if explicit_board is None:
             entrypoint_tree = def_helper.find_def(tree.children[2], def_helper.is_entrypoint_def)
             self.explicit_board = len(entrypoint_tree.children[2].children) != 0
@@ -81,7 +84,8 @@ Every other module should be given the module name as a prefix.
         self.user_defined_routine_names += def_helper.get_routine_names(defs)
         
         self.compile_defs(defs)
-        return self.code
+        
+        return self.code 
 
     def compile_imported_modules(self, tree):
         "Recursively compile the imported modules."
@@ -91,6 +95,7 @@ Every other module should be given the module name as a prefix.
                 code = compiler.compile_program(
                            mdl_tree, module_prefix=mdl_name, explicit_board=self.explicit_board
                        )
+                self.types += compiler.types
                 self.constructor_of_type.update(compiler.constructor_of_type)
             except common.utils.SourceException as exception:
                 self.module_handler.reraise(
@@ -751,5 +756,7 @@ which operates on any iterable value.
 def compile_program(tree):
     "Compile a full Gobstones program."
     compiler = GbsCompiler()
-    return compiler.compile_program(tree)
+    code = compiler.compile_program(tree)
+    lang.gbs_type.set_user_defined_types(compiler.types)
+    return code
 
