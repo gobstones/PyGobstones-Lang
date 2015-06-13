@@ -631,6 +631,7 @@ Otros usos:
   'Parsing.': 'Haciendo análisis sintáctico.',
   'Exploding program macros.': 'Explotando macros del programa.',
   'Performing semantic checks.': 'Haciendo análisis semántico.',
+  'Program check was successful.': 'El chequeo del programa fue exitoso.',
   'Compiling.': 'Compilando.',
   'Starting program execution.': 'Ejecutando el programa.',
   'Program execution finished.': 'Ejecución finalizada.',

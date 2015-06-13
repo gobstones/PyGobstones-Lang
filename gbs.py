@@ -194,7 +194,7 @@ def print_run(gbs_run, options):
         if not options['asm']:
             if options['print-input']:
                 LOGGER.info(gbs_run.initial_board)
-            if options['print-board']:
+            if options['print-board'] and not gbs_run.final_board is None:
                 LOGGER.info(gbs_run.final_board)
             if options['print-retvals']:
                 for var, val in gbs_run.result:
@@ -258,6 +258,10 @@ def run_filename(filename, options):
 
     if options['target'] == 'parse':
         gbs_run = gobstones.parse(filename, open(filename).read())
+    elif options['target'] == 'check':
+        gbs_run = gobstones.parse(filename, open(filename).read())
+        gobstones.check(gbs_run.tree)
+        LOGGER.info(i18n.i18n("Program check was successful."))
     elif filename.lower().endswith('.gbo'):
         object_file = open(filename)
         compiled_program = lang.gbs_vm_serializer.load(object_file)
