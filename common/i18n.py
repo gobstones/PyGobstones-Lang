@@ -22,6 +22,9 @@ from common.utils import hsv
 
 ## Spanish
 ES = {
+# Misc errors
+  "%s Error":
+    "Error de %s",
 
 # lexer errors
   "Cannot execute an empty program":

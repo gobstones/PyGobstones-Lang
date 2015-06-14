@@ -39,7 +39,7 @@ except ImportError:
 
 #### Various utility functions
 
-VERSION = 1, 4, 0
+VERSION = 1, 4, 1
 
 def version_number():
     return '%s.%s.%s' % VERSION
@@ -48,7 +48,6 @@ def version_number():
 class GobstonesException(Exception):
     def __init__(self, msg):
         self.msg = msg
-
 
 class GobstonesExecutionReport(object):
 
