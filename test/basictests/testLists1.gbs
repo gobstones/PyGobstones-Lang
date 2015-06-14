@@ -28,9 +28,29 @@ function sumarElementos(xs) {
 	return(suma)
 }
 
+function manyBool(n) {
+	bools := []
+	bool := True
+	repeat (n) {
+		bools := bools ++ [bool]
+		bool := not bool
+	}
+	return(bools)
+}
+
+function countTrue(bs) {
+	c := 0
+	foreach b in bs {
+		if (b) {
+			c := c +1
+		}
+	}
+	return(c)
+}
+
 t.program {
 	passed := True
-	
+	t.VaciarTablero()
 	t.LlenarTablero()
 	
 	cantidadesFila := filaALista(t)
@@ -39,6 +59,8 @@ t.program {
 	passed.Assert(sumarElementos(cantidadesFila) == 2 * 4 * anchoTablero)
 	
 	foreach i in [] {}
+	
+	passed := passed && countTrue(manyBool(20)) == 10
 	
 	return(passed)
 }

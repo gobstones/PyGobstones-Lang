@@ -425,6 +425,7 @@ class GbsVmInterpreter(object):
       assert dest in self.ar.routine.label_table
       assert len(self.stack) > 0
       val = self.pop_stack()
+      val = lang.gbs_builtins.unwrap_value(val)
 
       if lang.gbs_builtins.poly_typeof(val) != 'Bool':
         raise GbsVmException(i18n.i18n('Condition should be a boolean'), self.current_area())
@@ -438,6 +439,7 @@ class GbsVmInterpreter(object):
       assert dest in self.ar.routine.label_table
       assert len(self.stack) > 0
       val = self.pop_stack()
+      val = lang.gbs_builtins.unwrap_value(val)
       if val not in op[1]:
         self.ar.ip = self.ar.routine.label_table[dest]
       else:
