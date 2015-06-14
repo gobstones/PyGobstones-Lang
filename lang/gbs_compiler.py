@@ -202,7 +202,6 @@ namespace of routines.
             'case': self.compile_case,
             'while': self.compile_while,
             'repeat': self.compile_repeat,
-            'repeatWith': self.compile_repeat_with,
             'foreach': self.compile_foreach,
             'block': self.compile_block,
             'return': self.compile_return,
@@ -505,78 +504,9 @@ namespace of routines.
         # }
         code.push(('jump', lbegin), near=tree)
         code.push(('label', lend2), near=tree)
+        code.push(('label', lend), near=tree)
         code.push(('delVar', index), near=tree)
-        code.push(('label', lend), near=tree)
         
-    def compile_repeat_with(self, tree, code):
-        "Compile a repeatWith statement."
-        #
-        #   repeatWith i in Lower..Upper {BODY}
-        #
-        # Compiles to code corresponding to
-        # the following fragment:
-        #
-        #   i := Lower
-        #   upper0 := Upper
-        #   if (i <= upper0) {
-        #     while (true) {
-        #        {BODY}
-        #        if (i == upper0) break;
-        #        i := next(i)
-        #     }
-        #   }
-        #
-        def call_next():
-            """Add a VM instruction for calling the builtin 'next' function,
-which operates on any iterable value.
-"""
-            name = i18n.i18n('next')
-            if hasattr(tree, 'index_type_annotation'):
-                name = lang.gbs_builtins.polyname(
-                    name,
-                    [repr(tree.index_type_annotation)])
-            code.push(('call', name, 1), near=tree)
-
-        # upper0 is preserved in the stack
-        i = tree.children[1].value
-        limit_lower = tree.children[2].children[1]
-        limit_upper = tree.children[2].children[2]
-        body = tree.children[3]
-        upper0 = self.temp_varname()
-        lbegin = GbsLabel()
-        lend = GbsLabel()
-        # i := Lower
-        self.compile_expression(limit_lower, code)
-        code.push(('popTo', i), near=tree)
-        code.push(('setImmutable', i), near=tree)
-        # upper0 := Upper
-        self.compile_expression(limit_upper, code)
-        code.push(('popTo', upper0), near=tree)
-        # if i <= upper0
-        code.push(('pushFrom', i), near=tree)
-        code.push(('pushFrom', upper0), near=tree)
-        code.push(('call', '<=', 2), near=tree)
-        code.push(('jumpIfFalse', lend), near=tree)
-        # while true
-        code.push(('label', lbegin), near=tree)
-        # body
-        self.compile_block(body, code)
-        # if (i == upper0) break
-        code.push(('pushFrom', i), near=tree)
-        code.push(('pushFrom', upper0), near=tree)
-        code.push(('call', '/=', 2), near=tree)
-        code.push(('jumpIfFalse', lend), near=tree)
-        # i := next(i)
-        code.push(('pushFrom', i), near=tree)
-        call_next()
-        code.push(('unsetImmutable', i), near=tree)
-        code.push(('popTo', i), near=tree)
-        code.push(('setImmutable', i), near=tree)
-        # end while
-        code.push(('jump', lbegin), near=tree)
-        code.push(('label', lend), near=tree)
-        code.push(('delVar', i), near=tree)
-
     def compile_block(self, tree, code):
         "Compile a block statement."
         self.compile_commands(tree.children[1], code)

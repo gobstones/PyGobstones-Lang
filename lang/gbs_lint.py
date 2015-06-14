@@ -221,6 +221,9 @@ class SymbolTableManager(object):
     def check_not_defined_or_defined_as(self, tree, name, as_kind, possible_types):
         return self.table_for_construct(self.get_of_possible_types(name, as_kind, possible_types)).check_not_defined_or_defined_as(tree, name, as_kind, possible_types)
 
+    def remove(self, name, kind, type):
+        self.table_for_type(type).remove(name, kind)
+        
 
 class SymbolTable(object):
     """Represents a table that maps symbol names to program constructs.
@@ -256,6 +259,11 @@ an error if it finds similar symbol names."""
         elif not lname in self.table:
             self.table[lname] = construct
             self.ribs[-1].append(lname)
+
+    def remove(self, name, kind):
+        lname = self.normalize_id(kind, name)
+        del self.table[lname]
+        self.ribs[-1] = filter(lambda x: x != lname, self.ribs[-1])
 
     def push_env(self):
         self.ribs.append([])
@@ -707,7 +715,6 @@ class GbsSemanticChecker(object):
             'case': self.check_case,
             'while': self.check_while,
             'repeat': self.check_repeat,
-            'repeatWith': self.check_repeatWith,
             'foreach': self.check_foreach,
             'block': self.check_block,
             'return': self.check_return,
@@ -822,17 +829,7 @@ class GbsSemanticChecker(object):
         self.check_block(tree.children[3]) # body
         self.check_nesting_constrains(tree.children[3])
         self.symbol_table.unset_immutable(varname)
-
-    def check_repeatWith(self, tree):
-        varname = tree.children[1].value
-        self._add_index(varname, tree.children[1])
-        self._check_nested_indexes(varname, tree.children[1])
-        self.symbol_table.set_immutable(varname)
-        self.check_expression(tree.children[2].children[1]) # from
-        self.check_expression(tree.children[2].children[2]) # to
-        self.check_block(tree.children[3]) # body
-        self.check_nesting_constrains(tree.children[3])
-        self.symbol_table.unset_immutable(varname)
+        self.symbol_table.remove(varname, "atomic", "index")
 
     def check_nesting_constrains(self, block):
         child = recursive_find_node(block, lambda node: node in ["foreach", "while", "repeat"])
