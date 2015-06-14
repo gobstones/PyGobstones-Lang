@@ -134,51 +134,66 @@ class SymbolTableManager(object):
     """ Manages a routine symbol table and a variable/index/param
         symbol table in order to generate two different namespaces """
     def __init__(self, normalize_id=lax_normalize_id):
-        self.rtn_table = SymbolTable(normalize_id)
-        self.name_table = SymbolTable(normalize_id)
+        self.tables = {
+            "type_proc" : SymbolTable(normalize_id),
+            "rtn"       : SymbolTable(normalize_id),
+            "name"      : SymbolTable(normalize_id)
+        }
         self.environment_names = []
 
     def table_for_construct(self, construct):
-        if hasattr(construct, "type") and construct.type() in ['function', 'procedure', 'entrypoint', 'type']:
-            return self.rtn_table
+        if hasattr(construct, "type") and construct.type() in ['procedure', 'type']:
+            return self.tables["type_proc"]
+        elif hasattr(construct, "type") and construct.type() in ['function', 'entrypoint']:
+            return self.tables["rtn"]
         else:
-            return self.name_table
+            return self.tables["name"]
 
     def table_for_type(self, type):
-        if type in ['function', 'procedure', 'entrypoint', 'type']:
-            return self.rtn_table
+        if type in ['procedure', 'type']:
+            return self.tables["type_proc"]
+        elif type in ['function', 'entrypoint']:
+            return self.tables["rtn"]
         else:
-            return self.name_table
+            return self.tables["name"]
 
     def add(self, construct, area=None, exclusive=True):
         self.table_for_construct(construct).add(construct, area, exclusive)
 
     def push_env(self, environment_name=None):
-        self.rtn_table.push_env()
-        self.name_table.push_env()
+        for name, table in self.tables.items():
+            table.push_env()
         self.environment_names.append(environment_name)
 
     def environment_name(self):
         return self.environment_names[-1]
 
     def pop_env(self):
-        self.rtn_table.pop_env()
-        self.name_table.pop_env()
+        for name, table in self.tables.items():
+            table.pop_env()
         self.environment_names.pop()
 
     def is_immutable(self, var):
-        return self.name_table.is_immutable(var)
+        return self.tables["name"].is_immutable(var)
 
     def set_immutable(self, var):
-        self.name_table.set_immutable(var)
+        self.tables["name"].set_immutable(var)
 
     def unset_immutable(self, var):
-        self.name_table.unset_immutable(var)
+        self.tables["name"].unset_immutable(var)
 
-    def get(self, as_kind, name, else_):
-        val = self.rtn_table.get(as_kind, name, None)
+    def get_routine(self, as_kind, name, else_=None):
+        return self.tables["rtn"].get(as_kind, name, else_)
+
+    def get_name(self, as_kind, name, else_=None):
+        return self.tables["name"].get(as_kind, name, else_)
+
+    def get(self, as_kind, name, else_=None):
+        val = self.get_routine(as_kind, name, else_)
         if val is None:
-            val = self.name_table.get(as_kind, name, None)
+            val = self.get_name(as_kind, name, else_)
+            if val is None:
+                val = self.tables["type_proc"].get(as_kind, name, else_)
         return val
 
     def is_defined_as(self, tree, name, as_kind, as_type):
@@ -188,17 +203,20 @@ class SymbolTableManager(object):
         return self.table_for_type(as_type).check_defined_as(tree, name, as_kind, as_type)
 
     def _error_not_defined(self, tree, name, as_type):
-        self.name_table._error_not_defined(tree, name, as_type)
+        self.tables["name"]._error_not_defined(tree, name, as_type)
 
     def all_defined_routine_or_type_names(self):
-        return self.name_table.all_defined_routine_or_type_names() + self.rtn_table.all_defined_routine_or_type_names()
+        all_defined = []
+        for name, table in self.tables.items():
+            all_defined += table.all_defined_routine_or_type_names()
+        return all_defined
 
     def get_of_possible_types(self, name, as_kind, possible_types):
-        rtnval = self.rtn_table.get(as_kind, name, None)
+        rtnval = self.tables["rtn"].get(as_kind, name, None)
         if not rtnval is None and rtnval.type() in possible_types:
             return rtnval
         else:
-            return self.name_table.get(as_kind, name, None)
+            return self.tables["name"].get(as_kind, name, None)
 
     def check_not_defined_or_defined_as(self, tree, name, as_kind, possible_types):
         return self.table_for_construct(self.get_of_possible_types(name, as_kind, possible_types)).check_not_defined_or_defined_as(tree, name, as_kind, possible_types)
@@ -327,6 +345,7 @@ class GbsSemanticChecker(object):
         self.explicit_board = explicit_board
         self.allow_recursion = allow_recursion
         self.invocation_graph = InvocationGraph()
+        self.types = []
 
     def setup(self, tree):
         if self.explicit_board is None:
@@ -338,10 +357,11 @@ class GbsSemanticChecker(object):
             self.symbol_table.add(b)
         for name, type in lang.gbs_type.BasicTypes.items():
             self.symbol_table.add(lang.gbs_constructs.BuiltinType(name, type))
+        self.types += lang.gbs_type.build_types(tree)  
 
     def check_program(self, tree, loaded_modules=[], is_main_program=True):
         self.setup(tree)
-
+        
         self.loaded_modules = loaded_modules
         self.is_main_program = is_main_program
 
@@ -382,7 +402,7 @@ class GbsSemanticChecker(object):
 
         mdl_lint = GbsSemanticChecker(strictness=self.strictness, warn=self.warn, explicit_board=self.explicit_board)
         try:
-            mdl_lint.check_program(mdl_tree, self.loaded_modules + [mdl_name], is_main_program=False)
+            mdl_lint.check_program(mdl_tree, self.loaded_modules + [mdl_name], is_main_program=False)            
         except common.utils.SourceException as exception:
             self.module_handler.reraise(GbsLintException, exception,
                                                       common.i18n.i18n('Error linting module %s') % (mdl_name,),
@@ -422,6 +442,8 @@ class GbsSemanticChecker(object):
                 else:
                     self.symbol_table.add(construct, area=common.position.ProgramAreaNear(construct.identifier()))
                     self.imported_rtns[construct.name()] = True
+                    if construct.type() == "type":
+                        self.types += filter(lambda x: x.name == construct.name(), mdl_lint.types)
 
     def check_defs(self, tree):
         if len(tree.children) == 0:
@@ -954,4 +976,6 @@ class GbsSemanticChecker(object):
 
 # strictness in ['lax', 'strict']
 def lint(tree, strictness='lax', allow_recursion=True):
-    GbsSemanticChecker(strictness=strictness, allow_recursion=allow_recursion).check_program(tree)
+    checker = GbsSemanticChecker(strictness=strictness, allow_recursion=allow_recursion)
+    checker.check_program(tree)
+    lang.gbs_type.set_user_defined_types(checker.types)
