@@ -22,7 +22,7 @@ function testEqualityListsWithMax(prev, rMin, rMax) {
 		xs := rangeS(rMin, rMax, rStep)
 		passed.Assert(xs == rangeS(rMin, rMax, rStep))
 		prev2 := prev2 ++ [0]				
-		passed.Assert(xs /= prev)
+		passed.Assert(xs /= prev2)
 		prev2 := xs  
 	}
 	return(passed, prev2)
@@ -59,7 +59,7 @@ function testEqRecsWithN(prev, n) {
 		tp1 := mkTuple(n, d)
 		passed.Assert(tp1 == mkTuple(n, d))			
 		prev2.first := first(prev) + 100
-		passed.Assert(tp1 /= prev)						
+		passed.Assert(tp1 /= prev2)						
 		prev2 := tp1
 	}
 	return(passed, prev2)

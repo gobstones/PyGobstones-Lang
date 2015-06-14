@@ -256,7 +256,7 @@ modifies the current state of the analysis."""
       'pow': self.gen_binary_op,
       'listop': self.gen_binary_op,
       'projection': self.gen_binary_op_left_only,
-      'constructor': self.gen_binary_op,
+      'constructor': self.gen_funcCall,
       'match': self.gen_match,
       'varName': self.gen_varName,
       'funcCall': self.gen_funcCall,
@@ -335,7 +335,7 @@ modifies the current state of the analysis."""
         try:
             self.check_unused_def(def_)
         except GbsUnusedVarException as e:
-            if def_.children[0] == 'procedure':
+            if def_.children[0] == 'procedure' and len(def_.children[2].children) > 0:
                 proc_var = def_.children[2].children[0]
                 unused_var = e.area.elem.children[1].children[1]
                 if unused_var.value != proc_var.value:

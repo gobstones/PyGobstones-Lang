@@ -15,7 +15,7 @@ type Persona is record {
 	field edad
 }
 
-procedure JustTest() {
+function justTest() {
 	r1 := Persona(nombre <- "Javier",
 									dni <- "0",
 									edad <- 20)
@@ -29,6 +29,7 @@ procedure JustTest() {
 	
 	r4 := Persona(r3 | edad <- 44)
 	edadR4 := edad(r4)
+	return(nombreR1 == "Javier" && nombreR2 == "Ramiro" && dniR3 == "4433353" && edadR4 == 44)
 }
 
 function pairTest() {
@@ -39,6 +40,7 @@ function pairTest() {
 }
 
 program {
-	JustTest()
-	return(pairTest())
+	passed := justTest()
+	passed := passed && pairTest()
+	return(passed)
 }
