@@ -33,9 +33,9 @@ class GobstonesWorker(ProgramWorker):
         board = tools.board_format.from_string(initial_board_string)
         
         if run_mode == GobstonesWorker.RunMode.ONLY_CHECK:
-            options = lang.GobstonesOptions(lang_version=gobstones_version)
+            options = lang.GobstonesOptions(lang_version=gobstones_version, check_liveness=True, lint_mode="strict")
         else:
-            options = lang.GobstonesOptions()
+            options = lang.GobstonesOptions(lang_version=gobstones_version)
         self.gobstones = lang.Gobstones(options, self.api)
         
         try:
