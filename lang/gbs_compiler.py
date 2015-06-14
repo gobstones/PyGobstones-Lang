@@ -454,13 +454,15 @@ namespace of routines.
         # the following fragment:
         #
         #   xs0 := <List>
-        #   while (true) {
-        #     if (isEmpty(xs0)) break;
-        #     <Index> := head(xs0)
-        #     setImmutable(<Index>)
-        #     <Block>
-        #     unsetImmutable(<Index>)
-        #     xs0 := tail(xs)
+        #   if (not isEmpty(xs0)) {
+        #       while (true) {
+        #         if (isEmpty(xs0)) break;
+        #         <Index> := head(xs0)
+        #         setImmutable(<Index>)
+        #         <Block>
+        #         unsetImmutable(<Index>)
+        #         xs0 := tail(xs)
+        #       }
         #   }
         #
         def jumpIfIsEmpty(var, label):
@@ -487,10 +489,10 @@ namespace of routines.
         # xs0 := <List>
         self.compile_expression(list_, code)
         code.push(('popTo', xs0), near=tree)        
+        # if (not isEmpty(xs0)) {
+        jumpIfIsEmpty(xs0, lend)
         # while (true) {
         code.push(('label', lbegin), near=tree)
-        #   if (isEmpty(xs0)) break;
-        jumpIfIsEmpty(xs0, lend)
         #   <Index> := head(xs0)
         head(xs0, index)
         #   setImmutable(<Index>)
@@ -501,11 +503,13 @@ namespace of routines.
         code.push(('unsetImmutable', index), near=tree)
         #   xs0 := tail(xs0)
         tail(xs0, xs0)
-        # }
+        #   if (isEmpty(xs0)) break;
+        jumpIfIsEmpty(xs0, lend2)
+        # }}
         code.push(('jump', lbegin), near=tree)
         code.push(('label', lend2), near=tree)
-        code.push(('label', lend), near=tree)
         code.push(('delVar', index), near=tree)
+        code.push(('label', lend), near=tree)
         
     def compile_block(self, tree, code):
         "Compile a block statement."
