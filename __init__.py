@@ -44,13 +44,10 @@ class GobstonesWorker(ProgramWorker):
             else:
                 # Parse gobstones script
                 self.gobstones.api.log(i18n.i18n('Parsing.'))
-                tree = self.gobstones.parse(program_text, filename)            
-                assert tree
-                # Explode macros
-                self.gobstones.api.log(i18n.i18n('Exploding program macros.'))            
-                self.gobstones.explode_macros(tree)
+                gbs_run = self.gobstones.parse(filename, program_text)            
+                assert gbs_run.tree
                 # Check semantics, liveness and types
-                self.gobstones.check(tree)
+                self.gobstones.check(gbs_run.tree)
                 self.success()
         except Exception as exception:
             self.failure(exception)
