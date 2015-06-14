@@ -39,7 +39,7 @@ except ImportError:
 
 #### Various utility functions
 
-VERSION = 2, 0, "0dev"
+VERSION = 1, 4, 0
 
 def version_number():
     return '%s.%s.%s' % VERSION
