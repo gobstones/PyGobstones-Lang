@@ -93,6 +93,7 @@ class GbsOptions(object):
         '--interactive',
         '--output-type X',
         '--language X',
+        '--compile-jsgbs',
         '--recursion'
     ]
 
@@ -256,7 +257,9 @@ def run_filename(filename, options):
                                      allow_recursion=options["recursion"])
     gobstones = lang.Gobstones(gbs_opts, ConsoleInteractiveAPI(options))
 
-    if options['target'] == 'parse':
+    if options['compile-jsgbs']:
+        gbs_run = gobstones.compile_jsgbs(filename, open(filename).read()) 
+    elif options['target'] == 'parse':
         gbs_run = gobstones.parse(filename, open(filename).read())
     elif options['target'] == 'check':
         gbs_run = gobstones.parse(filename, open(filename).read())

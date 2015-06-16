@@ -37,6 +37,7 @@ import lang.gbs_infer
 import lang.gbs_compiler
 import lang.gbs_board
 import lang.gbs_optimizer
+import lang.jsgbs.JSGbsCompiler
 from lang.grammar import GbsGrammarFile, XGbsGrammarFile
 from lang.board.fmt_json import JsonBoardFormat
 from lang.gbs_api import GobstonesOptions, GobstonesRun, ExecutionAPI
@@ -108,6 +109,20 @@ class Gobstones(object):
         # Compile program
         self.api.log(i18n.i18n('Compiling.'))
         gbs_run.compiled_program = self.compile_program(tree)
+        return gbs_run
+    
+    def compile_jsgbs(self, filename, program_text):
+        gbs_run = self.parse(filename, program_text)
+        tree = gbs_run.tree
+        # Check semantics, liveness and types
+        self.check(tree)
+        # Optimize program
+        if self.options.optimize:
+            self.api.log(i18n.i18n('Optimizing.')) #[TODO] i18n
+            lang.gbs_optimizer.optimize(tree)
+        # Compile program
+        self.api.log(i18n.i18n('Compiling.'))
+        gbs_run.compiled_program = lang.jsgbs.JSGbsCompiler.compile_program(tree)
         return gbs_run
 
     def run_object_code(self, compiled_program, initial_board):

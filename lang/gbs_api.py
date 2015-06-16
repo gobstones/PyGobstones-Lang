@@ -18,6 +18,8 @@
 
 from lang.grammar import GbsGrammarFile, XGbsGrammarFile
 import lang.gbs_io
+import json
+from lang.board.fmt_json import JsonBoardFormat
 
 """ Gobstones API classes """
 
