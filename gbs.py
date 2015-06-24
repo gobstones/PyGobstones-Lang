@@ -25,7 +25,7 @@ import common.logtools
 import lang
 import logging
 import json
-from common.utils import SourceException
+from common.utils import SourceException, GobstonesException
 
 LOGGER = common.logtools.get_logger('gbs-console')
 
@@ -300,8 +300,11 @@ def main():
         except SourceException as exception:
             report_program_error(exception.error_type(), exception.msg, exception.area)
             sys.exit(1)
+        except GobstonesException as exception:
+            report_error(i18n.i18n("%s Error") % ("Gobstones",), exception.msg)
+            sys.exit(4)
         except Exception as exception:
-            report_error("Python Error: ", "Failed to execute %s file." % (options['src'],))
+            report_error(i18n.i18n("%s Error") % ("Python",), "Failed to execute %s file." % (options['src'],))
             logging.exception(str(exception))
             sys.exit(3)
 
