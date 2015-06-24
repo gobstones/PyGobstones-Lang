@@ -21,6 +21,7 @@ import common.utils
 import common.i18n as i18n
 import lang.gbs_builtins
 import lang.board.basic
+from lang.board.BoardFormatException import BoardFormatException
 
 def is_numeric(x):
   return re.match('^[0-9]+$', x)
@@ -89,7 +90,7 @@ class GbbBoardFormat(lang.board.basic.BoardFormat):
         return orig[0].split(' ')
 
     def fail(msg):
-      raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed gbb board') + '\n' +
+      raise BoardFormatException(i18n.i18n('Malformed gbb board') + '\n' +
                                  '  ' + i18n.i18n('Near line:') + ' "' + orig[0].strip('\r\n') + '"\n' +
                                  '  ' + msg)
 
