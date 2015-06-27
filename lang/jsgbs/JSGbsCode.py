@@ -59,11 +59,14 @@ class JSGbsCode(object):
   
     def __repr__(self):
         def showop(op):
-            return op[0] + "(" + ', '.join([str(x) for x in op[1:]]) + ");"
+            if isinstance(op, tuple):
+                return op[0] + "(" + ', '.join([str(x) for x in op[1:]]) + ");"
+            else:
+                return op
 
         params = ", ".join(self.params)
         if self.prfn == 'function':
-            _def = "var " + self.name + " = declareFunction(function (%s) {\n%s\n}"
+            _def = "var " + self.name + " = declareFunction(function (%s) {\n%s\n})"
         elif self.prfn == 'lambda':
             _def = "function (%s) {\n%s\n}" 
         else:

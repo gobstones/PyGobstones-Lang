@@ -15,6 +15,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 from lang.gbs_type import build_types
+from string import lower
 
 "Gobstones compiler from source ASTs to virtual machine code."
 
@@ -42,7 +43,10 @@ def parse_literal(tok):
         #assert val is not None
         if val is None:
             val = tok.value
-    return val
+            
+    if val in [True, False]:
+        val = lower(str(val))
+    return str(val)
 
 class GbsLabel(object):
     "Represents a unique label in the program."
@@ -157,7 +161,7 @@ namespace of routines.
         prfn = def_helper.get_def_keyword(tree)
         name = def_helper.get_def_name(tree).value
         self._current_def_name = name
-        params = [param.value for param in def_helper.get_def_params(tree)]
+        params = ["t"] + [param.value for param in def_helper.get_def_params(tree)]
         
         immutable_params = []
         if prfn == 'function':
@@ -261,11 +265,9 @@ namespace of routines.
             #Set ref
             code.push(('call', '_SetRefValue', 2), near=tree)
         else:
-            #compile expression
-            self.compile_expression(tree.children[3], code)
             #assign varname
             full_varname = '.'.join([tok.value for tok in tree.children[1].children[1:]])        
-            code.push(('popTo', full_varname), near=tree)
+            code.push(full_varname + " = " + self.compile_expression(tree.children[3]) + ";", near=tree)
     
     def compile_assign_var_tuple1(self, tree, code):
         "Compile a tuple assignment: (v1, ..., vN) := f(...)"
@@ -276,18 +278,12 @@ namespace of routines.
 
     def compile_if(self, tree, code):
         "Compile a conditional statement."
-        lelse = GbsLabel()
-        self.compile_expression(tree.children[1], code) # cond
-        code.push((('jumpIfFalse'), lelse), near=tree)
+        code.push("if (%s) {" % (self.compile_expression(tree.children[1]),), near=tree)
         self.compile_block(tree.children[2], code) # then
-        if tree.children[3] is None:
-            code.push(('label', lelse), near=tree)
-        else:
-            lend = GbsLabel()
-            code.push(('jump', lend), near=tree)
-            code.push(('label', lelse), near=tree)
+        if not tree.children[3] is None:
+            code.push("} else {", near=tree)
             self.compile_block(tree.children[3], code) # else
-            code.push(('label', lend), near=tree)
+        code.push("}", near=tree)
 
     def compile_case(self, tree, code):
         "Compile a case statement."
@@ -384,14 +380,9 @@ namespace of routines.
 
     def compile_while(self, tree, code):
         "Compile a while statement."
-        lbegin = GbsLabel()
-        lend = GbsLabel()
-        code.push(('label', lbegin), near=tree)
-        self.compile_expression(tree.children[1], code) # cond
-        code.push(('jumpIfFalse', lend), near=tree)
+        code.push ("while (" + self.compile_expression(tree.children[1]) + ") {", near=tree)
         self.compile_block(tree.children[2], code) # body
-        code.push(('jump', lbegin), near=tree)
-        code.push(('label', lend), near=tree)
+        code.push("}", near=tree)
 
     def compile_repeat(self, tree, code):
         "Compile a repeat statement."
@@ -477,31 +468,12 @@ namespace of routines.
     def compile_return(self, tree, code):
         "Compile a return statement."
         vals = tree.children[1].children 
-        for val in vals:
-            self.compile_expression(val, code)
+        return_args = [self.compile_expression(val) for val in vals]
+            
         if self._current_def_name == 'program':
-            vrs = []
-            expr_count = 1
-            for v in tree.children[1].children:
-                if v.children[0] == 'varName':
-                    vrs.append(v.children[1].value)
-                else:
-                    vrs.append("#%s" % (expr_count,)) 
-                expr_count += 1
-                    
-            if hasattr(tree, 'type_annot'):
-                # Decorate the return variables with their types.
-                types = [
-                    repr(subtype)
-                    for subtype in tree.type_annot.subtypes()
-                ]
-                vrs = [
-                    lang.gbs_builtins.polyname(vname, [vtype])
-                    for vname, vtype in zip(vrs, types)
-                ]
-            code.push(tuple(['returnVars'] + vrs), near=tree)
+            code.push(tuple(['returnVars'] + return_args), near=tree)
         else:
-            code.push(tuple(['return'] + vals), near=tree)
+            code.push(tuple(['return'] + return_args), near=tree)
     
     #### Expressions
 
@@ -546,7 +518,12 @@ namespace of routines.
     def compile_binary_op(self, tree):
         "Compile a binary operator expression."
         type_annotation = self.get_type_annotation(tree)
-        return "%s(%s, %s)" % (tree.children[1].value, self.compile_expression(tree.children[2]), self.compile_expression(tree.children[3]))
+        op = tree.children[1].value
+        if op in [">", ">=", "<", "<=", "==", "/=", "+", "-", "*"]:
+            template = "%s " + op + " %s"
+        else:
+            template = "%s(%s, %s)" % (op,)
+        return template % (self.compile_expression(tree.children[2]), self.compile_expression(tree.children[3]))
 
     def compile_not(self, tree, code):
         "Compile a boolean not expression."
@@ -572,34 +549,27 @@ namespace of routines.
         args = tree.children[1:]
         self._compile_func_call_poly(tree, funcname, args, code)
 
-    def compile_var_name(self, tree, code):
+    def compile_var_name(self, tree):
         "Compile a variable name expression."        
         offsets = tree.children[2].children
         var = tree.children[1].value
-        code.push(('pushFrom', var), near=tree)      
-        if len(offsets) > 0:
-            self.compile_projectable_var_check(tree, code, var)
-            #calculate assignment reference                   
-            for offset in offsets:                
-                self.compile_expression(offset.children[1], code)            
-                code.push(('call', '_getRef', 2), near=tree)
-            code.push(('call', '_getRefValue', 1), near=tree)        
-
-    def compile_func_call(self, tree, code):
+        return ".".join([var] + offsets)
+    
+    def compile_func_call(self, tree):
         "Compile a function call."
         funcname = tree.children[1].value
         args = tree.children[2].children
         if lang.gbs_builtins.is_defined(funcname) or funcname in self.user_defined_routine_names:
-            self._compile_func_call_poly(tree, funcname, args, code)
+            return self._compile_func_call_poly(tree, funcname, args)
         else:
-            self._compile_field_getter(tree, funcname, args, code)
+            return self._compile_field_getter(tree, funcname, args)
 
-    def _compile_field_getter(self, tree, field_name, args, code):
+    def _compile_field_getter(self, tree, field_name, args):
         field = tree.children[1]
         field.type = 'symbol'        
-        code.push(('_get_field', self.compile_expression(args[0]), parse_literal(field)), near=tree)
+        return self.compile_expression(args[0]) + "." + parse_literal(field)
 
-    def _compile_func_call_poly(self, tree, funcname, args, code):
+    def _compile_func_call_poly(self, tree, funcname, args):
         "Compile a potentially polymorphic function call."
         polys = lang.gbs_builtins.BUILTINS_POLYMORPHIC
         annotate = True
@@ -617,7 +587,7 @@ namespace of routines.
             funcname = lang.gbs_builtins.polyname(
                 funcname,
                 [repr(ann) for ann in tree.type_annotation])
-        code.push(tuple([funcname, "t"] + compiled_args), near=tree)
+        return funcname + "(" + ", ".join(["t"] + compiled_args) + ")"
 
     def compile_literal(self, tree):
         "Compile a constant expression."
