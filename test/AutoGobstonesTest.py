@@ -38,4 +38,4 @@ class AutoGobstonesTest(TestCase):
             else:
                 self.parent.fail("The execution results count do not match the expected results count")      
         else:
-            self.parent.fail(results[0])
+            self.parent.fail(results[1])

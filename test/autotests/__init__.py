@@ -13,6 +13,17 @@ import unittest
 class XGbsTestScript(TestScript):
     pass
 
+class TestKeys(XGbsTestScript):
+    
+    def gbs_code(self):
+        code = "xs := []\n"
+        letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        for prefix in ["K_CTRL_", "K_SHIFT_", "K_"]:
+            for key_prefix, key_letter in itertools.product([prefix], letters, repeat=1):
+                code += "xs := xs + [%s]\n" % (key_prefix + key_letter,)    
+        return code
+
+
 class TestOpMapping(XGbsTestScript):
 
     def __init__(self):
@@ -31,7 +42,7 @@ class TestOpMapping(XGbsTestScript):
             return(zs)
         '''    
         
-    def pyresult(self, args):
+    def py_code(self, args):
         xs = nats(1, args["length"])
         ys = nats(args["length"], 1)
         zs = []
@@ -60,7 +71,7 @@ class TestOpInject(XGbsTestScript):
             return(res)
         '''
         
-    def pyresult(self, args):
+    def py_code(self, args):
         xs = nats(1, args["length"])
         ys = nats(args["length"], 1)
         res = 0
@@ -102,7 +113,7 @@ class TestEnumeration(XGbsTestScript):
             return(first_ocurr)
         '''
         
-    def pyresult(self, args):
+    def py_code(self, args):
         vals = args["list"][1:-1].split(", ")
         return vals.count(vals[0])
 
@@ -126,7 +137,7 @@ class TestListGenerator(XGbsTestScript):
             return(ts, us, vs, ws, xs, ys, zs)
         '''
         
-    def pyresult(self, args):
+    def py_code(self, args):
         xs = range(args['low'], args['high']+1)
         ys = range(args['low'], args['high']+1, 1)
         zs = range(args['high'], args['low']-1, -1)
@@ -153,7 +164,7 @@ class TestRepeat(XGbsTestScript):
             return(count)
         '''
         
-    def pyresult(self, args):
+    def py_code(self, args):
         return args["times"]
     
     
@@ -174,7 +185,7 @@ class TestForeachSeq(XGbsTestScript):
             return(res)
         '''
         
-    def pyresult(self, args):
+    def py_code(self, args):
         res = 0
         ns = args["numbers"][1:-1].split(",")
         for n in map(int, ns):

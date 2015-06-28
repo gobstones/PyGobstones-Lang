@@ -28,7 +28,7 @@ class TestForeachSeq(Gbs3TestScript):
             return(res)
         '''
         
-    def pyresult(self, args):
+    def py_code(self, args):
         res = 0
         ns = args["numbers"][1:-1].split(",")
         for n in map(int, ns):
@@ -50,7 +50,7 @@ class TestRepeat(Gbs3TestScript):
             return(count)
         '''
         
-    def pyresult(self, args):
+    def py_code(self, args):
         return args["times"]
 
 class TestForeachWithRangeIterations(Gbs3TestScript):
@@ -67,7 +67,7 @@ class TestForeachWithRangeIterations(Gbs3TestScript):
             return(nroBolitas(Verde))
         '''
     
-    def pyresult(self, args):
+    def py_code(self, args):
         start = args["start_val"]
         end = args["end_val"]
         if start <= end:
@@ -89,7 +89,7 @@ class TestForeachWithRangeAndDeltaIterations(Gbs3TestScript):
             return(nroBolitas(Verde))
         '''
      
-    def pyresult(self, args):
+    def py_code(self, args):
         start = args["start_val"]
         end = args["end_val"]
         delta = args["delta"] * 1.0
