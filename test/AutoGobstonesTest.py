@@ -1,16 +1,26 @@
 from test_utils import eqValue, unzip, temp_test_file
 from GobstonesRunner import run_gobstones
-from GobstonesTest import GobstonesTest
 import os
+from TestCase import TestCase
 
-class AutoGobstonesTest(GobstonesTest):
+class AutoGobstonesTest(TestCase):
 
-    def __init__(self, gbscode, pyfuncs, gbsparams=""):
+    def __init__(self, name, parent, operations, gbscode, pyfuncs, gbsparams=""):
+        self.__name__ = name
+        self.operations = operations
         self.gbscode = gbscode
         self.pyfuncs = pyfuncs
         self.gbsparams = gbsparams
+        self.parent = parent
+        
+    def name(self):
+        return self.__name__
         
     def run(self):
+        result_to_op = []
+        for op in self.operations:
+            result_to_op.extend([op for x in range(op.nretvals)])
+            print "\tRunning subtest %s" % (op,)
         results = run_gobstones(temp_test_file(self.gbscode), os.path.dirname(__file__)+"/boards/empty.gbb", self.gbsparams)
         if results[0] == "OK":
             gbsres = results[1]
@@ -23,11 +33,9 @@ class AutoGobstonesTest(GobstonesTest):
                     pyres.append(pyr)
                     
             if len(pyres) == len(gbsres):
-                for gbsval, pyval in zip(unzip(gbsres)[1], pyres):
-                    if not eqValue(gbsval, pyval):
-                        return "FAILED"
-                return "PASSED"
+                for gbsval, pyval, index in zip(unzip(gbsres)[1], pyres, range(len(pyres))):
+                    self.parent.assertEqual(gbsval, str(pyval), "Operation %s failed. The result %s do not match the expected value. Expected: %s. Actual: %s" % (result_to_op[index], index, pyval, gbsval))
             else:
-                return "FAILED"            
+                self.parent.fail("The execution results count do not match the expected results count")      
         else:
-            return results[0]
+            self.parent.fail(results[0])

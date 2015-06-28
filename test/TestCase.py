@@ -1,20 +1,10 @@
 class TestCase(object):
-    
-    def __init__(self, testcase_name):
-        self.name = testcase_name
-        self.passed = 0
-        self.failed = 0
-        self.errors = 0    
+        
+    def name(self):
+        return self.__class__.__name__
 
     def __repr__(self):
-        output = "TestCase: %s, " % self.name
-        if self.errors > 0:
-            output += "ERROR."
-        elif self.failed > 0:
-            output += "FAILED."
-        else:
-            output += "OK."
-        return output
+        return "TestCase: %s, " % self.name
     
     def get_gobstones_tests(self):
         "Get Test Case's tests"
@@ -28,23 +18,18 @@ class TestCase(object):
         "Parameters for language implementation"
         return ""
     
-    def run(self):
-        tests = self.get_gobstones_tests()
-        self.result = {"PASSED":0, "FAILED":0, "ERROR":0}
-        for test in tests:
-            self.setup()
-            res = test.run()
-            if res == "FAILED":
-                print "Failed test '%s'" % (test.name(),)
-            self.result[res] += 1
-            self.teardown()
-        
-        self.passed = self.result["PASSED"]
-        self.failed = self.result["FAILED"]
-        self.errors = self.result["ERROR"]
+    def testCases(self):
+        test_cases = self.get_gobstones_tests()
+        for test_case in test_cases:
+            print "%s: Running test %s" % (self.name(), test_case.name())
+            test_case.run()
+        self.cleanup()
 
-    def setup(self):
+    def setUp(self):
         pass
         
-    def teardown(self):
+    def tearDown(self):
+        pass
+    
+    def cleanup(self):
         pass

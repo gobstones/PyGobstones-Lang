@@ -1,15 +1,19 @@
-from test_logger import log
+import subprocess
 import os
 
 class GobstonesRunner(object):
     
     def run(self, filename, board_file, parameters=""):
-        result = os.popen(os.path.dirname(__file__) + "/run_gobstones.sh %s %s \"%s\"" % (filename, board_file, parameters)).read()        
-        result = result.split('\n')
+        command = os.path.dirname(__file__) + "/run_gobstones.sh %s %s \"%s\"" % (filename, board_file, parameters)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+        #Launch the shell command:
+        output, error = process.communicate()
+        
+        result = output.split('\n')
         while len(result) > 0 and result[-1] == '': result = result[:-1]
         if len(result) == 0 or result[-1] != 'OK':
-            log("\n".join(result))
-            return 'ERROR', {}
+            return 'ERROR', error 
         else:
             result = result[:-1]
             dic = []

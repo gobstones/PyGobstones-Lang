@@ -1,22 +1,18 @@
+import unittest
 import itertools
 import functools
-from test_logger import log
-from test_utils import *
-from GobstonesRunner import run_gobstones
-from TestCase import TestCase
-from GobstonesTest import GobstonesTest
-from AutoGobstonesTest import AutoGobstonesTest
-from AutoTestCase import AutoTestCase
-from TestOperation import TestOperation
-from test_utils import *
-from TestScript import TestScript
+import os
+from test.test_utils import randomList, randomIntList, iceil, group, flatten, copy_file
+from test.TestOperation import TestOperation
+from test.TestScript import TestScript
+from test.AutoTestCase import AutoTestCase
     
 # Tests
 
-class GbsTestScript(TestScript):
+class Gbs3TestScript(TestScript):
     pass
 
-class TestForeachSeq(GbsTestScript):
+class TestForeachSeq(Gbs3TestScript):
     def __init__(self):
         numbers = randomList(lambda i: "[" + ",".join(map(str, randomIntList(10))) + "]", 5)
         super(TestForeachSeq, self).__init__({"numbers": numbers})
@@ -39,7 +35,7 @@ class TestForeachSeq(GbsTestScript):
             res = res*10 + n
         return res 
 
-class TestRepeat(GbsTestScript):
+class TestRepeat(Gbs3TestScript):
     def __init__(self):
         super(TestRepeat, self).__init__({"times": randomIntList(5, 20)})
     
@@ -57,7 +53,7 @@ class TestRepeat(GbsTestScript):
     def pyresult(self, args):
         return args["times"]
 
-class TestForeachWithRangeIterations(GbsTestScript):
+class TestForeachWithRangeIterations(Gbs3TestScript):
     
     def __init__(self):
         super(TestForeachWithRangeIterations, self).__init__({"start_val": [1, 7, 11,21], "end_val": [21,5,13]})
@@ -79,7 +75,7 @@ class TestForeachWithRangeIterations(GbsTestScript):
         else:
             return 0
         
-class TestForeachWithRangeAndDeltaIterations(GbsTestScript):
+class TestForeachWithRangeAndDeltaIterations(Gbs3TestScript):
      
     def __init__(self):
         super(TestForeachWithRangeAndDeltaIterations, self).__init__({"start_val": [0, 7, 11,21], "end_val": [21,5,13], "delta": [1,-1,2,-2,3,-3]})
@@ -109,16 +105,13 @@ class TestForeachWithRangeAndDeltaIterations(GbsTestScript):
             return iceil((start+1 - end)/abs(delta))
             
     
-TESTS_GROUPS = group(flatten([cls().build_tests() for cls in GbsTestScript.__subclasses__()]), 128)
+TESTS_GROUPS = group(flatten([cls().build_tests() for cls in Gbs3TestScript.__subclasses__()]), 128)
 TEST_DIR = os.path.dirname(os.path.dirname(__file__))
 THIS_TEST_DIR = os.path.dirname(__file__)
 
-class AutoTestCaseGbs3(AutoTestCase):
+class AutoTestCaseGbs3(unittest.TestCase, AutoTestCase):
     
-    def __init__(self):
-        super(AutoTestCaseGbs3, self).__init__("Automatic Test Cases for Gobstones 3")
-    
-    def prepare(self):
+    def setUp(self):
         copy_file(THIS_TEST_DIR + "/Biblioteca.gbs", TEST_DIR + "/examples/Biblioteca.gbs")
     
     def gobstones_parameters(self):

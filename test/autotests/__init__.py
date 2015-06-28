@@ -1,16 +1,13 @@
 import itertools
 import random
 import functools
-from AutoGobstonesTest import AutoGobstonesTest
-from test_logger import log
-from test_utils import *
-from GobstonesRunner import run_gobstones
-from TestCase import TestCase
-from GobstonesTest import GobstonesTest
-from AutoTestCase import AutoTestCase
-from TestOperation import TestOperation
-from TestScript import TestScript
 import os
+from test.AutoTestCase import AutoTestCase
+from test.TestOperation import TestOperation
+from test.TestScript import TestScript
+from test.test_utils import BINOPS, nats, tail, binop, head, isEmpty, COLORS,\
+    DIRS, BOOLS, randint, randomIntList, randomList, flatten, group, copy_file
+import unittest
 # Tests
 
 class XGbsTestScript(TestScript):
@@ -189,13 +186,9 @@ TESTS_GROUPS = group(flatten([cls().build_tests() for cls in XGbsTestScript.__su
 TEST_DIR = os.path.dirname(os.path.dirname(__file__))
 THIS_TEST_DIR = os.path.dirname(__file__)
 
-class XGbsAutoTestCase(AutoTestCase):
+class XGbsAutoTestCase(unittest.TestCase, AutoTestCase):
     
-    def __init__(self):
-        super(XGbsAutoTestCase, self).__init__("XGbsAutoTestCase")
-        self.name = "Automatic Test Cases for XGobstones"
-    
-    def prepare(self):
+    def setUp(self):
         copy_file(THIS_TEST_DIR + "/Biblioteca.gbs", TEST_DIR + "/examples/Biblioteca.gbs")
     
     def get_test_groups(self):

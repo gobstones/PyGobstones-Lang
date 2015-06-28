@@ -39,15 +39,22 @@ function testValidColorEnum() {
     return(testFullRangeCount(minColor(), maxColor()))
 }
 
+function testFullRangeCountB(xMin, maxRange, ordMax, ordMin, passedA) {
+   passed := passedA
+   ordMax2 := ordMax
+   foreach xMax in [xMin..maxRange] {
+        passed := passed && testRangeCount(xMin, xMax, (ordMax - ordMin) + 1)
+        ordMax2 := ordMax2 + 1
+    }
+    return(passed, ordMax2)
+}
+
 function testFullRangeCount(minRange, maxRange) {
     passed := True
     ordMin := 1
     foreach xMin in [minRange..maxRange] {
         ordMax := ordMin
-        foreach xMax in [xMin..maxRange] {
-            passed := passed && testRangeCount(xMin, xMax, (ordMax - ordMin) + 1)
-            ordMax := ordMax + 1
-        }
+        (passed, ordMax) := testFullRangeCountB(xMin, maxRange, ordMax, ordMin, passed)
         ordMin := ordMin + 1
     }
     return(passed)

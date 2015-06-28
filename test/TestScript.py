@@ -1,9 +1,8 @@
-from GobstonesTest import GobstonesTest
 from TestOperation import TestOperation
 from test_utils import combine_args
 import functools
 
-class TestScript(GobstonesTest):
+class TestScript(object):
     
     def __init__(self, possible_args):
         self.cases = combine_args(possible_args)
@@ -15,7 +14,7 @@ class TestScript(GobstonesTest):
         return [self.build_test(c) for c in self.cases]
     
     def build_test(self, args):
-        return (TestOperation(self.nretvals(), self.gbs_code(), args), self.py_func(args))
+        return (TestOperation(self.name(), args, self.nretvals(), self.gbs_code(), args), self.py_func(args))
     
     def nretvals(self):
         return 1

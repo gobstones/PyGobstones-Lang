@@ -1,5 +1,5 @@
-#from test.test import TestCase
+from test.FileBundleTestCase import FileBundleTestCase
+import unittest
 
-#class BasicTests(TestCase):
-#    pass
-
+class ImplicitBoardTests(unittest.TestCase, FileBundleTestCase):
+    pass
