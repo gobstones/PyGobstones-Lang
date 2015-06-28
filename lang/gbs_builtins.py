@@ -1336,7 +1336,7 @@ class KeyConstantBuilder:
         # Build SHILF_A .. SHIFT_Z key constants
         keys.extend(self.build_ascii_key_constants_in_range("K_SHIFT", 65, 90))
         
-        keys.extend(self.build_ascii_key_constants_in_range("K_CTRL_", 1, 26, lambda ascii_code: chr(ascii_code + 96)))
+        keys.extend(self.build_ascii_key_constants_in_range("K_CTRL", 1, 26, lambda ascii_code: chr(ascii_code + 96)))
         return keys
     
     def build_special_key_constants(self):

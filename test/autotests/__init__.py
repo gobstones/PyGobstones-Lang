@@ -20,7 +20,7 @@ class TestKeys(XGbsTestScript):
         letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         for prefix in ["K_CTRL_", "K_SHIFT_", "K_"]:
             for key_prefix, key_letter in itertools.product([prefix], letters, repeat=1):
-                code += "xs := xs + [%s]\n" % (key_prefix + key_letter,)    
+                code += "xs := xs ++ [%s]\n" % (key_prefix + key_letter,)    
         return code
 
 
@@ -201,6 +201,9 @@ class XGbsAutoTestCase(unittest.TestCase, AutoTestCase):
     
     def setUp(self):
         copy_file(THIS_TEST_DIR + "/Biblioteca.gbs", TEST_DIR + "/examples/Biblioteca.gbs")
+    
+    def gobstones_parameters(self):
+        return "--no-liveness"
     
     def get_test_groups(self):
         return TESTS_GROUPS
