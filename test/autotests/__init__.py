@@ -2,10 +2,10 @@ import itertools
 import random
 import functools
 import os
-from test.AutoTestCase import AutoTestCase
-from test.TestOperation import TestOperation
-from test.TestScript import TestScript
-from test.test_utils import BINOPS, nats, tail, binop, head, isEmpty, COLORS,\
+from AutoTestCase import AutoTestCase
+from TestOperation import TestOperation
+from TestScript import TestScript
+from test_utils import BINOPS, nats, tail, binop, head, isEmpty, COLORS,\
     DIRS, BOOLS, randint, randomIntList, randomList, flatten, group, copy_file
 import unittest
 # Tests

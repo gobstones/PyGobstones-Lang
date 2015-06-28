@@ -2,10 +2,10 @@ import unittest
 import itertools
 import functools
 import os
-from test.test_utils import randomList, randomIntList, iceil, group, flatten, copy_file
-from test.TestOperation import TestOperation
-from test.TestScript import TestScript
-from test.AutoTestCase import AutoTestCase
+from test_utils import randomList, randomIntList, iceil, group, flatten, copy_file
+from TestOperation import TestOperation
+from TestScript import TestScript
+from AutoTestCase import AutoTestCase
     
 # Tests
 

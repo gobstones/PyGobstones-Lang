@@ -19,6 +19,7 @@ class TestCase(object):
         return ""
     
     def testCases(self):
+        print "\n-- %s" % (self.name(),)
         test_cases = self.get_gobstones_tests()
         for test_case in test_cases:
             print "%s: Running test %s" % (self.name(), test_case.name())
