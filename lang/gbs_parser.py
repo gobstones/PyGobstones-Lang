@@ -16,6 +16,7 @@
 #
 
 import os
+import re
 
 import common.position
 import lang.bnf_parser
@@ -234,6 +235,18 @@ def prelude_for_file(filename):
         return prelude_filename
     else:
         return None
+
+def get_names(program_text):
+    regexp = re.compile("(procedure|function)[ ]*([A-Za-z_]*)")
+    return  [defname for deftype, defname in regexp.findall(program_text)]
+
+def parse_names(string, filename, toplevel_filename=None, grammar_file=XGbsGrammarFile):
+    names = set(get_names(string))
+    prelude_filename = prelude_for_file(filename)
+    if prelude_filename is not None:
+        names += set(get_names(open(prelude_filename).read()))
+
+    return names
 
 def parse_string_try_prelude(string, filename, toplevel_filename=None, grammar_file=XGbsGrammarFile):
     main_program = parse_string(string, filename, toplevel_filename, grammar_file)

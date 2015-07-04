@@ -86,6 +86,9 @@ class Gobstones(object):
         # Check types [TODO]
         # self.typecheck(tree, self.options.check_types)
 
+    def parse_names(self, filename, program_text):
+        return lang.gbs_parser.parse_names(program_text, filename, grammar_file=self.options.get_lang_grammar())
+
     def parse(self, filename, program_text):
         # Parse gobstones script
         self.api.log(i18n.i18n('Parsing.'))

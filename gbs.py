@@ -93,7 +93,8 @@ class GbsOptions(object):
         '--interactive',
         '--output-type X',
         '--language X',
-        '--recursion'
+        '--recursion',
+        '--names'
     ]
 
     def __init__(self, argv):
@@ -241,16 +242,20 @@ class ConsoleInteractiveAPI(lang.ExecutionAPI):
         if not self.options['silent']:
             LOGGER.info(msg)
 
+def get_lang(options):
+    if options["language"] == 'xgobstones':
+        lang_version = lang.GobstonesOptions.LangVersion.XGobstones
+    else:
+        lang_version = lang.GobstonesOptions.LangVersion.Gobstones
+    return lang_version
+
 def run_filename(filename, options):
 
     if not options["language"] in ['gobstones', 'xgobstones']:
         report_error("Options Error", "Language %s is not supported by this interpreter." % (options["language"],))
         usage(2)
-
-    if options["language"] == 'xgobstones':
-        lang_version = lang.GobstonesOptions.LangVersion.XGobstones
-    else:
-        lang_version = lang.GobstonesOptions.LangVersion.Gobstones
+        
+    lang_version = get_lang(options)
 
     gbs_opts = lang.GobstonesOptions(lang_version, options['lint'], options['liveness'], options['typecheck'], options['jit'], options['optimize'],
                                      allow_recursion=options["recursion"])
@@ -295,21 +300,25 @@ def main():
         sys.exit(0)
 
     if options['src']:
-        try:
-            gbs_run = run_filename(options['src'], options)
-        except SourceException as exception:
-            report_program_error(exception.error_type(), exception.msg, exception.area)
-            sys.exit(1)
-        except GobstonesException as exception:
-            report_error(i18n.i18n("%s Error") % ("Gobstones",), exception.msg)
-            sys.exit(4)
-        except Exception as exception:
-            report_error(i18n.i18n("%s Error") % ("Python",), "Failed to execute %s file." % (options['src'],))
-            logging.exception(str(exception))
-            sys.exit(3)
-
-        print_run(gbs_run, options)
-        persist_run(gbs_run, options)
+        if options['names']:
+            gobstones = lang.Gobstones(lang.GobstonesOptions(get_lang(options)))
+            print "\n".join(gobstones.parse_names(options['src'], open(options['src']).read()))
+        else:
+            try:
+                gbs_run = run_filename(options['src'], options)
+            except SourceException as exception:
+                report_program_error(exception.error_type(), exception.msg, exception.area)
+                sys.exit(1)
+            except GobstonesException as exception:
+                report_error(i18n.i18n("%s Error") % ("Gobstones",), exception.msg)
+                sys.exit(4)
+            except Exception as exception:
+                report_error(i18n.i18n("%s Error") % ("Python",), "Failed to execute %s file." % (options['src'],))
+                logging.exception(str(exception))
+                sys.exit(3)
+    
+            print_run(gbs_run, options)
+            persist_run(gbs_run, options)
 
 if __name__ == '__main__':
     main()
