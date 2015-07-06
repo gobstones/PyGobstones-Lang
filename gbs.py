@@ -302,7 +302,7 @@ def main():
     if options['src']:
         if options['names']:
             gobstones = lang.Gobstones(lang.GobstonesOptions(get_lang(options)))
-            print "\n".join(gobstones.parse_names(options['src'], open(options['src']).read()))
+            print json.dumps(gobstones.parse_names(options['src'], open(options['src']).read()))
         else:
             try:
                 gbs_run = run_filename(options['src'], options)

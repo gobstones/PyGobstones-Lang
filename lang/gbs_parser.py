@@ -247,11 +247,10 @@ def get_names(program_text):
     return  names
 
 def parse_names(string, filename, toplevel_filename=None, grammar_file=XGbsGrammarFile):
-    names = set(get_names(string))
+    names = get_names(string)
     prelude_filename = prelude_for_file(filename)
     if prelude_filename is not None:
-        names += set(get_names(open(prelude_filename).read()))
-
+        names.update(get_names(open(prelude_filename).read()))
     return names
 
 def parse_string_try_prelude(string, filename, toplevel_filename=None, grammar_file=XGbsGrammarFile):
