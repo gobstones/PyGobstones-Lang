@@ -237,13 +237,15 @@ def prelude_for_file(filename):
         return None
 
 def get_names(program_text):
-    regexp = re.compile("(?:(procedure)\s*([A-Z][A-Za-z_']*)|(function)[\s]*([a-z][A-Za-z_']*))\s*\(\s*([^)]+?)\s*\)")
+    regexp = re.compile("(?:(type)\s*([A-Z][A-Za-z_']*)|(?:(procedure)\s*([A-Z][A-Za-z_']*)|(function)[\s]*([a-z][A-Za-z_']*))\s*\(\s*([^)]*?)\s*\))")
     matches = regexp.findall(program_text)
     names = {}
     for parts in matches:
-        nametype, name = filter(lambda x: x != '', parts[0:4])
-        parameters = parts[4].replace(" ", "").replace("\n", "").replace("\t", "").split(",")
-        names[name] = { "type" : nametype, "parameters"  : parameters }
+        nametype, name = filter(lambda x: x != '', parts[0:6])
+        names[name] = { "type" : nametype}
+        if nametype in ["function", "procedure"]:
+            parameters = parts[6].replace(" ", "").replace("\n", "").replace("\t", "").split(",")
+            names[name]["parameters"] = parameters
     return  names
 
 def parse_names(string, filename, toplevel_filename=None, grammar_file=XGbsGrammarFile):

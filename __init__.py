@@ -5,6 +5,7 @@ import common.utils
 import common.i18n as i18n
 import lang
 import logging
+from language.implementation.lang.gbs_api import GobstonesRun
 
 class GUIExecutionAPI(lang.ExecutionAPI):
     
@@ -30,7 +31,6 @@ class GobstonesWorker(ProgramWorker):
         self.api = GUIExecutionAPI(self.communicator)                
     
     def start(self, filename, program_text, initial_board_string, run_mode, gobstones_version="xgobstones"):
-        board = tools.board_format.from_string(initial_board_string)
         
         if run_mode == GobstonesWorker.RunMode.ONLY_CHECK:
             options = lang.GobstonesOptions(lang_version=gobstones_version, check_liveness=True, lint_mode="strict")
@@ -40,8 +40,9 @@ class GobstonesWorker(ProgramWorker):
         
         try:
             if run_mode == GobstonesWorker.RunMode.FULL:
+                board = tools.board_format.from_string(initial_board_string)
                 self.success(self.gobstones.run(filename, program_text, board))
-            else:
+            elif run_mode == GobstonesWorker.RunMode.ONLY_CHECK:
                 # Parse gobstones script
                 self.gobstones.api.log(i18n.i18n('Parsing.'))
                 gbs_run = self.gobstones.parse(filename, program_text)            
@@ -49,14 +50,22 @@ class GobstonesWorker(ProgramWorker):
                 # Check semantics, liveness and types
                 self.gobstones.check(gbs_run.tree)
                 self.success()
+            elif run_mode == GobstonesWorker.RunMode.NAMES:
+                self.success(self.gobstones.parse_names(filename, program_text))
+            else:
+                raise Exception("There is no action associated with the given run mode.")
         except Exception as exception:
             self.failure(exception)
     
-    def success(self, gbs_run=None):
-        if gbs_run is None:
+    def success(self, result=None):
+        if result is None:
             self.communicator.send('OK', (None, None))
+        elif isinstance(result, GobstonesRun):
+            self.communicator.send('OK', (tools.board_format.to_string(result.final_board), result.result))
+        elif isinstance(result, dict):
+            self.communicator.send('OK', (result,))
         else:
-            self.communicator.send('OK', (tools.board_format.to_string(gbs_run.final_board), gbs_run.result))
+            assert False
     
     def failure(self, exception):
         if hasattr(exception, 'area'):
