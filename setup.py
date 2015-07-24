@@ -1,3 +1,4 @@
+#!/usr/bin/python
 """A setuptools based setup module.
 See:
 https://packaging.python.org/en/latest/distributing.html
@@ -95,7 +96,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'pygobstones-lang=pygobstones-lang.gbs:main',
+            'pygobstones-lang=pygobstoneslang:main',
         ],
     },
 )
