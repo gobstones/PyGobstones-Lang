@@ -1,43 +1,65 @@
-from language.programWorker import *
-from common.tools import tools
-from lang.gbs_board import Board
 import common.utils
 import common.i18n as i18n
-import lang
+from lang.gbs_board import Board
+from common.tools import tools
+import pygobstoneslang
 import logging
-from language.implementation.lang.gbs_api import GobstonesRun
+from lang.gbs_api import GobstonesRun
 
 class GUIExecutionAPI(lang.ExecutionAPI):
-    
+
     def __init__(self, communicator):
         self.comm = communicator
-    
+
     def read(self):
         self.comm.send('READ_REQUEST')
         message = self.comm.receive()
         if message.header != 'READ_DONE': assert False
-        return message.body        
-    
+        return message.body
+
     def show(self, board):
         self.comm.send('PARTIAL', tools.board_format.to_string(board))
-    
+
     def log(self, msg):
-        self.comm.send('LOG', msg)    
+        self.comm.send('LOG', msg)
+
+class ProgramWorker(object):
+    class RunMode:
+        FULL = 'full'
+        ONLY_CHECK = 'only_check'
+        NAMES = 'names'
+    def __init__(self, communicator):
+        self.communicator = communicator
+    def prepare(self):
+        pass
+    def start(self, filename, program_text, initial_board_string):
+        pass
+    def exit(self):
+        pass
+    def run(self):
+        self.prepare()
+        message = self.communicator.receive()
+        assert message.header in ['START', 'EXIT']
+        if message.header == 'EXIT':
+            self.exit()
+            return
+        filename, program_text, initial_board_string, run_mode, gobstones_version = message.body
+        self.start(filename, program_text, initial_board_string, run_mode, gobstones_version)
 
 
 class GobstonesWorker(ProgramWorker):
 
     def prepare(self):
-        self.api = GUIExecutionAPI(self.communicator)                
-    
+        self.api = GUIExecutionAPI(self.communicator)
+
     def start(self, filename, program_text, initial_board_string, run_mode, gobstones_version="xgobstones"):
-        
+
         if run_mode == GobstonesWorker.RunMode.ONLY_CHECK:
             options = lang.GobstonesOptions(lang_version=gobstones_version, check_liveness=True, lint_mode="strict")
         else:
             options = lang.GobstonesOptions(lang_version=gobstones_version)
         self.gobstones = lang.Gobstones(options, self.api)
-        
+
         try:
             if run_mode == GobstonesWorker.RunMode.FULL:
                 board = tools.board_format.from_string(initial_board_string)
@@ -45,7 +67,7 @@ class GobstonesWorker(ProgramWorker):
             elif run_mode == GobstonesWorker.RunMode.ONLY_CHECK:
                 # Parse gobstones script
                 self.gobstones.api.log(i18n.i18n('Parsing.'))
-                gbs_run = self.gobstones.parse(filename, program_text)            
+                gbs_run = self.gobstones.parse(filename, program_text)
                 assert gbs_run.tree
                 # Check semantics, liveness and types
                 self.gobstones.check(gbs_run.tree)
@@ -56,7 +78,7 @@ class GobstonesWorker(ProgramWorker):
                 raise Exception("There is no action associated with the given run mode.")
         except Exception as exception:
             self.failure(exception)
-    
+
     def success(self, result=None):
         if result is None:
             self.communicator.send('OK', (None, None))
@@ -66,7 +88,7 @@ class GobstonesWorker(ProgramWorker):
             self.communicator.send('OK', (result,))
         else:
             assert False
-    
+
     def failure(self, exception):
         if hasattr(exception, 'area'):
             self.communicator.send('FAIL', (exception.__class__, (exception.msg, exception.area)))

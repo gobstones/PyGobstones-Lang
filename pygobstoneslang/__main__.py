@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import absolute_import
 
 import os
 import sys
@@ -254,7 +255,7 @@ def run_filename(filename, options):
     if not options["language"] in ['gobstones', 'xgobstones']:
         report_error("Options Error", "Language %s is not supported by this interpreter." % (options["language"],))
         usage(2)
-        
+
     lang_version = get_lang(options)
 
     gbs_opts = lang.GobstonesOptions(lang_version, options['lint'], options['liveness'], options['typecheck'], options['jit'], options['optimize'],
@@ -316,7 +317,7 @@ def main():
                 report_error(i18n.i18n("%s Error") % ("Python",), "Failed to execute %s file." % (options['src'],))
                 logging.exception(str(exception))
                 sys.exit(3)
-    
+
             print_run(gbs_run, options)
             persist_run(gbs_run, options)
 
