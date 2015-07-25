@@ -20,19 +20,19 @@ from __future__ import absolute_import
 
 import os
 import sys
-import common.i18n as i18n
-import common.utils
-import common.logtools
-import lang
+import pygobstoneslang.common.i18n as i18n
+import pygobstoneslang.common.utils as utils
+import pygobstoneslang.common.logtools as logtools
+import pygobstoneslang.lang as lang
 import logging
 import json
-from common.utils import SourceException, GobstonesException
+from pygobstoneslang.common.utils import SourceException, GobstonesException
 
-LOGGER = common.logtools.get_logger('gbs-console')
+LOGGER = logtools.get_logger('gbs-console')
 
 def report_error(errtype, msg):
     LOGGER.error('%s:\n' % (errtype,))
-    LOGGER.error('%s\n' % (common.utils.indent(msg),))
+    LOGGER.error('%s\n' % (utils.indent(msg),))
 
 def report_program_error(errtype, msg, area):
     LOGGER.error('\n%s\n' % (area,))
@@ -101,7 +101,7 @@ class GbsOptions(object):
     def __init__(self, argv):
         if len(argv) == 1:
             argv.append('--help')
-        opts = common.utils.parse_options(GbsOptions.SWITCHES, argv)
+        opts = utils.parse_options(GbsOptions.SWITCHES, argv)
         if not opts:
             raise OptionsException()
         self.arguments, self.options = opts
@@ -170,7 +170,7 @@ class GbsOptions(object):
     def check_size(self, size):
         if size:
             width, height = size
-            if not common.utils.is_int(width) or not common.utils.is_int(height):
+            if not utils.is_int(width) or not utils.is_int(height):
                 return False
             width = int(width)
             height = int(height)
@@ -232,12 +232,12 @@ class ConsoleInteractiveAPI(lang.ExecutionAPI):
         self.options = options
     def read(self):
         if self.options['interactive']:
-            char = common.utils.getch()
+            char = utils.getch()
             return ord(char)
         else:
             return lang.GobstonesKeys.CTRL_D
     def show(self, board):
-        common.utils.clear()
+        utils.clear()
         self.log(board)
     def log(self, msg):
         if not self.options['silent']:
@@ -292,12 +292,12 @@ def main():
         else:
             usage()
     if options['version']:
-        LOGGER.info(common.utils.version_number())
+        LOGGER.info(utils.version_number())
         sys.exit(0)
     elif options['help']:
         usage(0)
     elif options['license']:
-        LOGGER.info(common.utils.read_file(common.LicenseFile))
+        LOGGER.info(utils.read_file(LicenseFile))
         sys.exit(0)
 
     if options['src']:

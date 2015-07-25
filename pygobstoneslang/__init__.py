@@ -1,11 +1,11 @@
 #!/usr/bin/python
-import common.utils
-import common.i18n as i18n
-from lang.gbs_board import Board
-from common.tools import tools
+import pygobstoneslang.common.utils as utils
+import pygobstoneslang.common.i18n as i18n
+from pygobstoneslang.lang.gbs_board import Board
+from pygobstoneslang.common.tools import tools
 import logging
-from lang.gbs_api import GobstonesRun
-import __main__
+from pygobstoneslang.lang.gbs_api import GobstonesRun
+
 
 class GUIExecutionAPI(lang.ExecutionAPI):
 
@@ -96,4 +96,4 @@ class GobstonesWorker(ProgramWorker):
         elif hasattr(exception, 'msg'):
             self.communicator.send('FAIL', (exception.__class__, (exception.msg, )))
         else:
-            self.communicator.send('FAIL', (common.utils.GobstonesException, (str(exception),)))
+            self.communicator.send('FAIL', (utils.GobstonesException, (str(exception),)))
