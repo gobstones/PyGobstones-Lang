@@ -129,5 +129,5 @@ class GobstonesWorker(ProgramWorker):
         else:
             self.communicator.send(
                 'FAIL',
-                (utils.GobstonesException, (str(exception),))
+                (utils.GobstonesException, (unicode(exception),))
                 )
