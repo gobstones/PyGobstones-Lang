@@ -321,7 +321,7 @@ class Parser(object):
                     stack.pop()
 
                     res_nonterm = None
-                    for nonterm in common.utils.seq_reversed(production.rule):
+                    for nonterm in utils.seq_reversed(production.rule):
                         if nonterm != '':
                             stack.append(nonterm)
                         res_nonterm = nonterm
@@ -392,7 +392,7 @@ class Analyzer(object):
 
         self.lexer_class = lexer_class
         self.parser_class = parser_class
-        self.warn = kwargs.get('warn', common.utils.std_warn)
+        self.warn = kwargs.get('warn', utils.std_warn)
 
         self.lexer = None
         self.parser = None
@@ -405,7 +405,7 @@ class Analyzer(object):
 
     def _read_bnf_from_file(self, filename):
         "Build the parser reading the BNF grammar from the given file."
-        self._read_bnf(common.utils.read_file(filename))
+        self._read_bnf(utils.read_file(filename))
 
     def _read_bnf(self, bnf_contents):
         "Builds the parser reading the BNF grammar from the given string."
@@ -414,17 +414,17 @@ class Analyzer(object):
         syntax = {}
         raw_bnf = _bnf_escape(bnf_contents)
         all_productions = [
-            common.utils.trim(prod)
+            utils.trim(prod)
             for prod in raw_bnf.split(';;')
-            if common.utils.nonempty(common.utils.trim(prod))
+            if utils.nonempty(utils.trim(prod))
         ]
         for production in all_productions:
             head, rules = [
-                common.utils.trim(part)
+                utils.trim(part)
                 for part in production.split('::=')
             ]
             rules = [
-                _bnf_unescape(common.utils.trim(part))
+                _bnf_unescape(utils.trim(part))
                 for part in rules.split(BNF_ALT_SEQ)
             ]
             if head == 'RESERVED':
