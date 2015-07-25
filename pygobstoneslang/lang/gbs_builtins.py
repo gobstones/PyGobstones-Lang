@@ -19,14 +19,14 @@
 
 import sys
 import functools
-import common.utils as utils
-from lang.gbs_type import UserDefinedTypes, GbsVariantType
-from lang.gbs_io import GobstonesKeys
+import pygobstoneslang.common.utils as utils
+from gbs_type import UserDefinedTypes, GbsVariantType
+from gbs_io import GobstonesKeys
 from sets import Set
 
 explicit_builtins = True
 
-from lang.gbs_type import (
+from gbs_type import (
     BasicTypes,
     GbsTypeVar,
     GbsStringType,
@@ -46,15 +46,15 @@ from lang.gbs_type import (
     GbsArrayType,
     GbsBoardType,
 )
-from lang.gbs_constructs import (
+from gbs_constructs import (
     RenameConstruct,
     BuiltinConstant,
     BuiltinFunction,
     BuiltinProcedure,
 )
 
-import common.i18n as i18n
-from common.utils import (
+import pygobstoneslang.common.i18n as i18n
+from pygobstoneslang.common.utils import (
     DynamicException,
 )
 
@@ -69,7 +69,7 @@ class GbsRuntimeException(DynamicException):
 
 class GbsRuntimeTypeException(GbsRuntimeException):
     """Exception for XGobstones runtime type errors."""
-    
+
     def error_type(self):
         "Description of the exception type."
         return i18n.i18n('Runtime type error')
@@ -118,8 +118,8 @@ TYPE_BB = GbsFunctionType(
                 GbsTupleType([GbsBoolType()]))
 
 def clone_value(value):
-    if isinstance(value, GbsObject):        
-        return value.clone()    
+    if isinstance(value, GbsObject):
+        return value.clone()
     elif isinstance(value, list):
         return [clone_value(val) for val in value]
     elif isinstance(value, dict):
@@ -143,26 +143,26 @@ class GbsObject(object):
         self.value = value
         self.bindings = bindings
         self.type = type
-        
+
     def full_type(self):
         return self.type
-    
+
     def __repr__(self):
         return repr(self.value)
-    
+
     def clone(self):
         new_value = clone_value(self.value)
-            
+
         new_bindings = {}
         for key, value in self.bindings.items():
             new_bindings[key] = clone_value(value)
-        
+
         return GbsObject(new_value, self.type, new_bindings)
-    
+
     def __getattr__(self, name):
         return self.value.__getattribute__(name)
-        
-        
+
+
 
 class GbsListBindings(object):
     def __init__(self, lstobj):
@@ -174,46 +174,46 @@ class GbsListBindings(object):
             i18n.i18n('current'): self.lstobj.current_ref,
             i18n.i18n('init'): self.lstobj.init_ref,
             i18n.i18n('tail'): self.lstobj.tail_ref,
-        }        
-        
+        }
+
     def __getitem__(self, key):
         if key in self.references.keys():
             return self.references[key]()
         else:
             return self.bindings[key]
-        
+
     def __setitem__(self, key, value):
         if key in self.references.keys():
             self.references[key].set(value)
         else:
             self.bindings[key] = value
-            
+
     def __iter__(self):
         return utils.imerge(self.bindings.keys(), self.getters.keys())
-    
+
     def keys(self):
         return self.bindings.keys() + self.getters.keys()
 
 class GbsListObject(GbsObject):
     # [TODO] Not-empty list operations...
-    def __init__(self, value = []):        
+    def __init__(self, value = []):
         super(GbsListObject, self).__init__(value, poly_typeof(value), GbsListBindings(self))
-        self.cursor = 0    
-        
+        self.cursor = 0
+
     def first_ref(self):
         def getter():
             return self.value[0]
         def setter(value):
             self.value[0] = value
         return GbsObjectRef(getter, setter)
-    
+
     def last_ref(self):
         def getter():
             return self.value[-1]
         def setter(value):
             self.value[-1] = value
-        return GbsObjectRef(getter, setter)   
-        
+        return GbsObjectRef(getter, setter)
+
     def current_ref(self):
         def getter():
             try:
@@ -223,8 +223,8 @@ class GbsListObject(GbsObject):
                 raise GbsRuntimeException(msg, None)
         def setter(value):
             self.value[self.cursor] = value
-        return GbsObjectRef(getter, setter)       
-    
+        return GbsObjectRef(getter, setter)
+
     def tail_ref(self):
         def getter():
             if len(self.value) > 1:
@@ -233,9 +233,9 @@ class GbsListObject(GbsObject):
                 return GbsListObject()
         def setter(obj):
             lst = obj.value
-            self.value = [self.value[0]] + lst        
+            self.value = [self.value[0]] + lst
         return GbsObjectRef(getter, setter)
-    
+
     def init_ref(self):
         def getter():
             if len(self.value) > 1:
@@ -245,14 +245,14 @@ class GbsListObject(GbsObject):
         def setter(obj):
             lst = obj.value
             self.value = lst + [self.value[-1]]
-        
+
         return GbsObjectRef(getter, setter)
-    
+
     def clone(self):
         obj = GbsListObject(clone_value(self.value))
-        obj.cursor = self.cursor        
+        obj.cursor = self.cursor
         return obj
-        
+
 class GbsFieldObject(GbsObject):
     pass
 
@@ -262,16 +262,16 @@ class GbsArrayObject(GbsObject):
         return GbsArrayObject(obj.value, obj.type, obj.bindings)
 
 class GbsRecordObject(GbsObject):
-    
+
     def __init__(self, value, type, bindings = {}):
         if '::' in type:
             realtype, constructor = type.split("::")
         else:
             realtype    = type
-            constructor = type 
+            constructor = type
         super(GbsRecordObject, self).__init__(value, realtype, bindings)
         self.constructor = constructor
-        
+
     def __repr__(self):
         if len(self.value) != 0:
             return self.constructor + '(' + ', '.join([k + ' <- ' + repr(v) for k, v in self.value.items()]) + ')'
@@ -282,7 +282,7 @@ class GbsRecordObject(GbsObject):
         rec = GbsRecordObject(obj.value, obj.type, obj.bindings)
         rec.constructor = self.constructor
         return rec
-    
+
     def full_type(self):
         if self.constructor == self.type:
             return self.type
@@ -297,10 +297,10 @@ def wrap_value(value):
         return GbsListObject(value)
     else:
         return GbsObject(value, poly_typeof(value))
-    
+
 def unwrap_value(obj):
-    if (isinstance(obj, GbsFieldObject ) or 
-        isinstance(obj, GbsRecordObject) or 
+    if (isinstance(obj, GbsFieldObject ) or
+        isinstance(obj, GbsRecordObject) or
         isinstance(obj, GbsArrayObject )): #[TODO] Smelly fix
         return obj
     elif isinstance(obj, GbsObject):
@@ -309,7 +309,7 @@ def unwrap_value(obj):
         return obj.get()
     else:
         return obj
-    
+
 def unwrap_values(values):
     return [unwrap_value(v) for v in values]
 
@@ -498,7 +498,7 @@ def poly_range(first, last, second):
             increment = 1
         else:
             assert False
-        
+
         def next_elem(elem):
             if increment >= 0:
                 for i in range(increment):
@@ -507,19 +507,19 @@ def poly_range(first, last, second):
                 for i in range(increment*-1):
                     elem = poly_prev(elem)
             return elem
-        
+
         def elem_reached(elem1, elem2):
             if increment >= 0:
                 return poly_ord(elem1)[0] >= poly_ord(elem2)[0]
             else:
                 return poly_ord(elem1)[0] <= poly_ord(elem2)[0]
-        
+
         elements = []
         elem = first
         while not elem_reached(elem, last):
             elements.append(elem)
             elem = next_elem(elem)
-            
+
         if poly_ord(elem) == poly_ord(last):
             elements.append(elem)
 
@@ -637,7 +637,7 @@ def poly_cmp(global_state, value1, value2, relop):
             return relop(value1.lower(), value2.lower())
         else:
             return relop(poly_ord(value1), poly_ord(value2))
-        
+
 
 def arith_add(_, x, y):
     "Add the numbers."
@@ -716,7 +716,7 @@ def board_go_to_origin(global_state, board):
     board.value.go_to_origin()
     return board
 
-def board_go_to_boundary(global_state, board, direction):    
+def board_go_to_boundary(global_state, board, direction):
     board.value.go_to_boundary(direction)
     return board
 
@@ -734,7 +734,7 @@ def board_put_stone(global_state, board, color):
     return board
 
 def board_binary_operation(global_state, board, v2, f):
-    if poly_typeof(board) != 'Board':        
+    if poly_typeof(board) != 'Board':
         msg = i18n.i18n('The procedure call variable should be a board.')
         raise GbsRuntimeException(msg, global_state.area())
     return f(global_state, board, v2)
@@ -812,7 +812,7 @@ def str_concat(global_state, str1, str2):
         msg = global_state.backtrace(i18n.i18n('%s was expected') % (i18n.i18n('string type value'),))
         raise GbsRuntimeException(msg, global_state.area())
 
-############### 
+###############
 ## References
 ###############
 
@@ -821,12 +821,12 @@ TYPE_GETREF = GbsForallType(
                     GbsFunctionType(
                         GbsTupleType([TYPEVAR_X, TYPEVAR_Y]),
                         GbsTupleType([TYPEVAR_Z])))
- 
+
 TYPE_GETREFVALUE = GbsForallType([TYPEVAR_X, TYPEVAR_Y],
                                  GbsFunctionType(
                                      GbsTupleType([TYPEVAR_X]),
                                      GbsTupleType([TYPEVAR_Y])))
- 
+
 TYPE_SETREFVALUE = GbsForallType(
                     [TYPEVAR_X, TYPEVAR_Y],
                     GbsFunctionType(
@@ -843,8 +843,8 @@ def check_projectable_var(global_state, varname):
             is_a = i18n.i18n('"%s" is a parameter')
         else:
             is_a = i18n.i18n('"%s" is an index')
-        msg = global_state.backtrace(". ".join([i18n.i18n('Cannot apply "." operator to "%s"'), 
-                                      is_a]) % 
+        msg = global_state.backtrace(". ".join([i18n.i18n('Cannot apply "." operator to "%s"'),
+                                      is_a]) %
                                      (varname, varname))
         raise GbsRuntimeException(msg, global_state.area())
 
@@ -870,22 +870,22 @@ def list_setter(lst, index):
         lst[index] = value
     return set_list
 
-def get_ref(global_state, from_, index):    
+def get_ref(global_state, from_, index):
     if isinstance(from_, list):
         if isinstance(index, str):
             msg = global_state.backtrace(i18n.i18n('Cannot apply "." operator to "%s"') % (poly_typeof(from_),))
         else:
             msg = global_state.backtrace(i18n.i18n('"%s" is not indexable.') % (poly_typeof(from_),))
         raise GbsRuntimeException(msg, global_state.area())
-        
+
     if isinstance(from_, GbsArrayObject):
         if index in range(0, len(from_.value)):
             content = from_.value
-            return GbsObjectRef(lambda: content[index], 
+            return GbsObjectRef(lambda: content[index],
                                 list_setter(content, index))
         elif index in from_.bindings.keys():
             content = from_.bindings
-            return GbsObjectRef(lambda: content[index], 
+            return GbsObjectRef(lambda: content[index],
                                 dict_setter(content, index))
         else:
             if isinstance(index, str):
@@ -893,7 +893,7 @@ def get_ref(global_state, from_, index):
             else:
                 msg = global_state.backtrace(i18n.i18n('"%s" is not indexable.') % (poly_typeof(from_),))
             raise GbsRuntimeException(msg, global_state.area())
-        
+
     else:
         if index in from_.value.keys():
             dic = from_.value
@@ -902,16 +902,16 @@ def get_ref(global_state, from_, index):
         else:
             msg = global_state.backtrace(i18n.i18n('"%s" is not a valid field.') % (index,))
             raise GbsRuntimeException(msg, global_state.area())
-    
-        return GbsObjectRef(lambda: dic[index], 
+
+        return GbsObjectRef(lambda: dic[index],
                             dict_setter(dic, index))
-        
+
 def assign_ref(global_state, ref, value):
     if isinstance(value, GbsObject):
-        rvalue = value.clone()        
+        rvalue = value.clone()
     else:
         rvalue = wrap_value(value)
-        
+
     # [TODO] getter and setter for array position
     if isinstance(ref, GbsObject):
         ref.value = rvalue.value
@@ -926,12 +926,12 @@ BUILTINS_EXPLICIT_BOARD = [
       i18n.i18n('_getRef'),
       TYPE_GETREF,
       get_ref
-    ),  
+    ),
     BuiltinFunction(
       i18n.i18n('_getRefValue'),
       TYPE_GETREFVALUE,
       get_ref_value
-    ),  
+    ),
     BuiltinFunction(
       i18n.i18n('_SetRefValue'),
       TYPE_SETREFVALUE,
@@ -942,19 +942,19 @@ BUILTINS_EXPLICIT_BOARD = [
         TYPE_CHECKPROJECTABLEVAR,
         check_projectable_var
     ),
-                           
+
     BuiltinProcedure(
       i18n.i18n('_FreeVars'),
       GbsProcedureType(GbsTupleType([GbsBoardType()])),
       internal_freevars
     ),
-                           
+
     BuiltinProcedure(
       i18n.i18n('_Show'),
       GbsProcedureType(GbsTupleType([GbsBoardType()])),
       internal_show
     ),
-                                                      
+
     BuiltinProcedure(
         i18n.i18n('PutStone'),
         GbsProcedureType(GbsTupleType([GbsBoardType(), GbsColorType()])),
@@ -972,7 +972,7 @@ BUILTINS_EXPLICIT_BOARD = [
         GbsProcedureType(GbsTupleType([GbsBoardType(), GbsDirType()])),
         lambda gs, board, v: board_binary_operation(gs, board, v, board_move)
     ),
-            
+
     BuiltinProcedure(
         i18n.i18n('GoToBoundary'),
         GbsProcedureType(GbsTupleType([GbsBoardType(), GbsDirType()])),
@@ -1018,7 +1018,7 @@ def implicit_board_func(f):
     return ff
 
 def implicit_board_proc(f):
-    def ff(gs, *values): 
+    def ff(gs, *values):
         f(gs, GbsObject(gs.board, 'Board'), *values)
     return ff
 
@@ -1032,12 +1032,12 @@ BUILTINS_IMPLICIT_BOARD = [
       i18n.i18n('_getRef'),
       TYPE_GETREF,
       disabled_references
-    ),  
+    ),
     BuiltinFunction(
       i18n.i18n('_getRefValue'),
       TYPE_GETREFVALUE,
       disabled_references
-    ),  
+    ),
     BuiltinFunction(
       i18n.i18n('_SetRefValue'),
       TYPE_SETREFVALUE,
@@ -1053,13 +1053,13 @@ BUILTINS_IMPLICIT_BOARD = [
       GbsProcedureType(GbsTupleType([])),
       implicit_board_proc(internal_freevars)
     ),
-                           
+
     BuiltinProcedure(
       i18n.i18n('_Show'),
       GbsProcedureType(GbsTupleType([])),
       implicit_board_proc(internal_show)
     ),
-                           
+
     BuiltinProcedure(
         i18n.i18n('PutStone'),
         GbsProcedureType(GbsTupleType([GbsColorType()])),
@@ -1077,7 +1077,7 @@ BUILTINS_IMPLICIT_BOARD = [
         GbsProcedureType(GbsTupleType([GbsDirType()])),
         implicit_board_proc(board_move)
     ),
-            
+
     BuiltinProcedure(
         i18n.i18n('GoToBoundary'),
         GbsProcedureType(GbsTupleType([GbsDirType()])),
@@ -1120,13 +1120,13 @@ BUILTINS_IMPLICIT_BOARD = [
 BUILTINS = [
 
     #### Internal operations
-    
+
     BuiltinFunction(
       i18n.i18n('_read'),
       GbsFunctionType(GbsTupleType([]), GbsTupleType([GbsIntType()])),
       internal_read
     ),
-            
+
     BuiltinFunction(
         i18n.i18n('minBool'),
         GbsFunctionType(
@@ -1175,7 +1175,7 @@ BUILTINS = [
     BuiltinFunction(
         i18n.i18n('prev'),
         TYPE_AA,
-        lambda global_state, x: atomic_operation(global_state, x, poly_prev) 
+        lambda global_state, x: atomic_operation(global_state, x, poly_prev)
     ),
     BuiltinFunction(
         i18n.i18n('opposite'),
@@ -1197,7 +1197,7 @@ BUILTINS = [
     BuiltinFunction(
         i18n.i18n('=='),
         TYPE_AAB,
-        poly_equal        
+        poly_equal
     ),
 
     BuiltinFunction(
@@ -1298,7 +1298,7 @@ BUILTINS = [
         TYPE_AA,
         gbs_poly_opposite
     ),
-            
+
     #### Constants
 
     BuiltinConstant(i18n.i18n('True'), GbsBoolType(), True),
@@ -1317,15 +1317,15 @@ BUILTINS = [
 class KeyConstantBuilder:
     def build_key_constant(self, keyname, value):
         return BuiltinConstant(keyname, GbsIntType(), value)
-    
+
     def build_ascii_key_constants_in_range(self, prefix, min, max, name_builder=None):
         keys = []
         if name_builder is None:
             name_builder = lambda ascii_code:chr(ascii_code)
         for ascii_code in range(min, max + 1):
              keys.append(self.build_key_constant(prefix + '_' + str.upper(name_builder(ascii_code)), ascii_code))
-        return keys     
-    
+        return keys
+
     def build_ascii_key_constants(self):
         keys = []
         # Build C_0 .. C_9 key constants
@@ -1334,10 +1334,10 @@ class KeyConstantBuilder:
         keys.extend(self.build_ascii_key_constants_in_range("K", 97, 122))
         # Build SHILF_A .. SHIFT_Z key constants
         keys.extend(self.build_ascii_key_constants_in_range("K_SHIFT", 65, 90))
-        
+
         keys.extend(self.build_ascii_key_constants_in_range("K_CTRL", 1, 26, lambda ascii_code: chr(ascii_code + 96)))
         return keys
-    
+
     def build_special_key_constants(self):
         return [
                 self.build_key_constant(i18n.i18n("K_ARROW_LEFT"), GobstonesKeys.ARROW_LEFT),
@@ -1351,13 +1351,13 @@ class KeyConstantBuilder:
                 self.build_key_constant('K_TAB', 9),
                 self.build_key_constant('K_ESCAPE', 27),
                 ]
-    
+
     def build(self):
         keys = []
         keys.extend(self.build_ascii_key_constants())
         keys.extend(self.build_special_key_constants())
         return keys;
-    
+
 BUILTINS.extend(KeyConstantBuilder().build())
 
 #### List functions
@@ -1430,7 +1430,7 @@ def list_binary_operation(global_state, lst1, lst2, f):
         else:
             msg = global_state.backtrace(i18n.i18n('Concatenation between lists with different inner type.'))
             raise GbsRuntimeException(msg, global_state.area())
-    
+
 def notempty_list_operation(global_state, lst, f):
     """Wrapper for list binary operations that require the list not to be
     empty (head, tail, init, last).
@@ -1442,7 +1442,7 @@ def notempty_list_operation(global_state, lst, f):
         else:
             return f(lst)
     return list_operation(global_state, lst, inner_)
-    
+
 def list_operation(global_state, lst, f):
     """Ensures list type"""
     if poly_typeof(lst) != 'List':
@@ -1492,7 +1492,7 @@ def list_has_next(global_state, lst):
 def list_go_to_start(global_state, lst):
     lst.cursor = 0
     return lst
-    
+
 def list_next(global_state, lst):
     lst.cursor += 1
     return lst
@@ -1585,7 +1585,7 @@ LIST_BUILTINS = [
         TYPE_RANGE,
         list_op_adapter(list_range)
     ),
-#                 
+#
 # Uncomment to enable cons and snoc builtin functions
 #
 #    BuiltinFunction(
@@ -1635,7 +1635,7 @@ def mk_field(global_state, symbol, value):
 def mk_record(global_state, type, fields, bindings={}):
     type_name = type.split("::")[0]
     type_def = UserDefinedTypes[type_name]
-    
+
     def get_fields(type, type_def):
         if isinstance(type_def, GbsVariantType):
             fields = type_def.cases[type.split("::")[1]].fields.keys()
@@ -1644,21 +1644,21 @@ def mk_record(global_state, type, fields, bindings={}):
         else:
             assert False
         return fields
-    
+
     for fieldname in Set([f.value[0] for f in fields] + bindings.keys()):
         if not fieldname in get_fields(type, type_def):
             msg = global_state.backtrace(i18n.i18n('Field "%s" is not a valid field for record of type "%s"') % (fieldname, type_name))
-            raise GbsRuntimeException(msg, global_state.area()) 
-        
+            raise GbsRuntimeException(msg, global_state.area())
+
     for fieldname in get_fields(type, type_def):
         if not fieldname in Set([f.value[0] for f in fields] + bindings.keys()):
             msg = global_state.backtrace(i18n.i18n('Field "%s" of type "%s" must have a value') % (fieldname, type_name))
             raise GbsRuntimeException(msg, global_state.area())
-        
+
     try:
         _bindings = {}
         for k in bindings.keys():
-            _bindings[k] = bindings[k].clone()        
+            _bindings[k] = bindings[k].clone()
         for field in fields:
             _bindings[field.value[0]] = wrap_value(field.value[1])
         return GbsRecordObject(_bindings, type, _bindings)
@@ -1666,33 +1666,33 @@ def mk_record(global_state, type, fields, bindings={}):
         "Just in case..."
         msg = global_state.backtrace(i18n.i18n('Error while building type %s') % (type,))
         raise GbsRuntimeException(msg, global_state.area())
-    
+
 def mk_record_from(global_state, type, fields, from_record):
     if from_record.type != type.split("::")[0] or from_record.constructor != type.split("::")[1]:
         if type.split("::")[0] == type.split("::")[1]:
             type = type.split("::")[0]
         msg = global_state.backtrace(i18n.i18n("Error while building type %s") % (type,) + ": " + i18n.i18n("the given value has type %s") % (from_record.full_type(),))
         raise GbsRuntimeException(msg, global_state.area())
-    else:  
+    else:
         return mk_record(global_state, type, fields, from_record.bindings)
 
-def projection(global_state, record, field_name):    
+def projection(global_state, record, field_name):
     if not isinstance(record, GbsRecordObject) and isinstance(record, GbsObject):
         record = record.value
-    
+
     if not isinstance(record, GbsObject):
-        msg = global_state.backtrace(i18n.i18n('Tried to apply projection to a value of type %s. Only record values could be projected.') 
+        msg = global_state.backtrace(i18n.i18n('Tried to apply projection to a value of type %s. Only record values could be projected.')
                                      % (i18n.i18n(poly_typeof(record)),))
         raise GbsRuntimeException(msg, global_state.area())
-    
+
     if isinstance(record, GbsRecordObject):
         record = record.value
-        
+
     try:
         return unwrap_value(record[field_name])
     except Exception as exception:
         msg = global_state.backtrace(i18n.i18n('The record doesn\'t have a field named "%s"\n' +
-                                               'The available field names for this record are: %s') 
+                                               'The available field names for this record are: %s')
                                      % (field_name, ', '.join(record.keys()),))
         raise GbsRuntimeException(msg, global_state.area())
 
@@ -1768,7 +1768,7 @@ BUILTINS += RECORD_BUILTINS
 
 
 
-############### 
+###############
 ## Arrays
 ###############
 
@@ -1790,8 +1790,8 @@ def mk_array(global_state, type, fields):
     elif poly_typeof(field.value[1]) != 'Int':
         msg = global_state.backtrace(
             i18n.i18n('"%s" field has type %s, but type %s was expected.') % (
-                        'size', 
-                        poly_typeof(field.value[1]), 
+                        'size',
+                        poly_typeof(field.value[1]),
                         i18n.i18n('Int'),))
         raise GbsRuntimeTypeException(msg, global_state.area())
     else:
@@ -1824,7 +1824,7 @@ def _is_int_constant(string):
         if char not in digs:
             return False
     return True
-        
+
 BUILTINS += LIST_BUILTINS
 
 #### OPTIMIZATIONS
@@ -1975,7 +1975,7 @@ def _initialize_builtins_by_name(builtins):
     dic = {}
     for builtin in builtins:
         dic[builtin.name()] = builtin
-        
+
     return dic
 
 
@@ -2002,16 +2002,16 @@ def get_builtins():
         return BUILTINS + BUILTINS_IMPLICIT_BOARD
 
 BUILTINS_NAMES = []
-def get_builtins_names():    
+def get_builtins_names():
     if len(BUILTINS_NAMES) == 0:
         BUILTINS_NAMES.extend([b.name() for b in get_builtins()])
     return BUILTINS_NAMES
-    
+
 BUILTINS_BY_NAME = {}
 def get_builtins_by_name():
     if len(BUILTINS_BY_NAME.keys()) == 0:
         BUILTINS_BY_NAME.update(_initialize_builtins_by_name(get_builtins()))
     return BUILTINS_BY_NAME
-    
+
 def get_correct_names():
     return get_builtins_names()

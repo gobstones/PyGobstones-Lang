@@ -18,8 +18,8 @@
 # Author: Ary Pablo Batista <arypbatista@gmail.com>
 #---------------------------------------------------------------------
 
-import lang.ast
-from lang.parser.Token import Token
+import ast
+from parser.Token import Token
 
 def unpack_definition(def_):
     return def_.children
@@ -39,7 +39,7 @@ def is_entrypoint_def(def_):
 
 def is_program_def(def_):
     return is_def(def_) and is_def_keyword(def_, 'entrypoint') and get_def_name(def_).value == 'program'
-                                                                   
+
 def is_interactive_def(def_):
     return is_def(def_) and is_def_keyword(def_, 'entrypoint') and get_def_name(def_).value == 'interactive'
 
@@ -47,7 +47,7 @@ def is_def_keyword(def_, keyword):
     return get_def_keyword(def_) == keyword
 
 def is_def(tree):
-    return hasattr(tree, "children") and (len(tree.children) == 5) 
+    return hasattr(tree, "children") and (len(tree.children) == 5)
 
 def get_def_keyword(def_):
     return def_.children[0]
@@ -57,10 +57,10 @@ def get_def_name(def_):
 
 def set_def_name(def_, nameToken):
     def_.children[1] = nameToken
-    
+
 def set_def_token_name(def_, name):
     def_.children[1].value = name
-    
+
 def get_def_body(def_):
     return def_.children[3]
 
@@ -76,11 +76,11 @@ def get_def_type_decl(def_):
 def find_def(defs, satisfies):
     "Searchs for a definition that satisfies some criteria (satisfies is a Function)"
     def_tree = None
-    
+
     for def_ in defs.children:
         if satisfies(def_):
             def_tree = def_
-            
+
     return def_tree
 
 def recursive_find_node(tree, satisfies):
@@ -99,7 +99,7 @@ def recursive_find_all_nodes(node, satisfies):
   if satisfies(node):
       result.append(node)
   for child in node.children:
-      if isinstance(child, lang.ast.ASTNode):
+      if isinstance(child, ast.ASTNode):
           result.extend(recursive_find_all_nodes(child, satisfies))
   return result
 
@@ -113,16 +113,16 @@ def recursive_replace_token(tree, search, replace, soft_mode=False):
   return tree
 
 def is_node(label, node):
-  if hasattr(node, 'children') and len(node.children) > 0: 
+  if hasattr(node, 'children') and len(node.children) > 0:
     return node.children[0] == label
   return False
-    
+
 def type_defs(tree):
     return filter(is_type_def, tree.children)
 
 def routine_defs(tree):
     return filter(lambda def_: not is_type_def(def_), tree.children)
-    
+
 def is_token(node):
     return isinstance(node, Token)
 
@@ -131,7 +131,7 @@ def ffalse(node):
 
 def collect_nodes_with_stop(root, tree, satisfies, stop_search=ffalse):
     collected = []
-    if isinstance(tree, lang.ast.ASTNode) and (root == tree or not stop_search(tree)):
+    if isinstance(tree, ast.ASTNode) and (root == tree or not stop_search(tree)):
         if satisfies(tree):
             collected.append(tree)
         for child in tree.children:
@@ -140,7 +140,7 @@ def collect_nodes_with_stop(root, tree, satisfies, stop_search=ffalse):
 
 def collect_nodes(tree, satisfies):
     collected = []
-    if isinstance(tree, lang.ast.ASTNode):
+    if isinstance(tree, ast.ASTNode):
         if satisfies(tree):
             collected.append(tree)
         for child in tree.children:
@@ -153,12 +153,12 @@ def is_field_gen(node):
     if not (isinstance(node.children[0], str) and node.children[0] == 'funcCall'):
         return False
     return (isinstance(node.children[1], Token)
-            and node.children[1].value == '_mk_field') 
+            and node.children[1].value == '_mk_field')
 
 def collect_nodes_until_found(tree, satisfies):
     "Stop branch search if found"
     collected = []
-    if isinstance(tree, lang.ast.ASTNode):
+    if isinstance(tree, ast.ASTNode):
         if satisfies(tree):
             collected.append(tree)
         else:

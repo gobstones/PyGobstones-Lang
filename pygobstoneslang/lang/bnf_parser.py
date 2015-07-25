@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-from lang.grammar import XGbsGrammarFile
+from grammar import XGbsGrammarFile
 
 """Tokenizer and parser for LL(1) grammars.
 The grammar is read in BNF format from a text file.
@@ -22,13 +22,13 @@ The grammar is read in BNF format from a text file.
 
 import re
 
-import common.position
-import common.i18n as i18n
-import common.utils
+import pygobstoneslang.common.position as position
+import pygobstoneslang.common.i18n as i18n
+import pygobstoneslang.common.utils as utils
 
-from lang.parser.Token import Token
+from parser.Token import Token
 
-from common.utils import (
+from pygobstoneslang.common.utils import (
     set_new, set_add_change, set_add, seq_sorted
 )
 
@@ -36,7 +36,7 @@ BNF_COMMENT_SEQ = "##"
 BNF_ESCAPE_SEQ = "$$"
 BNF_ALT_SEQ = "|"
 
-class ParserException(common.utils.StaticException):
+class ParserException(utils.StaticException):
     "Base exception for syntax errors."
 
     def error_type(self):
@@ -53,20 +53,20 @@ def is_nonterminal(string):
 def fake_bof():
     """Return a dummy token. Useful for reporting errors that
     do not occur in a clear point of the program."""
-    pos = common.position.Position('', '')
-    return common.position.ProgramAreaNear(Token('BOF', 'BOF', pos, pos))
+    pos = position.Position('', '')
+    return position.ProgramAreaNear(Token('BOF', 'BOF', pos, pos))
 
 class Lexer(object):
     "Lexical analyzer."
 
-    def __init__(self, tokens, reserved, warn=common.utils.std_warn):
+    def __init__(self, tokens, reserved, warn=utils.std_warn):
         self.tokens = tokens
         self.reserved = reserved
         self.warn = warn
 
     def pure_tokenize(self, string, filename='...'):
         "Generates a stream of tokens for the given string."
-        pos = common.position.Position(string, filename)
+        pos = position.Position(string, filename)
         previous_token = Token('BOF', 'BOF', pos, pos)
         yield previous_token
         while pos.start < len(string):
@@ -104,11 +104,11 @@ class Production(object):
 
     def __init__(self, raw_bnf_rule):
         rule_action = raw_bnf_rule.split('@')
-        self.rule = tuple(common.utils.trim_blanks(rule_action[0]).split(' '))
+        self.rule = tuple(utils.trim_blanks(rule_action[0]).split(' '))
         if len(rule_action) == 1:
             self.action = None
         else:
-            self.action = common.utils.trim_blanks(rule_action[1]).split(' ')
+            self.action = utils.trim_blanks(rule_action[1]).split(' ')
 
     def __repr__(self):
         if self.action:
@@ -124,7 +124,7 @@ def bnf_rule_to_str(rule):
 class Parser(object):
     "Parser for LL(1) grammars."
 
-    def __init__(self, syntax, warn=common.utils.std_warn):
+    def __init__(self, syntax, warn=utils.std_warn):
         self.syntax = syntax
         self.warn = warn
 
@@ -286,8 +286,8 @@ class Parser(object):
                                 'Found: %s',
                                 'Expected one of the following tokens:'])) % (
                      token,)
-            msg += '\n' + common.utils.indent('\n'.join(follow))
-        raise ParserException(msg, common.position.ProgramAreaNear(token))
+            msg += '\n' + utils.indent('\n'.join(follow))
+        raise ParserException(msg, position.ProgramAreaNear(token))
 
     def _warn_conflict(self, nonterminal, terminal, area):
         "Emits a warning for a conflictive state."
@@ -295,7 +295,7 @@ class Parser(object):
         msg += i18n.i18n('Conflictive rule for: ("%s", "%s")\n') % (
                     nonterminal, terminal)
         msg += i18n.i18n('Will choose first production:\n')
-        msg += common.utils.indent(bnf_rule_to_str(
+        msg += utils.indent(bnf_rule_to_str(
                         self._parse_table[(nonterminal, terminal)]))
         self.warn(ParserException(msg, area))
 
@@ -313,9 +313,9 @@ class Parser(object):
                     #  self._warn_conflict(
                     #       top,
                     #       token.type,
-                    #       common.position.ProgramAreaNear(token))
+                    #       position.ProgramAreaNear(token))
                     # in case of conflict, choose the lexically least production
-                    production = common.utils.dict_min_value(
+                    production = utils.dict_min_value(
                                     productions,
                                     key=lambda p: p.rule)
                     stack.pop()

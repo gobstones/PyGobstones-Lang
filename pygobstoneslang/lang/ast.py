@@ -19,11 +19,11 @@
 Includes the implementation of the semantic actions in the parser.
 """
 from itertools import groupby
-import common.i18n as i18n
-import common.position
-import common.utils
-import lang.bnf_parser
-import lang.gbs_builtins
+import pygobstoneslang.common.i18n as i18n
+import pygobstoneslang.common.position as position
+import pygobstoneslang.common.utils as utils
+import bnf_parser
+import gbs_builtins
 import copy
 import json
 
@@ -75,13 +75,13 @@ def _make_range_generator(expr_range):
     elif len(expr_range.children) == 3:
         first, _, last = expr_range.children
         second = ASTNode(['literal',
-                          lang.bnf_parser.Token('symbol', 'NoSecondElementForRange', pos_b, pos_e)],
+                          bnf_parser.Token('symbol', 'NoSecondElementForRange', pos_b, pos_e)],
                           pos_b, pos_e)
     else:
         assert False
 
     return ASTNode(['funcCall',
-                   lang.bnf_parser.Token('lowerid', '_range', pos_b, pos_e),
+                   bnf_parser.Token('lowerid', '_range', pos_b, pos_e),
                    ASTNode([first, last, second], pos_b, pos_e)
                   ], pos_b, pos_e)
 
@@ -94,18 +94,18 @@ def _make_list_expression(expr_list):
     pos_e = expr_list.pos_end
     lst = expr_list.children
     ret = ASTNode(['funcCall',
-                   lang.bnf_parser.Token('lowerid', '[]', pos_b, pos_e),
+                   bnf_parser.Token('lowerid', '[]', pos_b, pos_e),
                    ASTNode([], pos_b, pos_e)
                   ], pos_b, pos_e)
-    for exp in common.utils.seq_reversed(lst):
+    for exp in utils.seq_reversed(lst):
         pos_b = exp.pos_begin
         pos_e = exp.pos_end
         exp_list = ASTNode(['funcCall',
-                           lang.bnf_parser.Token('lowerid', '[x]', pos_b, pos_e),
+                           bnf_parser.Token('lowerid', '[x]', pos_b, pos_e),
                            ASTNode([exp], pos_b, pos_e)
                            ], pos_b, pos_e)
         ret = ASTNode(['listop',
-                       lang.bnf_parser.Token('lowerid', '++', pos_b, pos_e),
+                       bnf_parser.Token('lowerid', '++', pos_b, pos_e),
                        exp_list,
                        ret], pos_b, pos_e)
     return ret
@@ -140,11 +140,11 @@ def _infixr(subtrees, action):
                    arg1.pos_begin,
                    arg2.pos_end)
 
-class ASTNode(common.position.ProgramElement):
+class ASTNode(position.ProgramElement):
     "Represents an internal node of an abstract syntax tree."
 
     def __init__(self, children, pos_begin, pos_end):
-        common.position.ProgramElement.__init__(self)
+        position.ProgramElement.__init__(self)
 
         # A node is represented by a list
         # - its first element is a label
@@ -204,14 +204,14 @@ this node by the static analysis tool.
         if self.live_in is not None:
             live_in = ''.join([
                 '{live_in: ',
-                str(' '.join(common.utils.seq_sorted(self.live_in.keys()))),
+                str(' '.join(utils.seq_sorted(self.live_in.keys()))),
                 '}'
             ])
         live_out = ''
         if self.live_out is not None:
             live_out = ''.join([
                 '{live_out: ',
-                str(' '.join(common.utils.seq_sorted(self.live_out.keys()))),
+                str(' '.join(utils.seq_sorted(self.live_out.keys()))),
                 '}'
             ])
         return live_in, live_out
@@ -331,7 +331,7 @@ class ASTBuilder(object):
         """Returns the position where the last nonempty element of
 `subtrees` occurs.
 """
-        for subtree in common.utils.seq_reversed(subtrees):
+        for subtree in utils.seq_reversed(subtrees):
             if subtree is None or isinstance(subtree, str):
                 continue
             return subtree.pos_end
@@ -382,7 +382,7 @@ class ASTBuilder(object):
             symbol_tok = subtrees[1].children[1]
             symbol_tok.type = 'symbol'
             firstf = ASTNode(['funcCall',
-                              lang.bnf_parser.Token('lowerid', '_mk_field', pos_b, pos_e),
+                              bnf_parser.Token('lowerid', '_mk_field', pos_b, pos_e),
                               ASTNode([ASTNode(['literal',
                                                 symbol_tok],
                                                 pos_b, pos_e),
@@ -449,7 +449,7 @@ class ASTBuilder(object):
         pos_e = self._pos_end(subtrees)
         params = [self._expand_action_part(subtrees, action[i]) for i in range(len(action))[1:]]
         return ASTNode(['funcCall',
-                   lang.bnf_parser.Token('lowerid', '_mk_field', pos_b, pos_e),
+                   bnf_parser.Token('lowerid', '_mk_field', pos_b, pos_e),
                    ASTNode(params, pos_b, pos_e)
                   ], pos_b, pos_e)
 
@@ -465,7 +465,7 @@ class ASTBuilder(object):
     def _expand_action_literal_or_construct(self, subtrees, action):
         """Expands a literal/construct, transforming "literal/construct"
         action into either a "literal", "recConstruct" or "ArrayConstruct" node."""
-        if subtrees[1].type == 'upperid' and not lang.gbs_builtins.is_builtin_constant(subtrees[1].value):
+        if subtrees[1].type == 'upperid' and not gbs_builtins.is_builtin_constant(subtrees[1].value):
             return self._make_construct_expression(subtrees)
         else:
             return fix_string_literal(ASTNode(
@@ -490,14 +490,14 @@ class ASTBuilder(object):
 
         if constructor_type.children[1].value == 'Arreglo':
             result = ASTNode(['funcCall',
-                            lang.bnf_parser.Token('lowerid', '_mkArray', pos_b, pos_e),
+                            bnf_parser.Token('lowerid', '_mkArray', pos_b, pos_e),
                             ASTNode([constructor_type,
                                      fields], pos_b, pos_e),
                             ], pos_b, pos_e)
         else:
             if not (len(expr_construct[2].children) > 0 and expr_construct[2].children[0] == 'recordSuchAs'):
                 result = ASTNode(['constructor',
-                            lang.bnf_parser.Token('lowerid', '_construct', pos_b, pos_e),
+                            bnf_parser.Token('lowerid', '_construct', pos_b, pos_e),
                             ASTNode([constructor_type,
                                      fields],
                                     pos_b,
@@ -505,7 +505,7 @@ class ASTBuilder(object):
                             ], pos_b, pos_e)
             else:
                 result = ASTNode(['constructor',
-                            lang.bnf_parser.Token('lowerid', '_construct_from', pos_b, pos_e),
+                            bnf_parser.Token('lowerid', '_construct_from', pos_b, pos_e),
                             ASTNode([constructor_type,
                                      fields,
                                      from_value],
@@ -558,7 +558,7 @@ class ASTBuilder(object):
         """Expands a procedure definition inserting inout parameter to
         params list."""
 
-        if isinstance(subtrees[1], lang.bnf_parser.Token) and subtrees[1].value == 'interactive':
+        if isinstance(subtrees[1], bnf_parser.Token) and subtrees[1].value == 'interactive':
             epvar = subtrees[2]
             epname = subtrees[1]
             body = subtrees[5]
@@ -571,7 +571,7 @@ class ASTBuilder(object):
                 epvar = None
                 epname = subtrees[1]
                 body = subtrees[3]
-                
+
         params = ASTNode([],self._pos_begin(subtrees), self._pos_end(subtrees))
         eptype = None
         if not epvar is None and len(epvar.children) != 0:

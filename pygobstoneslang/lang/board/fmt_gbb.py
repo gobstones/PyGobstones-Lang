@@ -17,15 +17,15 @@
 
 import re
 
-import common.utils
-import common.i18n as i18n
-import lang.gbs_builtins
-import lang.board.basic
+import pygobstoneslang.common.utils as utils
+import pygobstoneslang.common.i18n as i18n
+import pygobstoneslang.lang.gbs_builtins
+import basic
 
 def is_numeric(x):
   return re.match('^[0-9]+$', x)
 
-class GbbBoardFormat(lang.board.basic.BoardFormat):
+class GbbBoardFormat(basic.BoardFormat):
   "Simple human-friendly board format."
 
   def dump(self, board, f=None, style='verbose', **kwargs):
@@ -35,13 +35,13 @@ class GbbBoardFormat(lang.board.basic.BoardFormat):
       output = self.dump_with_translator(board, self.compact_translator)
     else:
       assert False
-    
+
     if not f is None:
         f.write(output)
-        
-    return output   
-      
-    
+
+    return output
+
+
 
   def verbose_translator(self, s):
     return s
@@ -65,9 +65,9 @@ class GbbBoardFormat(lang.board.basic.BoardFormat):
       for y in range(h):
         cell = []
         for coli in range(4):
-          cant = board.cells[y][x].num_stones(coli) 
+          cant = board.cells[y][x].num_stones(coli)
           if cant == 0: continue
-          col = lang.gbs_builtins.Color(coli).name()
+          col = gbs_builtins.Color(coli).name()
           cell.append('%s %i' % (translate(col), cant))
         if cell == []: continue
         output += '%s %i %i %s\r\n' % (translate('cell'), x, y, ' '.join(cell))
@@ -80,7 +80,7 @@ class GbbBoardFormat(lang.board.basic.BoardFormat):
 
     orig = ['']
 
-    f_lines = common.utils.read_stripped_lines(f)
+    f_lines = utils.read_stripped_lines(f)
     def next_line():
       if f_lines == []:
         return False
@@ -89,7 +89,7 @@ class GbbBoardFormat(lang.board.basic.BoardFormat):
         return orig[0].split(' ')
 
     def fail(msg):
-      raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed gbb board') + '\n' +
+      raise basic.BoardFormatException(i18n.i18n('Malformed gbb board') + '\n' +
                                  '  ' + i18n.i18n('Near line:') + ' "' + orig[0].strip('\r\n') + '"\n' +
                                  '  ' + msg)
 
@@ -107,7 +107,7 @@ class GbbBoardFormat(lang.board.basic.BoardFormat):
     board.randomize_header()
     board._clear_board()
 
-    color_to_index = lang.gbs_builtins.COLOR_NAME_TO_INDEX_DICT
+    color_to_index = gbs_builtins.COLOR_NAME_TO_INDEX_DICT
 
     visited_cells = {}
 

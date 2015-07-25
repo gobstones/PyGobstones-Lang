@@ -14,19 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-from lang.gbs_type import build_types
+from gbs_type import build_types
 
 "Gobstones compiler from source ASTs to virtual machine code."
 
-import lang.gbs_vm
-import lang.gbs_builtins
-import lang.gbs_type
-import lang.gbs_def_helper as def_helper
-import common.i18n as i18n
-import common.position
-import common.utils
+import gbs_vm
+import gbs_builtins
+import gbs_type
+import gbs_def_helper as def_helper
+import pygobstoneslang.common.i18n as i18n
+import pygobstoneslang.common.position as position
+import pygobstoneslang.common.utils as utils
 
-class GbsCompileException(common.utils.StaticException):
+class GbsCompileException(utils.StaticException):
     "Base exception for Gobstones compiler errors."
     pass
 
@@ -37,7 +37,7 @@ def parse_literal(tok):
     if tok.type == 'symbol':
         val = tok.value
     else:
-        val = lang.gbs_builtins.parse_constant(tok.value)
+        val = gbs_builtins.parse_constant(tok.value)
         #assert val is not None
         if val is None:
             val = tok.value
@@ -60,7 +60,7 @@ class GbsCompiler(object):
 
     def compile_program(self, tree, module_prefix='', explicit_board=None):
         """Given an AST for a full program, compile it to virtual machine
-code, returning an instance of lang.gbs_vm.GbsCompiledProgram.
+code, returning an instance of gbs_vm.GbsCompiledProgram.
 The Main module should be given the empty module prefix ''.
 Every other module should be given the module name as a prefix.
 """
@@ -75,15 +75,15 @@ Every other module should be given the module name as a prefix.
         imports = tree.children[1].children
         defs = tree.children[2]
 
-        self.code = lang.gbs_vm.GbsCompiledProgram(
+        self.code = gbs_vm.GbsCompiledProgram(
                         tree, module_prefix=module_prefix)
         self.compile_imports(imports)
         self.user_defined_routine_names = list(self.code.external_routines.keys())
         self.user_defined_routine_names += def_helper.get_routine_names(defs)
-        
+
         self.compile_defs(defs)
-        
-        return self.code 
+
+        return self.code
 
     def compile_imported_modules(self, tree):
         "Recursively compile the imported modules."
@@ -94,7 +94,7 @@ Every other module should be given the module name as a prefix.
                            mdl_tree, module_prefix=mdl_name, explicit_board=self.explicit_board
                        )
                 self.constructor_of_type.update(compiler.constructor_of_type)
-            except common.utils.SourceException as exception:
+            except utils.SourceException as exception:
                 self.module_handler.reraise(
                     GbsCompileException,
                     exception,
@@ -103,7 +103,7 @@ Every other module should be given the module name as a prefix.
                     ) % (
                         mdl_name,
                     ),
-                    common.position.ProgramAreaNear(tree.children[1]))
+                    position.ProgramAreaNear(tree.children[1]))
             self.module_handler.set_compiled_code(mdl_name, code)
 
     def compile_imports(self, imports):
@@ -114,8 +114,8 @@ namespace of routines.
             mdl_name = imp.children[1].value
             rtns = imp.children[2].children
             for rtn in rtns:
-                if (not isinstance(rtn, lang.gbs_constructs.UserType) and
-                    not isinstance(rtn, lang.gbs_constructs.BuiltinFieldGetter)):
+                if (not isinstance(rtn, gbs_constructs.UserType) and
+                    not isinstance(rtn, gbs_constructs.BuiltinFieldGetter)):
                     mdl_code = self.module_handler.compiled_code_for(mdl_name)
                     if rtn.name() in mdl_code.routines:
                         self.code.external_routines[rtn.name()] = (
@@ -135,7 +135,7 @@ namespace of routines.
                 self.gather_type_data(def_)
             else:
                 self.compile_routine_def(def_)
-                    
+
     def gather_type_data(self, def_):
         _, type_name, type_or_def = def_.children
         if type_or_def.children[0] == 'record':
@@ -145,7 +145,7 @@ namespace of routines.
             for case in body.children:
                 _, cname, _ = case.children
                 self.constructor_of_type[cname.value] = type_name.value
-                    
+
     def temp_varname(self):
         "Make a temporary variable name."
         self.temp_counter += 1
@@ -157,27 +157,27 @@ namespace of routines.
         name = def_helper.get_def_name(tree).value
         self._current_def_name = name
         params = [param.value for param in def_helper.get_def_params(tree)]
-        
+
         immutable_params = []
         if prfn == 'function':
             immutable_params = params
         elif prfn == 'procedure' and len(params) > 1:
             immutable_params = params[1:]
-            
-        code = lang.gbs_vm.GbsCompiledCode(tree, prfn, name, params, self.explicit_board)
+
+        code = gbs_vm.GbsCompiledCode(tree, prfn, name, params, self.explicit_board)
         code.add_enter()
         for p in immutable_params:
-                code.push(('setImmutable', p), near=tree)            
+                code.push(('setImmutable', p), near=tree)
         self.compile_commands(def_helper.get_def_body(tree), code)
-        if prfn == 'procedure' and self.explicit_board:            
-            code.push(('pushFrom', params[0]), near=tree)                
+        if prfn == 'procedure' and self.explicit_board:
+            code.push(('pushFrom', params[0]), near=tree)
         code.add_leave_return()
         code.build_label_table()
         self.code.routines[name] = code
 
     #### The following methods take a program fragment in form of an AST
     #### and a "code" argument, which should be an instance of
-    #### lang.gbs_vm.GbsCompiledCode.
+    #### gbs_vm.GbsCompiledCode.
     ####
     #### The compilation process appends to the compiled code the virtual
     #### machine code corresponding to the given program fragment.
@@ -227,19 +227,19 @@ namespace of routines.
     def compile_proc_call(self, tree, code):
         "Compile a procedure call."
         procname = tree.children[1].value
-        args = tree.children[2].children     
-        
-        if self.explicit_board:           
+        args = tree.children[2].children
+
+        if self.explicit_board:
             inout_var = args[0]
-        
+
         type_annotation = None
         if hasattr(tree, 'type_annotation'):
             type_annotation = tree.type_annotation
-            
+
         for i, arg in zip(range(len(args)), args):
             self.compile_expression(arg, code)
         code.push(('call', procname, len(args)), near=tree)
-        
+
         if self.explicit_board:
             code.push(('popTo', inout_var.children[1].value), near=tree)
 
@@ -248,23 +248,23 @@ namespace of routines.
         "Compile a projectable variable check. Varname is pushed to stack."
         code.push(('pushConst', var), near=tree)
         code.push(('call', '_checkProjectableVar', 1), near=tree)
-        
+
     def compile_assign_var_name(self, tree, code):
-        "Compile an assignment: <lvalue> := <expr>"            
-        
-        offsets = tree.children[2].children    
+        "Compile an assignment: <lvalue> := <expr>"
+
+        offsets = tree.children[2].children
         if len(offsets) > 0:
-            #calculate assignment reference       
+            #calculate assignment reference
             var = tree.children[1].children[1].value
             self.compile_projectable_var_check(tree, code, var)
-            code.push(('pushFrom', var), near=tree)                                
+            code.push(('pushFrom', var), near=tree)
             for offset in offsets:
                 if offset.children[0] == 'index':
                     self.compile_expression(offset.children[1], code)
                 else:
                     code.push(('pushConst', parse_literal(offset.children[1].children[1])), near=tree)
-                code.push(('call', '_getRef', 2), near=tree)        
-            
+                code.push(('call', '_getRef', 2), near=tree)
+
             #compile expression
             self.compile_expression(tree.children[3], code)
             #Set ref
@@ -273,14 +273,14 @@ namespace of routines.
             #compile expression
             self.compile_expression(tree.children[3], code)
             #assign varname
-            full_varname = '.'.join([tok.value for tok in tree.children[1].children[1:]])        
+            full_varname = '.'.join([tok.value for tok in tree.children[1].children[1:]])
             code.push(('popTo', full_varname), near=tree)
-    
+
     def compile_assign_var_tuple1(self, tree, code):
         "Compile a tuple assignment: (v1, ..., vN) := f(...)"
         self.compile_expression(tree.children[2], code)
         varnames = [var.value for var in tree.children[1].children]
-        for var in common.utils.seq_reversed(varnames):
+        for var in utils.seq_reversed(varnames):
             code.push(('popTo', var), near=tree)
 
     def compile_if(self, tree, code):
@@ -315,11 +315,11 @@ namespace of routines.
         #   else               {BodyElse}
         value = tree.children[1]
         value0 = self.temp_varname()
-        
+
         self.compile_expression(value, code)
         # value0 := value
         code.push(('popTo', value0), near=tree)
-        
+
         lend = GbsLabel()
         next_label = None
         for branch in tree.children[2].children:
@@ -338,7 +338,7 @@ namespace of routines.
                 # BodyElse
                 self.compile_block(branch.children[1], code)
         code.push(('label', lend), near=tree)
-    
+
     def compile_match(self, tree, code):
         "Compile a match statement."
         #   match (<Expr-V>) of
@@ -358,13 +358,13 @@ namespace of routines.
         #   else <Expr-Else>
         value = tree.children[1]
         value0 = self.temp_varname()
-        
+
         self.compile_expression(value, code)
         # This is a runtime function to extract type name
         code.push(('call', '_extract_case', 1), near=tree)
         # value0 := value
         code.push(('popTo', value0), near=tree)
-        
+
         lend = GbsLabel()
         next_label = None
         default_branch = False
@@ -417,7 +417,7 @@ namespace of routines.
         #     counter := counter - 1
         #   }
         #
-        
+
         times = tree.children[1]
         body = tree.children[2]
         counter = self.temp_varname()
@@ -439,7 +439,7 @@ namespace of routines.
         code.push(('pushFrom', counter), near=tree)
         code.push(('pushConst', 1), near=tree)
         code.push(('call', '-', 2), near=tree)
-        code.push(('popTo', counter), near=tree)            
+        code.push(('popTo', counter), near=tree)
         # end while
         code.push(('jump', lbegin), near=tree)
         code.push(('label', lend), near=tree)
@@ -478,7 +478,7 @@ namespace of routines.
             code.push(('pushFrom', listVar), near=tree)
             code.push(('call', i18n.i18n('tail'), 1), near=tree)
             code.push(('popTo', var), near=tree)
-            
+
         index = tree.children[1].value
         list_ = tree.children[2]
         body = tree.children[3]
@@ -488,7 +488,7 @@ namespace of routines.
         lend2 = GbsLabel()
         # xs0 := <List>
         self.compile_expression(list_, code)
-        code.push(('popTo', xs0), near=tree)        
+        code.push(('popTo', xs0), near=tree)
         # if (not isEmpty(xs0)) {
         jumpIfIsEmpty(xs0, lend)
         # while (true) {
@@ -510,14 +510,14 @@ namespace of routines.
         code.push(('label', lend2), near=tree)
         code.push(('delVar', index), near=tree)
         code.push(('label', lend), near=tree)
-        
+
     def compile_block(self, tree, code):
         "Compile a block statement."
         self.compile_commands(tree.children[1], code)
 
     def compile_return(self, tree, code):
         "Compile a return statement."
-        vals = tree.children[1].children 
+        vals = tree.children[1].children
         for val in vals:
             self.compile_expression(val, code)
         if self._current_def_name == 'program':
@@ -527,9 +527,9 @@ namespace of routines.
                 if v.children[0] == 'varName':
                     vrs.append(v.children[1].value)
                 else:
-                    vrs.append("#%s" % (expr_count,)) 
+                    vrs.append("#%s" % (expr_count,))
                 expr_count += 1
-                    
+
             if hasattr(tree, 'type_annot'):
                 # Decorate the return variables with their types.
                 types = [
@@ -537,13 +537,13 @@ namespace of routines.
                     for subtype in tree.type_annot.subtypes()
                 ]
                 vrs = [
-                    lang.gbs_builtins.polyname(vname, [vtype])
+                    gbs_builtins.polyname(vname, [vtype])
                     for vname, vtype in zip(vrs, types)
                 ]
             code.push(('returnVars', len(vals), vrs), near=tree)
         else:
             code.push(('return', len(vals)), near=tree)
-    
+
     #### Expressions
 
     def compile_expression(self, tree, code):
@@ -572,7 +572,7 @@ namespace of routines.
             dispatch[exptype](tree, code)
         else:
             msg = i18n.i18n('Unknown expression: %s') % (exptype,)
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             raise GbsCompileException(msg, area)
 
     def get_type_annotation(self, tree):
@@ -598,11 +598,11 @@ namespace of routines.
         lcontinue = GbsLabel()
         lend = GbsLabel()
         type_annotation = self.get_type_annotation(tree)
-        
+
         self.compile_expression(tree.children[2], code)
-            
+
         code.push(('jumpIfFalse', lcontinue), near=tree)
-        code.push(('pushConst', lang.gbs_builtins.parse_constant('True')),
+        code.push(('pushConst', gbs_builtins.parse_constant('True')),
                   near=tree)
         code.push(('jump', lend), near=tree)
         code.push(('label', lcontinue), near=tree)
@@ -619,7 +619,7 @@ namespace of routines.
         self.compile_expression(tree.children[3], code)
         code.push(('jump', lend), near=tree)
         code.push(('label', lcontinue), near=tree)
-        code.push(('pushConst', lang.gbs_builtins.parse_constant('False')),
+        code.push(('pushConst', gbs_builtins.parse_constant('False')),
                   near=tree)
         code.push(('label', lend), near=tree)
 
@@ -630,23 +630,23 @@ namespace of routines.
         self._compile_func_call_poly(tree, funcname, args, code)
 
     def compile_var_name(self, tree, code):
-        "Compile a variable name expression."        
+        "Compile a variable name expression."
         offsets = tree.children[2].children
         var = tree.children[1].value
-        code.push(('pushFrom', var), near=tree)      
+        code.push(('pushFrom', var), near=tree)
         if len(offsets) > 0:
             self.compile_projectable_var_check(tree, code, var)
-            #calculate assignment reference                   
-            for offset in offsets:                
-                self.compile_expression(offset.children[1], code)            
+            #calculate assignment reference
+            for offset in offsets:
+                self.compile_expression(offset.children[1], code)
                 code.push(('call', '_getRef', 2), near=tree)
-            code.push(('call', '_getRefValue', 1), near=tree)        
+            code.push(('call', '_getRefValue', 1), near=tree)
 
     def compile_func_call(self, tree, code):
         "Compile a function call."
         funcname = tree.children[1].value
         args = tree.children[2].children
-        if lang.gbs_builtins.is_defined(funcname) or funcname in self.user_defined_routine_names:
+        if gbs_builtins.is_defined(funcname) or funcname in self.user_defined_routine_names:
             self._compile_func_call_poly(tree, funcname, args, code)
         else:
             self._compile_field_getter(tree, funcname, args, code)
@@ -654,27 +654,27 @@ namespace of routines.
     def _compile_field_getter(self, tree, field_name, args, code):
         self.compile_expression(args[0], code)
         field = tree.children[1]
-        field.type = 'symbol'        
+        field.type = 'symbol'
         code.push(('pushConst', parse_literal(field)), near=tree)
         code.push(('call', '_get_field', 2), near=tree)
 
     def _compile_func_call_poly(self, tree, funcname, args, code):
         "Compile a potentially polymorphic function call."
-        polys = lang.gbs_builtins.BUILTINS_POLYMORPHIC
+        polys = gbs_builtins.BUILTINS_POLYMORPHIC
         annotate = True
         annotate = annotate and funcname in polys
         annotate = annotate and hasattr(tree, 'type_annotation')
         annotate = annotate and isinstance(tree.type_annotation, list)
-        
+
         type_annotation = None
         if hasattr(tree, 'type_annotation'):
             type_annotation = tree.type_annotation
-        
+
         for i, arg in zip(range(len(args)),args):
             self.compile_expression(arg, code)
-                
+
         if annotate:
-            funcname = lang.gbs_builtins.polyname(
+            funcname = gbs_builtins.polyname(
                 funcname,
                 [repr(ann) for ann in tree.type_annotation])
         code.push(('call', funcname, len(args)), near=tree)
@@ -689,4 +689,3 @@ def compile_program(tree):
     compiler = GbsCompiler()
     code = compiler.compile_program(tree)
     return code
-

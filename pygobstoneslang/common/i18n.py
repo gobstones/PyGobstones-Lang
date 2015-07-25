@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from common.utils import hsv
+from utils import hsv
 
 #### Provides translations of all kinds of messages found in the source.
 
@@ -495,7 +495,7 @@ ES = {
   'line': 'línea',
   'column': 'columna',
   'Prelude': 'Biblioteca',
-  
+
 # misc2
   'atomic values': 'valores atómicos',
   'atomic value': 'valor atómico',
@@ -779,4 +779,3 @@ AST_type_descriptions = {
   'unaryMinus': i18n('arithmetic operator'),
   'import': i18n('import clause'),
 }
-

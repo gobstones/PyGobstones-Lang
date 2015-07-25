@@ -17,8 +17,8 @@
 
 import os
 
-import common.utils
-import lang.gbs_parser
+import pygobstoneslang.common.utils as utils
+import gbs_parser
 
 class GbsModuleHandler(object):
 
@@ -34,13 +34,13 @@ class GbsModuleHandler(object):
 
     def filename_for(self, module_name):
         return os.path.join(os.path.dirname(self._source_filename), module_name + '.gbs')
-  
+
     def module_exists(self, module_name):
         return os.path.exists(self.filename_for(module_name))
 
     def parse_tree(self, module_name):
         if module_name not in self._parse_trees:
-            self._parse_trees[module_name] = lang.gbs_parser.parse_file(
+            self._parse_trees[module_name] = gbs_parser.parse_file(
                 self.filename_for(module_name)
             )
         return self._parse_trees[module_name]
@@ -63,11 +63,10 @@ class GbsModuleHandler(object):
     def reraise(self, new_class, old_exception, new_msg, new_area):
         if self._source_filename == self._toplevel_filename:
             raise new_class(
-                new_msg + '\n' + common.utils.indent(
+                new_msg + '\n' + utils.indent(
                     '%s\n%s' % (old_exception.area, old_exception.msg)
                 ),
                 new_area
             )
         else:
             raise old_exception
-

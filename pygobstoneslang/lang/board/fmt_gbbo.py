@@ -15,11 +15,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import common.utils
-import lang.board.basic
-import lang.gbs_builtins
+import pygobstoneslang.common.utils as utils
+import basic
+import pygobstoneslang.lang.gbs_builtins as gbs_builtins
 
-class GbboBoardFormat(lang.board.basic.BoardFormat):
+class GbboBoardFormat(basic.BoardFormat):
   "Binary board format."
   def __init__(self, nbytes=4):
     self._nbytes = nbytes
@@ -33,7 +33,7 @@ class GbboBoardFormat(lang.board.basic.BoardFormat):
 
   def unpack(self, s):
     n = 0
-    s = common.utils.seq_reversed(s)
+    s = utils.seq_reversed(s)
     for c in s:
       n = (n << 8) | ord(c)
     return n
@@ -47,8 +47,8 @@ class GbboBoardFormat(lang.board.basic.BoardFormat):
     f.write(self.pack(y))
     for y in range(h):
       for x in range(w):
-        for coli in range(lang.gbs_builtins.NUM_COLORS):
-          cant = board.cells[y][x].num_stones(coli) 
+        for coli in range(gbs_builtins.NUM_COLORS):
+          cant = board.cells[y][x].num_stones(coli)
           f.write(self.pack(cant))
 
   def load(self, board, f):
@@ -62,11 +62,10 @@ class GbboBoardFormat(lang.board.basic.BoardFormat):
     head_x = self.unpack(s[2 * nb:3 * nb])
     head_y = self.unpack(s[3 * nb:4 * nb])
     board.goto(head_x, head_y)
-    
+
     d = 4 * nb
     for y in range(height):
       for x in range(width):
-        for coli in range(lang.gbs_builtins.NUM_COLORS):
+        for coli in range(gbs_builtins.NUM_COLORS):
           board[x, y][coli] = self.unpack(s[d:d + nb])
           d += nb
-

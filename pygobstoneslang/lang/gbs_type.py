@@ -15,10 +15,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import common.position
-import common.i18n as i18n
-from common.utils import *
-from lang.gbs_def_helper import type_defs
+import pygobstoneslang.common.position as position
+import pygobstoneslang.common.i18n as i18n
+from pygobstoneslang.common.utils import *
+from gbs_def_helper import type_defs
 
 #### Represent Gobstones types. Provides a type unification algorithm.
 
@@ -214,7 +214,7 @@ class GbsFieldType(GbsBasicType):
 
 
 class GbsRecordType(GbsType):
-    
+
     def __init__(self, name=None, fields={}):
         self.name = name
         self.fields = fields
@@ -237,22 +237,22 @@ class GbsRecordType(GbsType):
             if ft.occurs(var):
                 return True
         return False
-    
+
     def instantiate(self, subst=None):
         new_fields = {}
         for fname, ftype in self.fields.items():
             new_fields[fname] = ftype.instantiate(subst)
         return GbsRecordType(self.name, new_fields)
-    
+
     def fields_repr(self):
         return ', '.join([fn + ':' + repr(ft) for fn, ft in self.fields.items()])
-    
+
     def __repr__(self):
         if self.name is None:
             return 'Record(' + self.fields_repr() + ')'
         else:
             return self.name
-    
+
     def freevars(self):
         res = set_new([])
         for ft in self.fields.values():
@@ -463,7 +463,7 @@ class TypeParser:
             return self.parse_procedure(tree)
         else:
             return self.parse_function(tree)
-        
+
     def parse_procedure(self, tree):
         return GbsProcedureType(self.parse_tuple(tree.children[1]))
 
@@ -487,7 +487,7 @@ class TypeParser:
                 if t.kind_arity != len(args):
                     msg = i18n.i18n('type "%s" expects %u parameters, but receives %u') % (
                           tok.value, t.kind_arity, len(args))
-                    area = common.position.ProgramAreaNear(tok)
+                    area = position.ProgramAreaNear(tok)
                     raise GbsTypeSyntaxException(msg, area)
                 return t(*args)
             else:
@@ -496,7 +496,7 @@ class TypeParser:
                 else:
                     """[TODO] Translate """
                     msg = i18n.i18n('Undefined type "%s".') % (tok.value,)
-                    area = common.position.ProgramAreaNear(tok)
+                    area = position.ProgramAreaNear(tok)
                     raise GbsTypeSyntaxException(msg, area)
         elif tree.children[0] == 'typeVar':
             tok = tree.children[1]
@@ -513,19 +513,19 @@ def parse_type_declaration(tree, global_context):
 
 
 class TypeBuilder(object):
-    
+
     def build_record_type(self, name, fields):
         record = GbsRecordType(name)
         record.fields = self.build_record_fields(fields)
         return record
-    
+
     def build_record_fields(self, fields_tree):
         fields = {}
         for field in fields_tree.children:
             fname = field.children[1].children[1].value
             fields[fname] = GbsTypeVar()
         return fields
-    
+
     def build_variant_type(self, name, cases):
         variant = GbsVariantType(name)
         variant.cases = self.build_variant_cases(variant, cases)
@@ -546,7 +546,7 @@ class TypeBuilder(object):
         type_class = type_detail.children[0]
         cases_or_fields = type_detail.children[1]
         return name.value, type_class, cases_or_fields
-    
+
     def build_type(self, tree):
         """ Initializes User-Defined Type """
         name, type_class, cases_or_fields = self.get_type_info(tree)

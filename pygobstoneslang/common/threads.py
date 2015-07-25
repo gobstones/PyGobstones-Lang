@@ -15,12 +15,12 @@
 #
 
 import sys
-import common.utils
+import utils
 
 import multiprocessing
 import threading
 
-if common.utils.python_major_version() < 3:
+if utils.python_major_version() < 3:
     import Queue as queue
 else:
     import queue
@@ -40,7 +40,7 @@ if MULTIPROCESSING_ENABLED:
 
     Process = multiprocessing.Process
     Thread = threading.Thread
-    
+
     def terminate_process(p):
         return p.terminate()
 
@@ -54,4 +54,3 @@ else:
         sys.stderr.write('PyGobstones warning: unable to terminate process. See Python issue 3770\n')
 
 queue_empty = queue.Empty
-

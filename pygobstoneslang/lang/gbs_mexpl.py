@@ -17,8 +17,7 @@
 
 import functools
 import os
-import lang.gbs_def_helper as defhelper
-import lang
+import gbs_def_helper as defhelper
 
 #### Macro exploding of Gobstones programs.
 
@@ -27,7 +26,7 @@ class GbsMacroExploder(object):
     def _load_implementation(self, implementation_filename, reserved_token_names=None):
         """ Parses a file with the required implementation and replaces the
         reserved token names with user-innaccesible names """
-        implementation_program = lang.gbs_parser.parse_file(os.path.join(lang.GbsMacrosDir, implementation_filename))
+        implementation_program = gbs_parser.parse_file(os.path.join(GbsMacrosDir, implementation_filename))
         for token_name in reserved_token_names:
             defhelper.recursive_replace_token(implementation_program, token_name, "_" + token_name)
         return implementation_program

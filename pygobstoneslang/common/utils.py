@@ -53,13 +53,13 @@ class GobstonesExecutionReport(object):
 
     def __init__(self, message):
         self.message = message
-    
+
     def report_type(self):
         return "Generic"
 
 
 class GobstonesWarning(GobstonesExecutionReport):
-    
+
     def __init__(self, message):
         super(GobstonesExecutionReport, self).__init__(message)
 
@@ -85,14 +85,14 @@ class SourceException(GobstonesException):
     def __init__(self, msg, area):
         super(SourceException, self).__init__(msg)
         self.area = area
-        
+
     def __repr__(self):
         s = ''
         if self.area:
             s += '\n%s\n' % (self.area,)
         s += '%s\n' % (indent(self.msg),)
         return s
-    
+
     def error_type(self):
         return 'Error'
 
@@ -105,11 +105,11 @@ class DynamicException(SourceException):
     pass
 
 
-def trim(x): 
+def trim(x):
     return x.strip(' \t\r\n')
 
 _blanks = re.compile('[ \t\r\n]+')
-def trim_blanks(x): 
+def trim_blanks(x):
     return trim(_blanks.sub(' ', x))
 
 def nonempty(x):
@@ -210,7 +210,7 @@ def seq_sorted(xs, key=lambda x: x):
 def seq_reversed(xs):
     ys = []
     for x in xs:
-        ys.insert(0, x) 
+        ys.insert(0, x)
     return ys
 
 def seq_no_repeats(xs):
@@ -257,10 +257,10 @@ def show_string(s):
     s = s[1:-1]
     r = ''
     conv = {
-        'a': '\a', 
-        'b': '\b', 
-        'f': '\f', 
-        'n': '\n', 
+        'a': '\a',
+        'b': '\b',
+        'f': '\f',
+        'n': '\n',
         'r': '\r',
         't': '\t',
         'v': '\v',
@@ -384,7 +384,7 @@ def read_stripped_lines(f):
                 return re.sub('[ \t]+', ' ', l)
 
     lines = []
-    while True: 
+    while True:
         l = next_line()
         if not l:
             break
@@ -435,9 +435,8 @@ getch = _Getch()
 
 def clear():
   os.system('cls' if os.name == 'nt' else 'clear')
-  
+
 def imerge(a, b):
     for i, j in itertools.izip(a,b):
         yield i
         yield j
-    

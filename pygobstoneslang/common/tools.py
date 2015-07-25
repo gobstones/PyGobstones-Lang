@@ -16,17 +16,16 @@
 #
 
 
-import lang.gbs_mexpl
-import lang.gbs_lint
-import lang.gbs_liveness
-import lang.gbs_infer
-import lang.gbs_compiler
-import lang.gbs_builtins
-import lang.gbs_vm
-import lang.gbs_board
-import lang.board.formats
-import common.i18n as i18n
-import common.utils
+import pygobstoneslang.lang.gbs_lint as gbs_lint
+import pygobstoneslang.lang.gbs_liveness as gbs_liveness
+import pygobstoneslang.lang.gbs_infer as gbs_infer
+import pygobstoneslang.lang.gbs_compiler as gbs_compiler
+import pygobstoneslang.lang.gbs_builtins as gbs_builtins
+import pygobstoneslang.lang.gbs_vm as gbs_vm
+import pygobstoneslang.lang.gbs_board as gbs_board
+import pygobstoneslang.lang.board.formats as formats
+import i18n as i18n
+import utils
 
 class Tools():
     pass
@@ -34,16 +33,14 @@ class Tools():
 tools = Tools()
 tools.BoardViewerGeometry = "480x480"
 tools.DefaultBoardSize = 'random'
-tools.mexpl = lang.gbs_mexpl.mexpl
-tools.lint = lang.gbs_lint.lint
-tools.check_live_variables = lang.gbs_liveness.check_live_variables
-tools.typecheck = lang.gbs_infer.typecheck
-tools.compile = lang.gbs_compiler.compile_program
-tools.interp = lang.gbs_vm.interp
-tools.GbsVmInterpreter = lang.gbs_vm.GbsVmInterpreter
-#import lang.jit.gbs_jit
-#tools.GbsVmInterpreter = lang.jit.gbs_jit.JitInterpreter
-tools.Board = lang.gbs_board.Board
-tools.board_format = lang.board.formats.AvailableFormats['gbb']()
-tools.builtins = lang.gbs_builtins
-
+tools.lint = gbs_lint.lint
+tools.check_live_variables = gbs_liveness.check_live_variables
+tools.typecheck = gbs_infer.typecheck
+tools.compile = gbs_compiler.compile_program
+tools.interp = gbs_vm.interp
+tools.GbsVmInterpreter = gbs_vm.GbsVmInterpreter
+#import jit.gbs_jit
+#tools.GbsVmInterpreter = jit.gbs_jit.JitInterpreter
+tools.Board = gbs_board.Board
+tools.board_format = formats.AvailableFormats['gbb']()
+tools.builtins = gbs_builtins

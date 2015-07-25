@@ -15,14 +15,14 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import common.position
-import lang.gbs_builtins
-import lang.gbs_constructs
-import lang.gbs_type
-import lang.gbs_modules
-from lang.gbs_def_helper import *
-import common.i18n as i18n
-from common.utils import *
+import pygobstoneslang.common.position as position
+import gbs_builtins
+import gbs_constructs
+import gbs_type
+import gbs_modules
+from gbs_def_helper import *
+import pygobstoneslang.common.i18n as i18n
+from pygobstoneslang.common.utils import *
 
 #### Basic semantic checking of Gobstones programs.
 
@@ -122,7 +122,7 @@ class InvocationGraph(object):
 
     def recursive_invocation(self, invoker, invoked):
         return invoker == invoked or self.invocation_chain_includes(invoker, invoked)
-    
+
     def get_invocation_chains_with_ancestor(self, invocable, ancestor):
         result = []
         for chain in self.get_invocation_chains(invocable):
@@ -223,7 +223,7 @@ class SymbolTableManager(object):
 
     def remove(self, name, kind, type):
         self.table_for_type(type).remove(name, kind)
-        
+
 
 class SymbolTable(object):
     """Represents a table that maps symbol names to program constructs.
@@ -304,7 +304,7 @@ an error if it finds similar symbol names."""
         return val
 
     def _error_not_defined(self, tree, name, as_type):
-        area = common.position.ProgramAreaNear(tree)
+        area = position.ProgramAreaNear(tree)
         msg = i18n.i18n(as_type + ' "%s" is not defined') % (name,)
         raise GbsLintException(msg, area)
 
@@ -320,12 +320,12 @@ an error if it finds similar symbol names."""
 
     def _error_conflictive_definition(self, tree, name, as_type, val):
         if val.name() == name:
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             l1 = i18n.i18n('"%s" is not a ' + as_type) % (name,)
             l2 = i18n.i18n(val.type() + ' "%s" defined %s') % (name, val.where())
             raise GbsLintException('\n'.join([l1, l2]), area)
         else:
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             msg = i18n.i18n('"%s" is too similar to ' + val.type() + ' "%s", defined %s') % (
                             name, val.name(), val.where())
             raise GbsLintException(msg, area)
@@ -333,8 +333,8 @@ an error if it finds similar symbol names."""
     def all_defined_routine_or_type_names(self):
         rtns = []
         for construct in self.table.values():
-            if (isinstance(construct, lang.gbs_constructs.UserConstruct) or
-               isinstance(construct, lang.gbs_constructs.BuiltinFieldGetter)):
+            if (isinstance(construct, gbs_constructs.UserConstruct) or
+               isinstance(construct, gbs_constructs.BuiltinFieldGetter)):
                 rtns.append(construct)
         return rtns
 
@@ -360,20 +360,20 @@ class GbsSemanticChecker(object):
             entrypoint_tree = find_def(tree.children[2], is_entrypoint_def)
             self.explicit_board = len(entrypoint_tree.children[2].children) != 0
 
-        lang.gbs_builtins.explicit_builtins = self.explicit_board
-        for b in lang.gbs_builtins.get_builtins():
+        gbs_builtins.explicit_builtins = self.explicit_board
+        for b in gbs_builtins.get_builtins():
             self.symbol_table.add(b)
-        for name, type in lang.gbs_type.BasicTypes.items():
-            self.symbol_table.add(lang.gbs_constructs.BuiltinType(name, type))
-        self.types += lang.gbs_type.build_types(tree)  
+        for name, type in gbs_type.BasicTypes.items():
+            self.symbol_table.add(gbs_constructs.BuiltinType(name, type))
+        self.types += gbs_type.build_types(tree)
 
     def check_program(self, tree, loaded_modules=[], is_main_program=True):
         self.setup(tree)
-        
+
         self.loaded_modules = loaded_modules
         self.is_main_program = is_main_program
 
-        self.module_handler = tree.module_handler = lang.gbs_modules.GbsModuleHandler(tree.source_filename, tree.toplevel_filename)
+        self.module_handler = tree.module_handler = gbs_modules.GbsModuleHandler(tree.source_filename, tree.toplevel_filename)
         self.imported_rtns = {}
         imports = tree.children[1].children
         for imp in imports:
@@ -394,27 +394,27 @@ class GbsSemanticChecker(object):
     def check_import(self, tree):
         mdl_name = tree.children[1].value
         if not self.module_handler.module_exists(mdl_name):
-            pos = common.position.ProgramAreaNear(tree.children[1])
+            pos = position.ProgramAreaNear(tree.children[1])
             raise GbsLintException(i18n.i18n('Module %s cannot be found') % (mdl_name,), pos)
 
         try:
             mdl_tree = self.module_handler.parse_tree(mdl_name)
-        except common.utils.SourceException as exception:
+        except utils.SourceException as exception:
             self.module_handler.reraise(GbsLintException, exception,
-                                                      common.i18n.i18n('Error parsing module %s') % (mdl_name,),
-                                                      common.position.ProgramAreaNear(tree.children[1]))
+                                                      i18n.i18n('Error parsing module %s') % (mdl_name,),
+                                                      position.ProgramAreaNear(tree.children[1]))
 
         if mdl_name in self.loaded_modules:
-            pos = common.position.ProgramAreaNear(tree.children[1])
+            pos = position.ProgramAreaNear(tree.children[1])
             raise GbsLintException(i18n.i18n('Recursive modules'), pos)
 
         mdl_lint = GbsSemanticChecker(strictness=self.strictness, warn=self.warn, explicit_board=self.explicit_board)
         try:
-            mdl_lint.check_program(mdl_tree, self.loaded_modules + [mdl_name], is_main_program=False)            
-        except common.utils.SourceException as exception:
+            mdl_lint.check_program(mdl_tree, self.loaded_modules + [mdl_name], is_main_program=False)
+        except utils.SourceException as exception:
             self.module_handler.reraise(GbsLintException, exception,
-                                                      common.i18n.i18n('Error linting module %s') % (mdl_name,),
-                                                      common.position.ProgramAreaNear(tree.children[1]))
+                                                      i18n.i18n('Error linting module %s') % (mdl_name,),
+                                                      position.ProgramAreaNear(tree.children[1]))
 
         import_tokens = tree.children[2].children
         imports = map(lambda imp: imp.value, import_tokens)
@@ -428,7 +428,7 @@ class GbsSemanticChecker(object):
                 if construct.name() in imports:
                     newcons.append(construct)
                     imported.append(construct.name())
-                    if isinstance(construct, lang.gbs_constructs.UserType):
+                    if isinstance(construct, gbs_constructs.UserType):
                         newcons.extend(mdl_lint.field_getters_for_type(construct.name()))
             constructs = newcons
             invalid_imports = set(imports).difference(set(imported))
@@ -439,16 +439,16 @@ class GbsSemanticChecker(object):
                                                          'type or callable')
 
         for construct in constructs:
-            if isinstance(construct, lang.gbs_constructs.BuiltinFieldGetter):
+            if isinstance(construct, gbs_constructs.BuiltinFieldGetter):
                 if not construct.name() in self.imported_rtns:
                     self.symbol_table.add(construct, area=None)
                     self.imported_rtns[construct.name()] = True
             else:
                 if construct.name() in self.imported_rtns:
-                    pos = common.position.ProgramAreaNear(construct.identifier())
+                    pos = position.ProgramAreaNear(construct.identifier())
                     raise GbsLintException(i18n.i18n('%s %%s was already imported' % (construct.type(),)) % (construct.name(),), pos)
                 else:
-                    self.symbol_table.add(construct, area=common.position.ProgramAreaNear(construct.identifier()))
+                    self.symbol_table.add(construct, area=position.ProgramAreaNear(construct.identifier()))
                     self.imported_rtns[construct.name()] = True
                     if construct.type() == "type":
                         self.types += filter(lambda x: x.name == construct.name(), mdl_lint.types)
@@ -456,7 +456,7 @@ class GbsSemanticChecker(object):
     def check_defs(self, tree):
         if len(tree.children) == 0:
             if self.is_main_program:
-                pos = common.position.ProgramAreaNear(tree)
+                pos = position.ProgramAreaNear(tree)
                 raise GbsLintException(i18n.i18n('Empty program'), pos)
         else:
             self._check_EntryPoint(tree)
@@ -469,7 +469,7 @@ class GbsSemanticChecker(object):
 
     def _check_EntryPoint(self, tree):
         if not self._check_ProgramEntryPoint(tree) and self.is_main_program:
-            pos = common.position.ProgramAreaNear(tree.children[-1])
+            pos = position.ProgramAreaNear(tree.children[-1])
             raise GbsLintException(i18n.i18n('There should be an entry point (Main procedure or program block).'), pos)
 
     def _check_ProgramEntryPoint(self, tree):
@@ -504,38 +504,38 @@ class GbsSemanticChecker(object):
     def _add_var(self, varName, tree):
         var = self.symbol_table.check_not_defined_or_defined_as(tree, varName, 'atomic', ['variable', 'index', 'parameter'])
         if var is None:
-            self.symbol_table.add(lang.gbs_constructs.UserVariable(varName, tree))
+            self.symbol_table.add(gbs_constructs.UserVariable(varName, tree))
         elif var.type() == 'index':
             msg = i18n.i18n('Cannot modify "%s": index of a foreach/repeatWith/repeat is immutable') % (varName,)
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             raise GbsLintException(msg, area)
         elif var.type() == 'parameter':
             msg = i18n.i18n('Cannot modify "%s": parameter is immutable') % (varName,)
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             raise GbsLintException(msg, area)
 
     def _add_index(self, varName, tree):
         var = self.symbol_table.check_not_defined_or_defined_as(tree, varName, 'atomic', ['index', 'variable', 'parameter'])
         if var is None:
-            self.symbol_table.add(lang.gbs_constructs.UserIndex(varName, tree))
+            self.symbol_table.add(gbs_constructs.UserIndex(varName, tree))
         elif var.type() == 'variable':
             msg = i18n.i18n('Index of a foreach/repeatWith/repeat cannot be a variable: "%s"') % (varName,)
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             raise GbsLintException(msg, area)
         elif var.type() == 'parameter':
             msg = i18n.i18n('Index of a foreach/repeatWith/repeat cannot be a parameter: "%s"') % (varName,)
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             raise GbsLintException(msg, area)
 
     def _add_readvar(self, varName, tree):
         var = self.symbol_table.check_not_defined_or_defined_as(tree, varName, 'atomic', ['variable', 'parameter', 'index'])
         if var is None:
-            self.symbol_table.add(lang.gbs_constructs.UserVariable(varName, tree))
+            self.symbol_table.add(gbs_constructs.UserVariable(varName, tree))
 
     def _check_nested_indexes(self, varName, tree):
         if self.symbol_table.is_immutable(varName):
             msg = i18n.i18n('Nested foreach/repeatWith/repeat\'s cannot have the same index: "%s"') % (varName,)
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             raise GbsLintException(msg, area)
 
     def check_definition1(self, tree):
@@ -547,7 +547,7 @@ class GbsSemanticChecker(object):
     def add_type(self, name, tree):
         self.type_getters[name] = []
         self.symbol_table.check_not_defined_or_defined_as(tree, name, 'atomic', 'type')
-        self.symbol_table.add(lang.gbs_constructs.UserType(name, tree))
+        self.symbol_table.add(gbs_constructs.UserType(name, tree))
 
     def check_type_definition1(self, tree):
         " Visit a type definition and add it to the symbol table."
@@ -558,7 +558,7 @@ class GbsSemanticChecker(object):
             for case in body.children:
                 fieldcase, cname, cbody = case.children
                 if fieldcase != 'case':
-                    area = common.position.ProgramAreaNear(tree)
+                    area = position.ProgramAreaNear(tree)
                     msg = i18n.i18n('Variant body should only contain case declarations.')
                     raise GbsLintException(msg, area)
                 self.add_type(cname.value, case)
@@ -579,13 +579,13 @@ class GbsSemanticChecker(object):
             self.check_function_definition(tree)
         # add to the symbol table
         if prfn == 'procedure':
-            self.symbol_table.add(lang.gbs_constructs.UserProcedure(name, tree))
+            self.symbol_table.add(gbs_constructs.UserProcedure(name, tree))
         elif prfn == 'function':
-            self.symbol_table.add(lang.gbs_constructs.UserFunction(name, tree))
+            self.symbol_table.add(gbs_constructs.UserFunction(name, tree))
         elif is_program_def(tree):
-            self.symbol_table.add(lang.gbs_constructs.UserProgramEntryPoint(name, tree))
+            self.symbol_table.add(gbs_constructs.UserProgramEntryPoint(name, tree))
         elif is_interactive_def(tree):
-            self.symbol_table.add(lang.gbs_constructs.UserInteractiveEntryPoint(name, tree))
+            self.symbol_table.add(gbs_constructs.UserInteractiveEntryPoint(name, tree))
 
     def check_entrypoint_definition(self, tree):
         prfn, name, params, body, typeDecl = tree.children
@@ -596,19 +596,19 @@ class GbsSemanticChecker(object):
         prfn, name, params, body, typeDecl = tree.children
         if self.explicit_board and tree.annotations["varProc"] is None:
             name = name.value
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             msg = i18n.i18n('procedure "%s" should have a procedure variable') % (name,)
             raise GbsLintException(msg, area)
 
         if not self.explicit_board and not tree.annotations["varProc"] is None:
             name = name.value
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             msg = i18n.i18n('procedure "%s" should not have a procedure variable') % (name,)
             raise GbsLintException(msg, area)
 
         if self._body_has_return(body):
             name = name.value
-            area = common.position.ProgramAreaNear(body.children[-1])
+            area = position.ProgramAreaNear(body.children[-1])
             msg = i18n.i18n('procedure "%s" should not have a return') % (name,)
             raise GbsLintException(msg, area)
 
@@ -616,18 +616,18 @@ class GbsSemanticChecker(object):
         prfn, name, params, body, typeDecl = tree.children
         if body.children == []:
             name = name.value
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             msg = i18n.i18n('function body of "%s" cannot be empty') % (name,)
             raise GbsLintException(msg, area)
         elif not self._body_has_return(body):
             name = name.value
-            area = common.position.ProgramAreaNear(body.children[-1])
+            area = position.ProgramAreaNear(body.children[-1])
             msg = i18n.i18n('function "%s" should have a return') % (name,)
             raise GbsLintException(msg, area)
         return_clause = body.children[-1]
         if self._return_is_empty(return_clause):
             name = name.value
-            area = common.position.ProgramAreaNear(body.children[-1])
+            area = position.ProgramAreaNear(body.children[-1])
             raise GbsLintException(i18n.i18n('return from function "%s" must return something') % (name,), area)
 
     def check_definition2(self, tree):
@@ -662,8 +662,8 @@ class GbsSemanticChecker(object):
     def add_field_getter_function(self, type_name, field):
         field_name = field.children[1].children[1].value
         self.type_getters[type_name.value].append(field_name)
-        func_construct = lang.gbs_constructs.BuiltinFieldGetter(field_name,
-                                                                lang.gbs_builtins.TYPE_GETTER_FUNC)
+        func_construct = gbs_constructs.BuiltinFieldGetter(field_name,
+                                                                gbs_builtins.TYPE_GETTER_FUNC)
         self.symbol_table.add(func_construct, None, False)
 
     def check_routine_definition2(self, tree):
@@ -680,16 +680,16 @@ class GbsSemanticChecker(object):
             inout_var = params.children[0]
             set_add(parnames, inout_var.value)
             if prfn == 'function' or not self.explicit_board:
-                self.symbol_table.add(lang.gbs_constructs.UserParameter(inout_var.value, inout_var))
+                self.symbol_table.add(gbs_constructs.UserParameter(inout_var.value, inout_var))
             else:
-                self.symbol_table.add(lang.gbs_constructs.UserVariable(inout_var.value, inout_var))
+                self.symbol_table.add(gbs_constructs.UserVariable(inout_var.value, inout_var))
         if len(params.children) > 1:
             for var in params.children[1:]:
                 if var.value in parnames:
                     msg = i18n.i18n(prfn + ' "%s" has a repeated parameter: "%s"') % (name, var.value)
-                    raise GbsLintException(msg, common.position.ProgramAreaNear(var))
+                    raise GbsLintException(msg, position.ProgramAreaNear(var))
                 set_add(parnames, var.value)
-                self.symbol_table.add(lang.gbs_constructs.UserParameter(var.value, var))
+                self.symbol_table.add(gbs_constructs.UserParameter(var.value, var))
         for cmd in tree.children:
             self.check_command(cmd)
         self.symbol_table.pop_env()
@@ -723,7 +723,7 @@ class GbsSemanticChecker(object):
             dispatch[command](tree)
         else:
             msg = i18n.i18n('Unknown command: %s') % (command,)
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             raise GbsLintException(msg, area)
 
     def check_Skip(self, tree): pass
@@ -731,7 +731,7 @@ class GbsSemanticChecker(object):
 
     def _check_callable(self, callable_type, tree):
         name = tree.children[1]
-        self.check_invocation(self.symbol_table.environment_name(), name.value, common.position.ProgramAreaNear(tree))
+        self.check_invocation(self.symbol_table.environment_name(), name.value, position.ProgramAreaNear(tree))
         def_ = self.symbol_table.check_defined_as(tree, name.value, 'callable', callable_type)
         self.check_arity(def_, tree)
         self.check_tuple(tree.children[2])
@@ -745,7 +745,7 @@ class GbsSemanticChecker(object):
     def check_procCall(self, tree):
         if self.explicit_board != tree.annotations.get('explicit_board', False):
             raise GbsLintException(i18n.i18n('Can not use passing by reference when using the implicit board.'),
-                                   common.position.ProgramAreaNear(tree))
+                                   position.ProgramAreaNear(tree))
         self._check_callable('procedure', tree)
 
     def check_assignVarName(self, tree):
@@ -763,7 +763,7 @@ class GbsSemanticChecker(object):
         nombres = {}
         for v in varTuple:
             if v.value in nombres:
-                area = common.position.ProgramAreaNear(v)
+                area = position.ProgramAreaNear(v)
                 msg = i18n.i18n('Repeated variable in assignment: "%s"') % (v.value,)
                 raise GbsLintException(msg, area)
             nombres[v.value] = True
@@ -792,7 +792,7 @@ class GbsSemanticChecker(object):
             if branch.children[0] == 'branch':
                 for literal in branch.children[1].children:
                     if literal.value in seen:
-                        area = common.position.ProgramAreaNear(literal)
+                        area = position.ProgramAreaNear(literal)
                         raise GbsLintException(i18n.i18n('Literals in a switch should be disjoint'), area)
                     seen[literal.value] = 1
                     self.check_constant_or_typename(literal)
@@ -807,7 +807,7 @@ class GbsSemanticChecker(object):
             if branch.children[0] == 'branch':
                 branch_case = branch.children[1]
                 if branch_case.value in seen:
-                    area = common.position.ProgramAreaNear(branch_case)
+                    area = position.ProgramAreaNear(branch_case)
                     raise GbsLintException(i18n.i18n('Constructors in a match should be disjoint'), area)
                 seen[branch_case.value] = 1
                 self.check_constant_or_typename(branch_case)
@@ -834,8 +834,8 @@ class GbsSemanticChecker(object):
     def check_nesting_constrains(self, block):
         child = recursive_find_node(block, lambda node: node in ["foreach", "while", "repeat"])
         if not child is None:
-            raise GbsLintException(i18n.i18n("Repetition nesting is not allowed"), common.position.ProgramAreaNear(block))
-            
+            raise GbsLintException(i18n.i18n("Repetition nesting is not allowed"), position.ProgramAreaNear(block))
+
 
     def check_return(self, tree):
         self.check_tuple(tree.children[1])
@@ -872,7 +872,7 @@ class GbsSemanticChecker(object):
             dispatch[exptype](tree)
         else:
             msg = i18n.i18n('Unknown expression: %s') % (exptype,)
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             raise GbsLintException(msg, area)
 
     def check_unary_op(self, tree):
@@ -891,7 +891,7 @@ class GbsSemanticChecker(object):
                 return False
             if not (isinstance(node.children[0], str) and node.children[0] == 'funcCall'):
                 return False
-            return (isinstance(node.children[1], lang.bnf_parser.Token)
+            return (isinstance(node.children[1], bnf_parser.Token)
                     and node.children[1].value == '_mk_field')
 
         def fstop_search(node):
@@ -909,7 +909,7 @@ class GbsSemanticChecker(object):
             if not fname in field_names:
                 field_names.append(fname)
             else:
-                area = common.position.ProgramAreaNear(tree)
+                area = position.ProgramAreaNear(tree)
                 msg = i18n.i18n('Repeated assignment for field "%s".') % (fname,)
                 raise GbsLintException(msg, area)
 
@@ -947,7 +947,7 @@ class GbsSemanticChecker(object):
                 many_few = 'many'
             else:
                 many_few = 'few'
-            area = common.position.ProgramAreaNear(use_tree)
+            area = position.ProgramAreaNear(use_tree)
             msg = i18n.i18n('Too ' + many_few + ' arguments for ' +
                                             prfn + ' "%s".\n' +
                                             'Expected %i (%s), received %i') % (
@@ -960,7 +960,7 @@ class GbsSemanticChecker(object):
         name = def_comp.name()
         nretvals = def_comp.num_retvals()
         if nretvals != ret_arity:
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             if nretvals == 1:
                                 l1 = i18n.i18n('Function "%s" returns one value') % (name,)
             else:
@@ -975,4 +975,4 @@ class GbsSemanticChecker(object):
 def lint(tree, strictness='lax', allow_recursion=True):
     checker = GbsSemanticChecker(strictness=strictness, allow_recursion=allow_recursion)
     checker.check_program(tree)
-    lang.gbs_type.set_user_defined_types(checker.types)
+    gbs_type.set_user_defined_types(checker.types)

@@ -19,15 +19,15 @@
 import re
 import json
 
-import common.utils
-import common.i18n as i18n
-import lang.gbs_builtins
-import lang.board.basic
+import pygobstoneslang.common.utils as utils
+import pygobstoneslang.common.i18n as i18n
+import pygobstoneslang.lang.gbs_builtins as gbs_builtins
+import basic
 
 def is_numeric(x):
   return re.match('^[0-9]+$', x)
 
-class JsonBoardFormat(lang.board.basic.BoardFormat):
+class JsonBoardFormat(basic.BoardFormat):
   "Simple human-friendly board format."
 
   def dump(self, board, f=None, style='verbose', **kwargs):
@@ -37,10 +37,10 @@ class JsonBoardFormat(lang.board.basic.BoardFormat):
       output = self.dump_with_translator(board, self.compact_translator)
     else:
       assert False
-    
+
     if not f is None:
         f.write(output)
-    return json.dumps(output)   
+    return json.dumps(output)
 
   def dump_to_dict(self, board, style='verbose', **kwargs):
     if style == 'verbose':
@@ -49,7 +49,7 @@ class JsonBoardFormat(lang.board.basic.BoardFormat):
       output = self.dump_with_translator(board, self.compact_translator)
     else:
       assert False
-    return output 
+    return output
 
   def verbose_translator(self, s):
     return s
@@ -73,15 +73,15 @@ class JsonBoardFormat(lang.board.basic.BoardFormat):
       for y in range(h):
         cell = {}
         for coli in range(4):
-          cant = board.cells[y][x].num_stones(coli) 
+          cant = board.cells[y][x].num_stones(coli)
           if cant == 0: continue
-          col = lang.gbs_builtins.Color(coli).name()
+          col = gbs_builtins.Color(coli).name()
           cell.update({col : cant})
         if cell == {}: continue
-        
+
         if not x in cells.keys():
             cells[x] = {}
-        cells[x][y] = cell        
+        cells[x][y] = cell
     output.update({"head": board.head})
     output.update({"cells": cells})
     return output

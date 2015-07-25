@@ -18,8 +18,8 @@
 
 #### Not-quite-pretty printing
 
-import lang.gbs_def_helper as def_helper
-from lang.parser.Token import Token
+import gbs_def_helper as def_helper
+from parser.Token import Token
 
 def llen(s):
   return len(s.split('\n')[-1])
@@ -30,7 +30,7 @@ class GbsPrettyPrinter(object):
     self.width = width
     self.indentation_width = indentation_width
 
-  def join_fit_map(self, indent, sep, args, func):  
+  def join_fit_map(self, indent, sep, args, func):
     wsep = ''
     ind = ''
     lines = []
@@ -45,7 +45,7 @@ class GbsPrettyPrinter(object):
     if indent_ex:
       ind = indent * ' '
 
-    s = '' 
+    s = ''
     for a in args:
       if indent + len(s) + len(wsep) < self.width:
         s1 = s + wsep + func(a, indent + len(s) + len(wsep))
@@ -101,15 +101,15 @@ class GbsPrettyPrinter(object):
           return self.pprint_type_def(tree)
       else:
           return self.pprint_routine_def(tree)
-      
+
   def pprint_type_def(self, tree):
       typedef, type, keyword_or_alias, body = tree.children
-      
+
       if hasattr(keyword_or_alias, 'value'):
           keyword_or_alias = keyword_or_alias.value
       else:
           keyword_or_alias = self.pprint_type(keyword_or_alias, 0)
-          
+
       head = '%s %s is %s' % (typedef, type.value, keyword_or_alias)
       s = '%s ' % (head,)
       if body is not None:
@@ -123,10 +123,10 @@ class GbsPrettyPrinter(object):
               assert False
           s += '\n}'
       return s
-  
+
   def pprint_variant_cases(self, tree):
       return '\n'.join([self.pprint_variant_case(case) for case in tree.children])
-  
+
   def pprint_variant_case(self, tree):
       _, name, body = tree.children
       s = "case %s " % (name.value,)
@@ -137,14 +137,14 @@ class GbsPrettyPrinter(object):
           self.level -= 1
           s += '\n' + self.indent() + '}'
       return self.indent() + s
-  
+
   def pprint_fields(self, tree):
       return '\n'.join([self.pprint_field(field) for field in tree.children])
-  
-  def pprint_field(self, tree):      
+
+  def pprint_field(self, tree):
       return self.indent() + "field %s : %s" % (self.pprint_literal(tree.children[1], 0),
                                                 self.pprint_type(tree.children[2], 0))
-  
+
   def pprint_routine_def(self, tree):
     prfn, name, params, body, type_decl = tree.children
     head = '%s %s' % (prfn, name.value)
@@ -203,7 +203,7 @@ class GbsPrettyPrinter(object):
     s += self.join_fit_map(llen(s), ', ', vals, self.pprint_expression)
     s += ')'
     return s
-  
+
   def pprint_assignVarName(self, tree):
     s = self.indent() + tree.children[1].value + ' := '
     s += self.pprint_expression(tree.children[2], llen(s))
@@ -254,7 +254,7 @@ class GbsPrettyPrinter(object):
     s += ') '
     s += self.pprint_block_noindent(tree.children[2])
     return s
-  
+
   def pprint_repeat(self, tree):
     s = self.indent() + 'repeat '
     s += self.pprint_expression(tree.children[1], llen(s))
@@ -347,10 +347,10 @@ class GbsPrettyPrinter(object):
   def pprint_varName(self, tree, start_col):
     return tree.children[1].value
 
-  def pprint_constructor(self, tree, start_col):    
+  def pprint_constructor(self, tree, start_col):
     type = tree.children[2].children[1]
     fieldgens = def_helper.collect_nodes(tree, def_helper.is_field_gen)
- 
+
     s = type.value + '('
     s += self.join_fit_map(start_col + llen(s), ', ', fieldgens, self.pprint_expression)
     s += ')'
@@ -379,7 +379,7 @@ class GbsPrettyPrinter(object):
       s += ' ' + tree.children[1].value + ' '
       s += self.pprint_expression(tree.children[2].children[1], start_col)
       return s
-  
+
   def pprint_default_funcCall(self, tree, start_col):
     vals = tree.children[2].children
     s = tree.children[1].value + '('
@@ -451,7 +451,7 @@ class GbsPrettyPrinter(object):
     return s
 
   def pprint_type(self, tree, start_col):
-      s = self.pprint_type_atom(tree.children[1], start_col)      
+      s = self.pprint_type_atom(tree.children[1], start_col)
       if s == 'List':
           s = '[%s]'
       if len(tree.children) > 2 and not tree.children[2] is None:
@@ -459,8 +459,7 @@ class GbsPrettyPrinter(object):
       return s
 
   def pprint_type_atom(self, tok, start_col):
-      return tok.value 
+      return tok.value
 
 def pretty_print(tree, print_imports=True):
   return GbsPrettyPrinter().pprint_program(tree, print_imports=print_imports)
-

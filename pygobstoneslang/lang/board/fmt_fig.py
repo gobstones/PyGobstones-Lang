@@ -18,10 +18,10 @@
 
 import math
 
-import common.utils
-import common.i18n as i18n
-import lang.gbs_builtins
-import lang.board.basic
+import pygobstoneslang.common.utils as utils
+import pygobstoneslang.common.i18n as i18n
+import pygobstoneslang.lang.gbs_builtins as gbs_builtins
+import basic
 
 class Polyline(object):
   def __init__(self, points, fill=False, area_fill=20, fill_color=0, pen_color=0, thickness=1, depth=100):
@@ -140,7 +140,7 @@ class Text(object):
 class Color(object):
   def __init__(self, code, rgb=None, hex_color=None):
     self.code = code
-    assert rgb is not None or hex_color is not None 
+    assert rgb is not None or hex_color is not None
     if hex_color is None:
       self.hex_color = '#%.2x%.2x%.2x' % rgb
     else:
@@ -152,7 +152,7 @@ class Color(object):
     f.write('\n')
 
 def write_fig(f, objs):
-  f.write("#FIG 3.2  Produced by PyGobstones version %s\n" % (common.utils.version_number(),))
+  f.write("#FIG 3.2  Produced by PyGobstones version %s\n" % (utils.version_number(),))
   f.write("Landscape\n")
   f.write("Center\n")
   f.write("Metric\n")
@@ -166,7 +166,7 @@ def write_fig(f, objs):
 
 VALID_OPTIONS = ['verbose', 'head', 'labels', 'colors', 'color-names']
 
-class FigBoardFormat(lang.board.basic.BoardFormat):
+class FigBoardFormat(basic.BoardFormat):
 
   def dump(self, board, f, **kwargs):
     options = {}
@@ -185,7 +185,7 @@ class FigBoardFormat(lang.board.basic.BoardFormat):
     write_fig(f, self.render(board, options))
 
   def load(self, board, f):
-    raise lang.board.basic.BoardFormatException(i18n.i18n('Loading of fig boards not supported'))
+    raise basic.BoardFormatException(i18n.i18n('Loading of fig boards not supported'))
 
   def render(self, board, options={}):
     Margin = 250
@@ -213,12 +213,12 @@ class FigBoardFormat(lang.board.basic.BoardFormat):
           return 50 + x
         else:
           return 7
-    
+
     objs = []
 
     objs.append(Color(color_code('head-background'), hex_color='#e0e0a0'))
     objs.append(Color(color_code('head'), hex_color='#808000'))
-    for i in range(lang.gbs_builtins.NUM_COLORS):
+    for i in range(gbs_builtins.NUM_COLORS):
       objs.append(Color(50 + i, hex_color=i18n.i18n('I18N_stone_fill%i' % (i,))))
 
     objs.append(Rectangle(0, 0, 2 * Margin + width * CellSize, 2 * Margin + height * CellSize, pen_color=white, depth=100))
@@ -231,8 +231,8 @@ class FigBoardFormat(lang.board.basic.BoardFormat):
 
     def cell_for(i, j, coli):
       objs = []
-      num = board.cells[j][i].num_stones(coli) 
-      col = lang.gbs_builtins.Color(coli).name()
+      num = board.cells[j][i].num_stones(coli)
+      col = gbs_builtins.Color(coli).name()
       x0 = Margin + CellSize * i + CellSize // 2
       y0 = Margin + CellSize * (height - j - 1) + CellSize // 2
       x0 += pm(coli % 2 == 0) * CellSize // 4
@@ -278,7 +278,7 @@ class FigBoardFormat(lang.board.basic.BoardFormat):
         objs.append(Line(x0 - smm, y - smm, x0 + smm, y + smm, pen_color=cc, thickness=2, depth=40))
         objs.append(Line(x0 - smm, y + smm, x0 + smm, y - smm, pen_color=cc, thickness=2, depth=40))
         objs.append(Line(x1 - smm, y - smm, x1 + smm, y + smm, pen_color=cc, thickness=2, depth=40))
-        objs.append(Line(x1 - smm, y + smm, x1 + smm, y - smm, pen_color=cc, thickness=2, depth=40)) 
+        objs.append(Line(x1 - smm, y + smm, x1 + smm, y - smm, pen_color=cc, thickness=2, depth=40))
       return objs
 
     def label_row(i):
@@ -303,7 +303,7 @@ class FigBoardFormat(lang.board.basic.BoardFormat):
       for j in range(height):
         objs.append(Rectangle(Margin + i * CellSize, Margin + j * CellSize, CellSize, CellSize,
                               pen_color=black, depth=50))
-        for coli in range(lang.gbs_builtins.NUM_COLORS):
+        for coli in range(gbs_builtins.NUM_COLORS):
           objs.extend(cell_for(i, j, coli))
 
     if options['head']:
@@ -316,4 +316,3 @@ class FigBoardFormat(lang.board.basic.BoardFormat):
       for j in range(width):
         objs.extend(label_col(j))
     return objs
-

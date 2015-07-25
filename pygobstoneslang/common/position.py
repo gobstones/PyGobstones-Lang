@@ -17,8 +17,8 @@
 
 import os
 
-import common.i18n as i18n
-from common.utils import *
+import i18n as i18n
+from utils import *
 
 #### Tracking of positions inside source files.
 ####
@@ -114,4 +114,3 @@ a given program element."""
     return self.elem.pos_begin, self.elem.pos_end
   def filename(self):
     return self.elem.pos_begin.filename()
-

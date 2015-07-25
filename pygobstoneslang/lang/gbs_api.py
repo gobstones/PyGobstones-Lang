@@ -16,12 +16,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from lang.grammar import GbsGrammarFile, XGbsGrammarFile
-import lang.gbs_io
+from grammar import GbsGrammarFile, XGbsGrammarFile
+import gbs_io
 
 """ Gobstones API classes """
 
-class ExecutionAPI(lang.gbs_io.InteractiveApi):
+class ExecutionAPI(gbs_io.InteractiveApi):
     def log(self, msg):
         pass
 
@@ -30,12 +30,11 @@ class GobstonesOptions(object):
         Gobstones = "Gobstones3.0"
         XGobstones = "XGobstones"
     LINT_MODES = ['lax', 'strict']
-    def __init__(self, lang_version=LangVersion.Gobstones, lint_mode="lax", check_liveness=False, check_types=False, jit=False, optimize=False, allow_recursion=False):
+    def __init__(self, lang_version=LangVersion.Gobstones, lint_mode="lax", check_liveness=False, check_types=False, jit=False, allow_recursion=False):
         self.lint_mode = lint_mode
         self.check_liveness = check_liveness
         self.check_types = check_types
-        self.jit = jit
-        self.optimize = optimize
+        self.jit = jit        
         self.lang_version = lang_version
         self.allow_recursion = allow_recursion
 

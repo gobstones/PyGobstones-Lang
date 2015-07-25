@@ -16,16 +16,16 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import common.position
-import common.i18n as i18n
+import pygobstoneslang.common.position as position
+import pygobstoneslang.common.i18n as i18n
 
-import common.utils
+import pygobstoneslang.common.utils as utils
 
-class Token(common.position.ProgramElement):
+class Token(position.ProgramElement):
     "Represents a token (terminal symbol in the grammar)."
 
     def __init__(self, type_, value, pos_begin, pos_end):
-        common.position.ProgramElement.__init__(self)
+        position.ProgramElement.__init__(self)
         self.type = type_
         self.value = value
         self.pos_begin = pos_begin

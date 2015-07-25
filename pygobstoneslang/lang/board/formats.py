@@ -16,25 +16,25 @@
 #
 
 
-import lang.board.fmt_gbt
-import lang.board.fmt_tex
-import lang.board.fmt_gbb
-import lang.board.fmt_html
-import lang.board.fmt_gbbo
-import lang.board.fmt_png
-import lang.board.fmt_fig
+import fmt_gbt
+import fmt_tex
+import fmt_gbb
+import fmt_html
+import fmt_gbbo
+import fmt_png
+import fmt_fig
 
 AvailableFormats = {
-  'gbt': lang.board.fmt_gbt.GbtBoardFormat,
-  'tex': lang.board.fmt_tex.TexBoardFormat,
-  'gbb': lang.board.fmt_gbb.GbbBoardFormat,
-  'html': lang.board.fmt_html.HtmlBoardFormat,
-  'gbbo': lang.board.fmt_gbbo.GbboBoardFormat,
-  'fig': lang.board.fmt_fig.FigBoardFormat,
+  'gbt': fmt_gbt.GbtBoardFormat,
+  'tex': fmt_tex.TexBoardFormat,
+  'gbb': fmt_gbb.GbbBoardFormat,
+  'html': fmt_html.HtmlBoardFormat,
+  'gbbo': fmt_gbbo.GbboBoardFormat,
+  'fig': fmt_fig.FigBoardFormat,
 }
 
-if lang.board.fmt_png.available:
-  AvailableFormats['png'] = lang.board.fmt_png.PngBoardFormat
+if fmt_png.available:
+  AvailableFormats['png'] = fmt_png.PngBoardFormat
 
 DefaultFormat = 'gbb'
 
@@ -42,9 +42,8 @@ def is_board_filename(filename):
   return filename.lower().split('.')[-1] in AvailableFormats
 
 def format_for(filename):
-  fmt = filename.lower().split('.')[-1] 
+  fmt = filename.lower().split('.')[-1]
   if fmt in AvailableFormats:
     return fmt
   else:
     return DefaultFormat
-

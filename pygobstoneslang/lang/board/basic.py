@@ -14,21 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-import common.utils
-import lang.gbs_board
+import pygobstoneslang.common.utils as utils
+import pygobstoneslang.lang.gbs_board as gbs_board
 
 class BoardFormat(object):
     def to_string(self, board, **kwargs):
-        out = common.utils.StringIO()
+        out = utils.StringIO()
         self.dump(board, out, **kwargs)
         res = out.getvalue()
         out.close()
         return res
     def from_string(self, s, board=None):
         if board is None:
-            board = lang.gbs_board.Board()
-        f = common.utils.StringIO(s)
+            board = gbs_board.Board()
+        f = utils.StringIO(s)
         self.load(board, f)
         f.close()
         return board
-

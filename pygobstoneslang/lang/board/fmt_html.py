@@ -15,12 +15,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import common.utils
-import common.i18n as i18n
-import lang.gbs_builtins
-import lang.board.basic
+import pygobstoneslang.common.utils as utils
+import pygobstoneslang.common.i18n as i18n
+import pygobstoneslang.lang.gbs_builtins as gbs_builtins
+import basic
 
-class HtmlBoardFormat(lang.board.basic.BoardFormat):
+class HtmlBoardFormat(basic.BoardFormat):
   # size can be:
   #   - the string 'relative'
   #   - an integer (side of a cell in pixels)
@@ -163,7 +163,7 @@ table.gbs_board {
 
   def render(self, board, draw_head=True):
     w, h = board.size
-    out = common.utils.StringIO()
+    out = utils.StringIO()
 
     def row_titles(border):
       out.write('<tr>')
@@ -175,14 +175,14 @@ table.gbs_board {
 
     out.write('<table class="gbs_board">\n')
     row_titles('top')
-    for y in common.utils.seq_reversed(range(h)):
+    for y in utils.seq_reversed(range(h)):
       out.write('  <tr>\n')
       out.write('    <td class="lv">%u</td>\n' % (y,))
       for x in range(w):
         def cell_for(coli):
-          cant = board.cells[y][x].num_stones(coli) 
+          cant = board.cells[y][x].num_stones(coli)
           if cant == 0: return '<td><div class="O"></div></td>'
-          col = lang.gbs_builtins.Color(coli).name()
+          col = gbs_builtins.Color(coli).name()
           return '<td><div class="gbs_stone %s"><span>%i</span></div></td>' % (col[0], cant)
 
         if board.head == (y, x) and draw_head:
@@ -211,5 +211,4 @@ table.gbs_board {
     f.write(self.render(board))
 
   def load(self, board, f):
-    raise lang.board.basic.BoardFormatException(i18n.i18n('Loading of html boards not supported'))
-
+    raise basic.BoardFormatException(i18n.i18n('Loading of html boards not supported'))

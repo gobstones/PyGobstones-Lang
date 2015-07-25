@@ -22,8 +22,8 @@ identifier might take, such as "user-defined function"
 or "built-in constant".
 """
 
-import common.i18n as i18n
-import common.position
+import pygobstoneslang.common.i18n as i18n
+import pygobstoneslang.common.position as position
 
 class ProgramConstruct(object):
     """Base class to represent Gobstones constructs, such as constants,
@@ -47,7 +47,7 @@ defined.
         """Returns a program area indicating the place where this construct is
 defined.
 """
-        return common.position.ProgramArea()
+        return position.ProgramArea()
 
     def underlying_construct(self):
         "Returns the original construct (used for renames/aliases)."
@@ -79,7 +79,7 @@ class CallableConstruct(ProgramConstruct):
 
 class EntryPointConstruct(ProgramConstruct):
     """Represents a construct that cannot be called (entrypoint)"""
-    
+
     def kind(self):
         "Returns the kind of this construct."
         return 'entrypoint'
@@ -100,7 +100,7 @@ class ProgramEntryPoint(EntryPointConstruct):
     def type(self):
         "Returns the type of this construct."
         return 'program'
-    
+
 class InteractiveEntryPoint(EntryPointConstruct):
     """Represents a Gobstones interactive program block"""
     def type(self):
@@ -134,7 +134,7 @@ class Variable(AtomicConstruct):
     def type(self):
         "Returns the type of this construct."
         return 'variable'
-    
+
 class Type(AtomicConstruct):
     "Represents a Gobstones Type"
     def type(self):
@@ -189,7 +189,7 @@ defined by the Gobstones runtime.
 construct. The names are taken from its types. E.g.: Poner(color).
 """
         return self._params
-    
+
 class BuiltinProcedure(BuiltinCallable, Procedure):
     "Represents a builtin procedure."
     pass
@@ -204,7 +204,7 @@ class BuiltinFunction(BuiltinCallable, Function):
     def num_retvals(self):
         "Returns the number of values that this function returns."
         return self._nretvals
-    
+
 class BuiltinFieldGetter(BuiltinFunction):
     def __init__(self, name, gbstype, primitive=None):
         super(BuiltinFieldGetter, self).__init__(name, gbstype, primitive)
@@ -237,7 +237,7 @@ defined.
         """Returns a program area indicating the place where this user-defined
 construct is defined.
 """
-        return common.position.ProgramAreaNear(self._tree)
+        return position.ProgramAreaNear(self._tree)
 
     def is_builtin(self):
         """Returns True iff this construct is a builtin. (User defined
@@ -254,7 +254,7 @@ class UserEntryPoint(UserConstruct):
 class UserProgramEntryPoint(UserEntryPoint, ProgramEntryPoint):
     "Represents a user-defined program entrypoint."
     pass
-    
+
 class UserInteractiveEntryPoint(UserEntryPoint, ProgramEntryPoint):
     "Represents a user-defined interactive program entrypoint."
     pass

@@ -19,16 +19,16 @@
 """This module provides functions that implement type inference
 for Gobstones ASTs."""
 
-import lang.gbs_type
-from lang.gbs_type import print_type
-import lang.gbs_builtins
-import common.position
-import common.i18n as i18n
+import gbs_type
+from gbs_type import print_type
+import gbs_builtins
+import pygobstoneslang.common.position as position
+import pygobstoneslang.common.i18n as i18n
 
-from lang.gbs_def_helper import *
+from gbs_def_helper import *
 
 #from common.utils import *
-from common.utils import (
+from pygobstoneslang.common.utils import (
     StaticException,
     set_new, set_add,
 )
@@ -37,7 +37,7 @@ def _type_name(node):
     node_name = node.children[1].value
     if len(node.children) > 2:
         output_name = node_name + "("
-        for inner_type in node.children[2].children: 
+        for inner_type in node.children[2].children:
          output_name += _type_name(inner_type)
         return output_name + ")"
     else:
@@ -68,12 +68,12 @@ class GbsTypeInference(object):
 
     def init_builtins(self):
         "Initialize a global context with types for all the builtins."
-        for b in lang.gbs_builtins.get_builtins():
+        for b in gbs_builtins.get_builtins():
             bname, b = b.name(), b.underlying_construct()
             set_add(self.ribs[0], b.name())
             self.global_context[b.name()] = b.gbstype()
-        
-        for type_name, gbs_type in lang.gbs_type.BasicTypes.items():            
+
+        for type_name, gbs_type in gbs_type.BasicTypes.items():
             self.global_context[type_name] = gbs_type()
 
     def push_env(self):
@@ -96,11 +96,11 @@ class GbsTypeInference(object):
         """Add a variable to the context with the given type, checking
         that it is consistent with the types it might already have."""
         if new_type is None: # fresh
-            new_type = lang.gbs_type.GbsTypeVar()
+            new_type = gbs_type.GbsTypeVar()
         varname = token.value
         if varname in self.ribs[-1]:
             old_type = self.context[varname]
-            lang.gbs_type.unify(new_type, old_type)
+            gbs_type.unify(new_type, old_type)
         else:
             self.context[varname] = new_type
             set_add(self.ribs[-1], varname)
@@ -117,12 +117,12 @@ class GbsTypeInference(object):
                 self.module_handler.reraise(
                     GbsTypeInferenceException,
                     exception,
-                    common.i18n.i18n(
+                    i18n.i18n(
                         'Error typechecking module %s'
                     ) % (
                         mdl_name,
                     ),
-                    common.position.ProgramAreaNear(tree.children[1]))
+                    position.ProgramAreaNear(tree.children[1]))
             self.module_handler.set_type_context(
                 mdl_name, mdl_infer.global_context)
         imports = tree.children[1].children
@@ -137,7 +137,7 @@ class GbsTypeInference(object):
             mdl_name = imp.children[1].value
             imported_defs = imp.children[2].children
             for imported_def in imported_defs:
-                self.global_context[imported_def.value] = self.module_handler.type_of(mdl_name, 
+                self.global_context[imported_def.value] = self.module_handler.type_of(mdl_name,
                                                                                       imported_def.value)
 
     def infer_defs(self, tree):
@@ -146,16 +146,16 @@ class GbsTypeInference(object):
             self.initialize_def(def_)
         for def_ in type_defs(tree):
             self.infer_type_def(def_)
-        for def_ in type_defs(tree):    
+        for def_ in type_defs(tree):
             self.infer_type_def2(def_)
-            
+
         for def_ in routine_defs(tree):
             self.initialize_def(def_)
         for def_ in routine_defs(tree):
             self.infer_routine_def(def_)
 
     def initialize_def(self, tree):
-        """Initialize the types of all the toplevel definitions 
+        """Initialize the types of all the toplevel definitions
         in a file."""
         if is_type_def(tree):
             self.initialize_type_def(tree)
@@ -168,36 +168,36 @@ class GbsTypeInference(object):
         identifier "f" is initialized with type (s1 x s2) -> s3,
         where s1, s2 and s3 are fresh type variables."""
         tok = get_def_name(tree)
-        params = lang.gbs_type.GbsTypeVar()
-        
+        params = gbs_type.GbsTypeVar()
+
         type_decl = get_def_type_decl(tree)
         if type_decl is not None:
-            t = lang.gbs_type.parse_type_declaration(type_decl, self.global_context)
+            t = gbs_type.parse_type_declaration(type_decl, self.global_context)
         elif is_def_keyword(tree, 'procedure'):
-            t = lang.gbs_type.GbsProcedureType(params)
+            t = gbs_type.GbsProcedureType(params)
         elif is_entrypoint_def(tree):
-            t = lang.gbs_type.GbsEntryPointType()        
+            t = gbs_type.GbsEntryPointType()
         else:
-            t = lang.gbs_type.GbsFunctionType(params,
-                                              lang.gbs_type.GbsTypeVar())
+            t = gbs_type.GbsFunctionType(params,
+                                              gbs_type.GbsTypeVar())
         self.global_context[tok.value] = t
 
     def initialize_type_def(self, tree):
-        """ Initializes User-Defined Type """        
+        """ Initializes User-Defined Type """
         _, name, type_or_def = tree.children
         if type_or_def.children[0] == 'variant':
-            t = lang.gbs_type.GbsVariantType(name.value)
+            t = gbs_type.GbsVariantType(name.value)
         elif type_or_def.children[0] == 'record':
-            t = lang.gbs_type.GbsRecordType(name.value)
+            t = gbs_type.GbsRecordType(name.value)
         elif type_or_def.children[0] == 'type':
-            t = lang.gbs_type.GbsTypeAlias(name.value)
-        else:            
+            t = gbs_type.GbsTypeAlias(name.value)
+        else:
             assert False
         self.add_type(name.value, t)
-    
+
     def add_type(self, name, type):
         self.global_context[name] = type
-    
+
     def infer_routine_def(self, tree):
         """Infer the type of a definition (either a function or a procedure).
         Needed? Or already known on initialization?"""
@@ -217,8 +217,8 @@ class GbsTypeInference(object):
             fname = fname.children[1]
             ftype = self.infer_type(ftype)
             fields[fname.value] = ftype
-            self.global_context[fname.value] = lang.gbs_builtins.TYPE_GETTER_FUNC
-        return fields 
+            self.global_context[fname.value] = gbs_builtins.TYPE_GETTER_FUNC
+        return fields
 
     def infer_type_def(self, tree):
         "Infer the type of a type definition (alias/variant/record)"
@@ -235,7 +235,7 @@ class GbsTypeInference(object):
         else:
             assert False
         self.pop_env()
-        
+
     def infer_type_def2(self, tree):
         "Infer the type of variant cases"
         _, name, type_or_def = tree.children
@@ -243,7 +243,7 @@ class GbsTypeInference(object):
         if type_or_def.children[0] == 'variant':
             self.infer_variant_type_cases(name.value, type_or_def.children[1])
         self.pop_env()
-    
+
     def infer_variant_type(self, variant_name, body):
         variant = self.global_context[variant_name]
         for case in body.children:
@@ -251,26 +251,26 @@ class GbsTypeInference(object):
             fields = {}
             if not cbody is None:
                 fields = self.infer_record_type(cbody)
-            variant.cases[cname.value] = lang.gbs_type.GbsRecordType(cname.value, fields)
-            
+            variant.cases[cname.value] = gbs_type.GbsRecordType(cname.value, fields)
+
     def infer_variant_type_cases(self, variant_name, body):
         variant = self.global_context[variant_name]
         for case in body.children:
             _, cname, cbody = case.children
             ct = variant.instantiate()
             ct.is_case = cname.value
-            self.add_type(cname.value, ct) 
-    
+            self.add_type(cname.value, ct)
+
     def infer_type(self, node):
         "Infer types"
         """[TODO] Check """
         if node is None:
-            return lang.gbs_type.GbsTypeVar()
+            return gbs_type.GbsTypeVar()
         else:
             type = node.children[1]
             if len(node.children) > 2:
                 inner_types = [self.infer_type(inner_type) for inner_type in node.children[2].children]
-                return lang.gbs_type.ComposedTypes[type.value](*inner_types)
+                return gbs_type.ComposedTypes[type.value](*inner_types)
             else:
                 type_parts = type.value.split("::")
                 if len(type_parts) > 1:
@@ -278,16 +278,16 @@ class GbsTypeInference(object):
                 else:
                     type_name = type_parts[0]
                 type_class = self.global_context[type_name]
-                if len(type_parts) == 1 and isinstance(type_class, lang.gbs_type.GbsVariantType):
+                if len(type_parts) == 1 and isinstance(type_class, gbs_type.GbsVariantType):
                     type.value = type_class.name + "::" + type.value
                 return type_class
-        
+
     def _debug(self, tree):
         print()
         print('DEF', tree.children[0], tree.children[1].value)
         d2 = {}
         for k, v in self.global_context.items():
-            if k not in lang.gbs_builtins.BUILTIN_NAMES:
+            if k not in gbs_builtins.BUILTIN_NAMES:
                 d2[k] = v
         print('   Global_ctx:', d2)
         print('   Local_ctx :', self.context)
@@ -306,27 +306,27 @@ class GbsTypeInference(object):
         param_types = []
         for p in params.children:
             param_types.append(self.context[p.value])
-        param_types = lang.gbs_type.GbsTupleType(param_types)
+        param_types = gbs_type.GbsTupleType(param_types)
         if prfn == 'procedure':
-            def_type = lang.gbs_type.GbsProcedureType(param_types)
+            def_type = gbs_type.GbsProcedureType(param_types)
         elif prfn == 'function':
             return_types = self._return_type(prfn, name, params, body)
-            def_type = lang.gbs_type.GbsFunctionType(param_types, return_types)
+            def_type = gbs_type.GbsFunctionType(param_types, return_types)
         elif prfn == 'entrypoint' and (name.value == 'program' or name.value == 'interactive'):
-            def_type = lang.gbs_type.GbsEntryPointType()
+            def_type = gbs_type.GbsEntryPointType()
         else:
             assert False
         expected = self.global_context[name.value].instantiate()
         try:
-            lang.gbs_type.unify(expected, def_type)
+            gbs_type.unify(expected, def_type)
             if prfn == 'function': #[TODO] Check
                 freevars = def_type.freevars()
                 if len(freevars) > 0:
-                    def_type = lang.gbs_type.GbsForallType(freevars, def_type)
+                    def_type = gbs_type.GbsForallType(freevars, def_type)
                     self.global_context[name.value] = def_type
             tree.type_annot = def_type
-        except lang.gbs_type.UnificationFailedException as e:
-            area = common.position.ProgramAreaNear(tree)
+        except gbs_type.UnificationFailedException as e:
+            area = position.ProgramAreaNear(tree)
             if prfn == 'procedure':
                 msg = i18n.i18n(
                           'procedure "%s" should take: %s\n' +
@@ -400,11 +400,11 @@ class GbsTypeInference(object):
         proc_name = tree.children[1].value
         proc_type = self.global_context[proc_name].instantiate()
         arg_type = self.infer_tuple(tree.children[2])
-        expected = lang.gbs_type.GbsProcedureType(arg_type)
+        expected = gbs_type.GbsProcedureType(arg_type)
         try:
-            lang.gbs_type.unify(proc_type, expected)
-        except lang.gbs_type.UnificationFailedException as e:
-            area = common.position.ProgramAreaNear(tree)
+            gbs_type.unify(proc_type, expected)
+        except gbs_type.UnificationFailedException as e:
+            area = position.ProgramAreaNear(tree)
             msg = i18n.i18n(
                       'procedure "%s" is receiving: %s\n' +
                       'But should receive: %s'
@@ -421,8 +421,8 @@ class GbsTypeInference(object):
         exp = tree.children[3]
         try:
             self._add_var_with_offset(var, offsets, self.infer_expression(exp))
-        except lang.gbs_type.UnificationFailedException as e:
-            area = common.position.ProgramAreaNear(tree)
+        except gbs_type.UnificationFailedException as e:
+            area = position.ProgramAreaNear(tree)
             msg = i18n.i18n(
                       '"%s" has type: %s\n' +
                       'Right hand side has type: %s'
@@ -440,8 +440,8 @@ class GbsTypeInference(object):
         for var, ret_type in zip(tup, ret_types.subtypes()):
             try:
                 self._add_var(var, ret_type)
-            except lang.gbs_type.UnificationFailedException as e:
-                area = common.position.ProgramAreaNear(var)
+            except gbs_type.UnificationFailedException as e:
+                area = position.ProgramAreaNear(var)
                 msg = i18n.i18n(
                           '"%s" has type: %s\n' +
                           'Function "%s" returns: %s'
@@ -454,7 +454,7 @@ class GbsTypeInference(object):
     def infer_if(self, tree):
         "Infer types for conditional statement."
         cond = tree.children[1]
-        self._infer_expression_check_type(cond, lang.gbs_type.GbsBoolType())
+        self._infer_expression_check_type(cond, gbs_type.GbsBoolType())
         self.infer_block(tree.children[2]) # then
         if tree.children[3] is not None:
             self.infer_block(tree.children[3]) # else
@@ -462,7 +462,7 @@ class GbsTypeInference(object):
     def infer_case(self, tree):
         "Infer types for a case statement."
         value = tree.children[1]
-        value_type = lang.gbs_type.GbsTypeVar()
+        value_type = gbs_type.GbsTypeVar()
         self._infer_expression_check_type(value, value_type)
         for branch in tree.children[2].children:
             if branch.children[0] == 'branch':
@@ -477,9 +477,9 @@ class GbsTypeInference(object):
         for lit in lits.children:
             lit_type = self.infer_tok_literal(lit)
             try:
-                lang.gbs_type.unify(lit_type, expected_type)
-            except lang.gbs_type.UnificationFailedException as e:
-                area = common.position.ProgramAreaNear(lit)
+                gbs_type.unify(lit_type, expected_type)
+            except gbs_type.UnificationFailedException as e:
+                area = position.ProgramAreaNear(lit)
                 msg = i18n.i18n(
                           'Literal should have type: %s\n' +
                           'But has type: %s'
@@ -491,23 +491,23 @@ class GbsTypeInference(object):
     def infer_while(self, tree):
         "Infer types for a while statement."
         cond = tree.children[1]
-        self._infer_expression_check_type(cond, lang.gbs_type.GbsBoolType())
+        self._infer_expression_check_type(cond, gbs_type.GbsBoolType())
         self.infer_block(tree.children[2])
 
     def infer_repeat(self, tree):
         "Infer types for a repeat statement."
         times = tree.children[1]
-        self._infer_expression_check_type(times, lang.gbs_type.GbsIntType())
+        self._infer_expression_check_type(times, gbs_type.GbsIntType())
         self.infer_block(tree.children[2])
 
     def infer_foreach(self, tree):
         "Infer types for a foreach statement."
         index = tree.children[1]
         list = tree.children[2]
-        index_type = lang.gbs_type.GbsTypeVar()
+        index_type = gbs_type.GbsTypeVar()
         # index and both limits should have the same type
         self._add_var(index, index_type)
-        self._infer_expression_check_type(list, lang.gbs_type.GbsListType(index_type))
+        self._infer_expression_check_type(list, gbs_type.GbsListType(index_type))
         self.infer_block(tree.children[3])
         tree.index_type_annotation = index_type
 
@@ -515,8 +515,8 @@ class GbsTypeInference(object):
         "Infer types for a repeatWith statement."
         index = tree.children[1]
         rng = tree.children[2]
-        index_type = lang.gbs_type.GbsTypeVar()
-        exclude_type = lang.gbs_type.GbsListType(lang.gbs_type.GbsTypeVar())
+        index_type = gbs_type.GbsTypeVar()
+        exclude_type = gbs_type.GbsListType(gbs_type.GbsTypeVar())
         # index and both limits should have the same type
         self._add_var(index, index_type)
         self._infer_expression_check_type(rng.children[1], index_type, [exclude_type])
@@ -539,7 +539,7 @@ class GbsTypeInference(object):
         types = []
         for exp in tree.children:
             types.append(self.infer_expression(exp))
-        return lang.gbs_type.GbsTupleType(types)
+        return gbs_type.GbsTupleType(types)
 
     def infer_expression(self, tree):
         "Infer types for an expression."
@@ -567,33 +567,33 @@ class GbsTypeInference(object):
             return dispatch[exptype](tree)
         else:
             msg = i18n.i18n('Unknown expression: %s') % (exptype,)
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             self.error(GbsTypeInferenceException(msg, area))
 
     def _check_excluded_types(self, tree, type, excluded_types):
         for excluded_type in excluded_types:
             try:
-                lang.gbs_type.unify(type, excluded_type)
-                area = common.position.ProgramAreaNear(tree)
+                gbs_type.unify(type, excluded_type)
+                area = position.ProgramAreaNear(tree)
                 msg = i18n.i18n('Expression can\'t have type: %s') % (excluded_type,)
                 self.error(GbsTypeInferenceException(msg, area))
-            except lang.gbs_type.UnificationFailedException as exception:
+            except gbs_type.UnificationFailedException as exception:
                 pass
 
     def _infer_expression_check_type(self, tree, expected_type, excluded_types=[]):
         """Infer types for an expression, and check that its
         inferred type coincides with the expected type."""
-        
+
         real_type = self.infer_expression(tree)
         return self.check_type(tree, real_type, expected_type, excluded_types)
 
     def check_type(self, tree, real_type, expected_type, excluded_types=[]):
         try:
-            lang.gbs_type.unify(real_type, expected_type)
+            gbs_type.unify(real_type, expected_type)
             self._check_excluded_types(tree, real_type, excluded_types)
             return real_type
-        except lang.gbs_type.UnificationFailedException as e:
-            area = common.position.ProgramAreaNear(tree)
+        except gbs_type.UnificationFailedException as e:
+            area = position.ProgramAreaNear(tree)
             msg = i18n.i18n(
                       'Expression should have type: %s\n' +
                       'But has type: %s'
@@ -601,11 +601,11 @@ class GbsTypeInference(object):
                       expected_type, real_type
                   )
             self.error(GbsTypeInferenceException(msg, area))
-        
+
     def infer_bool_bool_bool_binary_op(self, tree):
         """Infer types for an application of a binary operator
         of type 'Bool * Bool -> Bool'."""
-        t = lang.gbs_type.GbsBoolType()
+        t = gbs_type.GbsBoolType()
         self._infer_expression_check_type(tree.children[2], t)
         self._infer_expression_check_type(tree.children[3], t)
         tree.type_annotation = [t,t]
@@ -614,44 +614,44 @@ class GbsTypeInference(object):
     def infer_a_a_bool_binary_op(self, tree):
         """Infer types for an application of a binary operator
         of type 'forall a. a * a -> Bool'."""
-        t = lang.gbs_type.GbsTypeVar()
+        t = gbs_type.GbsTypeVar()
         self._infer_expression_check_type(tree.children[2], t)
         self._infer_expression_check_type(tree.children[3], t)
         tree.type_annotation = [t,t]
-        return lang.gbs_type.GbsBoolType()
+        return gbs_type.GbsBoolType()
 
     def infer_int_int_int_binary_op(self, tree):
         """Infer types for an application of a binary operator
         of type 'Int * Int -> Bool'."""
-        t = lang.gbs_type.GbsIntType()
+        t = gbs_type.GbsIntType()
         self._infer_expression_check_type(tree.children[2], t)
         self._infer_expression_check_type(tree.children[3], t)
         tree.type_annotation = [t,t]
         return t
-    
+
     def infer_a_a_list_binary_op(self, tree):
         """Infer types for an application of a binary operator
         of type 'a * a -> List(a)'."""
-        t = lang.gbs_type.GbsTypeVar()
+        t = gbs_type.GbsTypeVar()
         self._infer_expression_check_type(tree.children[2], t)
         self._infer_expression_check_type(tree.children[3], t)
-        return lang.gbs_type.GbsListType(t)
-    
+        return gbs_type.GbsListType(t)
+
     def infer_list_list_list_binary_op(self, tree):
         """Infer types for an application of a binary operator
         of type 'List * List -> List'."""
-        t = lang.gbs_type.GbsListType()
-        self._infer_expression_check_type(tree.children[2], lang.gbs_type.GbsListType())
-        self._infer_expression_check_type(tree.children[3], lang.gbs_type.GbsListType())
+        t = gbs_type.GbsListType()
+        self._infer_expression_check_type(tree.children[2], gbs_type.GbsListType())
+        self._infer_expression_check_type(tree.children[3], gbs_type.GbsListType())
         tree.type_annotation = [t,t]
         return t
-    
+
     def infer_constructor(self, tree):
         """ Infer record/variant constructor type """
         expected_type = self.infer_type(tree.children[2])
-        
+
         def constructor_except(real_type, expected_type):
-            area = common.position.ProgramAreaNear(tree)
+            area = position.ProgramAreaNear(tree)
             msg = i18n.i18n(
                       'constructor "%s" is receiving: %s\n' +
                       'But should receive: %s'
@@ -659,56 +659,56 @@ class GbsTypeInference(object):
                       expected_type.name, real_type.fields_repr(), expected_type.fields_repr()
                   )
             self.error(GbsTypeInferenceException(msg, area))
-        
+
         fieldgens = collect_nodes_until_found(tree, is_field_gen)
-            
+
         fields = {}
         for fieldgen in fieldgens:
             fname, fvalue = fieldgen.children[2].children
             fields[fname.children[1].value] = self.infer_expression(fvalue)
-        
+
         type_name = tree.children[2].children[1]
         if type_name.value == "Arreglo":
-            real_type = lang.gbs_type.GbsArrayType()
+            real_type = gbs_type.GbsArrayType()
         else:
-            real_type = lang.gbs_type.GbsRecordType(type_name.value, fields)
-        
-        return_type = expected_type 
-        
-        if isinstance(expected_type, lang.gbs_type.GbsVariantType):
+            real_type = gbs_type.GbsRecordType(type_name.value, fields)
+
+        return_type = expected_type
+
+        if isinstance(expected_type, gbs_type.GbsVariantType):
             if type_name.value == expected_type.name:
-                area = common.position.ProgramAreaNear(tree)
+                area = position.ProgramAreaNear(tree)
                 msg = i18n.i18n('"%s" is not a valid variant case for "%s" type.') % (
                       type_name.value, expected_type.name
                   )
                 self.error(GbsTypeInferenceException(msg, area))
-            expected_type.is_case = type_name.value.split("::")[1] 
+            expected_type.is_case = type_name.value.split("::")[1]
             expected_type = expected_type.get_case()
-        
-        if not isinstance(real_type, lang.gbs_type.GbsArrayType) and len(fields.keys()) != len(expected_type.fields.keys()):
+
+        if not isinstance(real_type, gbs_type.GbsArrayType) and len(fields.keys()) != len(expected_type.fields.keys()):
             constructor_except(real_type, expected_type)
-        
+
         try:
             self.check_type(tree, real_type, expected_type)
         except GbsTypeInferenceException as e:
             constructor_except(real_type, expected_type)
-        
+
         return return_type
-    
+
     def infer_projection(self, tree):
         """Infer types for an application of projection operator
         of type 'Record(s1:a1 * s2:a2 .. * sn:an) * si -> ai'"""
         field_name = tree.children[3].children[1]
-        t1 = lang.gbs_type.GbsRecordTypeVar({field_name.value : lang.gbs_type.GbsTypeVar()})
-        t2 = lang.gbs_type.GbsSymbolType()
+        t1 = gbs_type.GbsRecordTypeVar({field_name.value : gbs_type.GbsTypeVar()})
+        t2 = gbs_type.GbsSymbolType()
         self._infer_expression_check_type(tree.children[2], t1)
         self._infer_expression_check_type(tree.children[3], t2)
-        return t1.fields.get(field_name.value) 
+        return t1.fields.get(field_name.value)
 
     def infer_bool_bool_unary_op(self, tree):
         """Infer types for an application of a unary operator
         of type 'Bool -> Bool'."""
-        t = lang.gbs_type.GbsBoolType()
+        t = gbs_type.GbsBoolType()
         self._infer_expression_check_type(tree.children[1], t)
         tree.type_annotation = [t]
         return t
@@ -716,7 +716,7 @@ class GbsTypeInference(object):
     def infer_a_a_unary_op(self, tree):
         """Infer types for an application of a unary operator
         of type 'forall a. a -> a'."""
-        t = lang.gbs_type.GbsTypeVar()
+        t = gbs_type.GbsTypeVar()
         self._infer_expression_check_type(tree.children[1], t)
         tree.type_annotation = [t]
         return t
@@ -733,8 +733,8 @@ class GbsTypeInference(object):
     def infer_match(self, tree):
         "Infer types for a match statement."
         value = tree.children[1]
-        value_type = lang.gbs_type.GbsTypeVar()
-        branch_body_type = lang.gbs_type.GbsTypeVar()
+        value_type = gbs_type.GbsTypeVar()
+        branch_body_type = gbs_type.GbsTypeVar()
         self._infer_expression_check_type(value, value_type)
         for branch in tree.children[2].children:
             if branch.children[0] == 'branch':
@@ -750,15 +750,15 @@ class GbsTypeInference(object):
         fun_name = tree.children[1].value
         fun_type = self.global_context[fun_name].instantiate()
         arg_type = self.infer_tuple(tree.children[2])
-        subtypes = [lang.gbs_type.GbsTypeVar() for i in range(nretvals)]
-        res_type = lang.gbs_type.GbsTupleType(subtypes)
-        expected = lang.gbs_type.GbsFunctionType(arg_type, res_type)
+        subtypes = [gbs_type.GbsTypeVar() for i in range(nretvals)]
+        res_type = gbs_type.GbsTupleType(subtypes)
+        expected = gbs_type.GbsFunctionType(arg_type, res_type)
 
         # check parameters
         try:
-            lang.gbs_type.unify(expected.paramtype(), fun_type.paramtype())
-        except lang.gbs_type.UnificationFailedException as e:
-            area = common.position.ProgramAreaNear(tree)
+            gbs_type.unify(expected.paramtype(), fun_type.paramtype())
+        except gbs_type.UnificationFailedException as e:
+            area = position.ProgramAreaNear(tree)
             msg = i18n.i18n(
                       'function "%s" is receiving: %s\n' +
                       'But should receive: %s'
@@ -769,9 +769,9 @@ class GbsTypeInference(object):
 
         # check return value
         try:
-            lang.gbs_type.unify(fun_type._res, expected._res)
-        except lang.gbs_type.UnificationFailedException as e:
-            area = common.position.ProgramAreaNear(tree)
+            gbs_type.unify(fun_type._res, expected._res)
+        except gbs_type.UnificationFailedException as e:
+            area = position.ProgramAreaNear(tree)
             msg = i18n.i18n(
                       'function "%s" is called as if it returned: %s\n' +
                       'But returns: %s'
@@ -790,17 +790,16 @@ class GbsTypeInference(object):
     def infer_tok_literal(self, tok):
         "Infer types for a constant."
         if tok.type == 'num':
-            return lang.gbs_type.GbsIntType()
+            return gbs_type.GbsIntType()
         elif tok.type == 'upperid':
             return self.global_context[tok.value].instantiate()
         elif tok.type == 'symbol':
-            return lang.gbs_type.GbsSymbolType()
+            return gbs_type.GbsSymbolType()
         elif tok.type == 'string':
-            return lang.gbs_type.GbsStringType()
+            return gbs_type.GbsStringType()
         else:
             assert False
 
 def typecheck(tree, enable_errors=False):
     "Infer types for a Gobstones program."
     GbsTypeInference(enable_errors).infer_program(tree)
-

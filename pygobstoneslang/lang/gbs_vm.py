@@ -15,15 +15,15 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import lang.gbs_builtins
-from lang.gbs_builtins import GbsObject, clone_value
-import lang.gbs_constructs
-import lang.gbs_runnable
-import lang.gbs_io
-import common.position
-import common.i18n as i18n
+import gbs_builtins
+from gbs_builtins import GbsObject, clone_value
+import gbs_constructs
+import gbs_runnable
+import gbs_io
+import pygobstoneslang.common.position as position
+import pygobstoneslang.common.i18n as i18n
 import random
-from common.utils import *
+from pygobstoneslang.common.utils import *
 
 #### Gobstones virtual machine
 
@@ -62,12 +62,12 @@ class GbsCompiledProgram(object):
     self.tree = tree
     self.module_prefix = module_prefix
     self.builtins = {}
-    for b in lang.gbs_builtins.get_builtins():
+    for b in gbs_builtins.get_builtins():
       bname, b = b.name(), b.underlying_construct()
       self.builtins[bname] = b
     self.routines = {}
     self.external_routines = {}
-    
+
   def __repr__(self):
     sr = seq_sorted(self.routines.values(), key=lambda r: r.name)
     return '\n\n'.join([repr(x) for x in sr])
@@ -82,8 +82,8 @@ class GbsCompiledProgram(object):
         body = lines[1:-2]
         routines_with_lines.append("\t" + header + "\n" +
                                    '\n'.join(["%s\t%s" % (num, line) for num, line in zip(range(len(body)), body)]) +
-                                   '\n\t' + footer)        
-    return '\n\n'.join(routines_with_lines)  
+                                   '\n\t' + footer)
+    return '\n\n'.join(routines_with_lines)
 
 
 class GbsCompiledCode(object):
@@ -96,32 +96,32 @@ class GbsCompiledCode(object):
         self.label_table = {}
         self.nearby_elems = {}
         self.explicit_board = explicit_board
-        
+
     def is_function(self):
         return self.prfn == 'function'
-    
+
     def is_procedure(self):
         return self.prfn == 'procedure'
-    
+
     def is_entrypoint(self):
         return self.prfn == 'entrypoint'
-    
+
     def push(self, op, near=None):
         if near:
             self.nearby_elems[len(self.ops)] = near
         self.ops.append(op)
-    
+
     def build_label_table(self):
         i = 0
         for op in self.ops:
             if op[0] == 'label':
                 self.label_table[id(op[1])] = i + 1
             i += 1
-      
+
     def add_enter(self):
         if self.prfn == 'function':
             self.push(('enter',))
-      
+
     def add_leave_return(self):
         if self.prfn == 'entrypoint' and self.name == 'program':
             self.add_leave_return_to_entrypoint()
@@ -133,17 +133,17 @@ class GbsCompiledCode(object):
                 self.push(('return', 0))
         elif len(self.ops) > 0 and self.ops[-1][0] == 'return' and self.prfn == 'function':
             self.ops.insert(-1, ('leave',))
-      
+
     def add_leave_return_to_entrypoint(self):
         if len(self.ops) == 0 or self.ops[-1][0] != 'returnVars':
             self.push(('returnVars', 0, []))
-      
+
     def construct(self):
         if self.prfn == 'function':
-            return lang.gbs_constructs.UserCompiledFunction(self.name, self.params)
+            return gbs_constructs.UserCompiledFunction(self.name, self.params)
         else:
-            return lang.gbs_constructs.UserCompiledProcedure(self.name, self.params)
-  
+            return gbs_constructs.UserCompiledProcedure(self.name, self.params)
+
     def __repr__(self):
         def showop(op):
             if op[0] == 'jumpIfNotIn':
@@ -168,43 +168,43 @@ class ActivationRecord(object):
         self.ip = 0
         self.bindings = {}
         self.immutable_names = []
-    
+
     def is_immutable(self, name):
         return name in self.immutable_names
-    
-    def set_immutable(self, name):        
+
+    def set_immutable(self, name):
         self.immutable_names.append(name)
-        
+
     def unset_immutable(self, name):
         self.immutable_names.remove(name)
-    
+
     def init_binding(self, name, val):
         if name in self.bindings:
             raise GbsVmException(i18n.i18n("Binding '%s' already exists") % (name,),
-                           common.position.ProgramAreaNear(self.program.tree))
+                           position.ProgramAreaNear(self.program.tree))
         else:
             self.bindings[name] = val
-    
+
     def set_binding(self, name, val):
         if not self.is_immutable(name):
             self.bindings[name] = val
         else:
             raise GbsVmException(i18n.i18n('Cannot modify "%s": %s is immutable') % (name, name),
-                           common.position.ProgramAreaNear(self.program.tree))
-            
+                           position.ProgramAreaNear(self.program.tree))
+
     def unset_binding(self, name):
         del self.bindings[name]
-        
+
     def get_binding(self, name):
         return self.bindings[name]
-    
+
     def is_binded(self, name):
         return name in self.bindings.keys()
-    
+
     def free_bindings(self):
         self.bindings = {}
         self.immutable_names = []
-    
+
 
 class GlobalState(object):
   def __init__(self, interpreter, board):
@@ -227,11 +227,11 @@ class GbsVmInterpreter(object):
 
   def area_near(self, ar):
     elem = ar.routine.nearby_elems.get(ar.ip, self.program.tree)
-    return common.position.ProgramAreaNear(elem)
+    return position.ProgramAreaNear(elem)
 
   def current_area(self):
     cs = self.callstack + [self.ar]
-    for ar in common.utils.seq_reversed(cs):
+    for ar in utils.seq_reversed(cs):
       if ar.program.tree.source_filename == self.toplevel_filename:
         return self.area_near(ar)
     # if everything else fails
@@ -244,7 +244,7 @@ class GbsVmInterpreter(object):
 
   def init_program(self, program, board, interactive_api):
     self.interactive_api = interactive_api
-      
+
     if self.toplevel_filename is None:
       self.toplevel_filename = program.tree.source_filename
     self.program = program
@@ -252,30 +252,30 @@ class GbsVmInterpreter(object):
     entrypoint = self.find_entrypoint(program.routines)
     if entrypoint is None:
       raise GbsVmException(i18n.i18n('Program has no entrypoint'),
-                           common.position.ProgramAreaNear(program.tree))
+                           position.ProgramAreaNear(program.tree))
     else:
       self.ar = ActivationRecord(program, entrypoint)
-      
+
 
     self.callstack = []
-    self.stack = []          
+    self.stack = []
     self.global_state = GlobalState(self, board)
     self.explicit_board = len(self.ar.routine.params) > 0
     if self.explicit_board:
-        self.ar.bindings[self.ar.routine.params[0]] = lang.gbs_builtins.GbsObject(board, 'Board')
-    
+        self.ar.bindings[self.ar.routine.params[0]] = gbs_builtins.GbsObject(board, 'Board')
+
   def push_stack(self, value):
       self.stack.append(value)
-      
+
   def pop_stack(self):
       return self.stack.pop()
-    
+
   def _read_arguments(self, params):
     args = []
     for i in range(len(params)):
       args.insert(0, self.pop_stack())
     for p, a in zip(params, args):
-      self.ar.init_binding(p, a)      
+      self.ar.init_binding(p, a)
 
   def show_state(self):
     return '\n'.join([
@@ -322,11 +322,11 @@ class GbsVmInterpreter(object):
       if varname not in bindings:
           raise GbsVmException(i18n.i18n('Identifier "%s" does not exists.') % (varname,),
                                self.current_area())
-  
+
   def get_binding(self, name):
-      self.check_uninitialized_variable(name, self.ar.bindings)      
+      self.check_uninitialized_variable(name, self.ar.bindings)
       return self.ar.get_binding(name)
-  
+
   def step(self):
     assert self.ar.ip < len(self.ar.routine.ops)
     op = self.ar.routine.ops[self.ar.ip]
@@ -342,7 +342,7 @@ class GbsVmInterpreter(object):
 
     elif opcode == 'delVar':
       assert op[1] in self.ar.bindings
-      self.ar.unset_binding(op[1])      
+      self.ar.unset_binding(op[1])
       if self.ar.is_immutable(op[1]):
           self.ar.unset_immutable(op[1])
       self.ar.ip += 1
@@ -350,19 +350,19 @@ class GbsVmInterpreter(object):
     elif opcode == 'setImmutable':
       assert op[1] in self.ar.bindings
       self.ar.set_immutable(op[1])
-      self.ar.ip += 1     
-      
+      self.ar.ip += 1
+
     elif opcode == 'unsetImmutable':
       assert op[1] in self.ar.bindings and self.ar.is_immutable(op[1])
       self.ar.unset_immutable(op[1])
-      self.ar.ip += 1      
+      self.ar.ip += 1
 
     elif opcode == 'popTo':
         assert len(self.stack) > 0
-        val = self.pop_stack()     
-        varname = op[1] 
+        val = self.pop_stack()
+        varname = op[1]
         if self.ar.is_binded(varname):
-            lang.gbs_builtins.typecheck_vals(self.global_state, self.ar.get_binding(varname), val)
+            gbs_builtins.typecheck_vals(self.global_state, self.ar.get_binding(varname), val)
         self.ar.set_binding(varname, clone_value(val))
         self.ar.ip += 1
 
@@ -376,15 +376,15 @@ class GbsVmInterpreter(object):
         args = []
         for i in range(nargs):
           args.insert(0, self.pop_stack())
-        
+
         #unwrap args
-        if isinstance(builtin, lang.gbs_constructs.BuiltinProcedure) and len(args) > 1:
-            args = [args[0]] + lang.gbs_builtins.unwrap_values(args[1:])
-        elif isinstance(builtin, lang.gbs_constructs.BuiltinFunction):
-            args = lang.gbs_builtins.unwrap_values(args)
-            
+        if isinstance(builtin, gbs_constructs.BuiltinProcedure) and len(args) > 1:
+            args = [args[0]] + gbs_builtins.unwrap_values(args[1:])
+        elif isinstance(builtin, gbs_constructs.BuiltinFunction):
+            args = gbs_builtins.unwrap_values(args)
+
         res = builtin.primitive()(self.global_state, *args)
-        # [TODO] Remove : if builtin.type() == 'function':        
+        # [TODO] Remove : if builtin.type() == 'function':
         if not res is None: # [TODO] Remove hack for _SetRefValue
             self.push_stack(res) # push result
         self.ar.ip += 1
@@ -406,7 +406,7 @@ class GbsVmInterpreter(object):
                     funcName,), self.current_area())
 
     elif opcode == 'THROW_ERROR':
-      msg = i18n.i18n('Self destruction:') 
+      msg = i18n.i18n('Self destruction:')
       msg = '\n'.join([msg, show_string(op[1])])
       msg = self.backtrace(msg)
       area = self.current_area()
@@ -425,9 +425,9 @@ class GbsVmInterpreter(object):
       assert dest in self.ar.routine.label_table
       assert len(self.stack) > 0
       val = self.pop_stack()
-      val = lang.gbs_builtins.unwrap_value(val)
+      val = gbs_builtins.unwrap_value(val)
 
-      if lang.gbs_builtins.poly_typeof(val) != 'Bool':
+      if gbs_builtins.poly_typeof(val) != 'Bool':
         raise GbsVmException(i18n.i18n('Condition should be a boolean'), self.current_area())
       if not val:
         self.ar.ip = self.ar.routine.label_table[dest]
@@ -439,7 +439,7 @@ class GbsVmInterpreter(object):
       assert dest in self.ar.routine.label_table
       assert len(self.stack) > 0
       val = self.pop_stack()
-      val = lang.gbs_builtins.unwrap_value(val)
+      val = gbs_builtins.unwrap_value(val)
       if val not in op[1]:
         self.ar.ip = self.ar.routine.label_table[dest]
       else:
@@ -465,19 +465,19 @@ class GbsVmInterpreter(object):
       nvals = op[1]
       if len(self.callstack) == 0:
         assert self.ar.routine.name == 'program' and self.ar.routine.prfn == 'entrypoint'
-        return_vars = [lang.gbs_builtins.polyname_name(x) for x in op[2]]
+        return_vars = [gbs_builtins.polyname_name(x) for x in op[2]]
         assert len(return_vars) == nvals
         #else:
         #  return_vars = [x.children[1].value
         #                    for x in self.ar.routine.tree.children[3].children[-1].children[1].children]
-        
-        # TODO: Result to str mapping should be done in a later stage, not here. 
+
+        # TODO: Result to str mapping should be done in a later stage, not here.
         return_vals = map(repr, self.stack[-len(return_vars):])
-        
+
         if self.explicit_board:
           return 'END', list(zip(return_vars, return_vals)), self.get_binding(self.ar.routine.params[0])
         else:
-          return 'END', list(zip(return_vars, return_vals)), lang.gbs_builtins.GbsObject(self.global_state.board, 'Board')
+          return 'END', list(zip(return_vars, return_vals)), gbs_builtins.GbsObject(self.global_state.board, 'Board')
       else:
         # pop the return results in case of having a recursive Main
         # (Main is a procedure, so the values it returns are not used)
@@ -494,26 +494,26 @@ class GbsVmInterpreter(object):
 
 def interp(compiled_program, board, interactive_api=None):
     vm = GbsVmInterpreter()
-  
+
     if interactive_api is None:
         interactive_api = NullInteractiveAPI()
-    
-    vm.init_program(compiled_program, board, lang.gbs_io.CrossPlatformApiAdapter(interactive_api))
-    
+
+    vm.init_program(compiled_program, board, gbs_io.CrossPlatformApiAdapter(interactive_api))
+
     while True:
         r = vm.step()
         if r[0] == 'END':
             return r[1:]
 
-class VmCompiledRunnable(lang.gbs_runnable.GbsRunnable):
+class VmCompiledRunnable(gbs_runnable.GbsRunnable):
     def __init__(self, compiled_program):
         self._prog = compiled_program
     def run(self, board, interactive_api = None):
         return interp(self._prog, board, interactive_api)
 
-class NullInteractiveAPI(lang.gbs_io.InteractiveApi):
+class NullInteractiveAPI(gbs_io.InteractiveApi):
     def __init__(self):
-        self.key_sequence = self.build_key_sequence()    
+        self.key_sequence = self.build_key_sequence()
     def read(self):
         return self.key_sequence.pop();
     def build_key_sequence(self):
@@ -521,10 +521,10 @@ class NullInteractiveAPI(lang.gbs_io.InteractiveApi):
         selectableKeys = [x for x in range(65,90)]
         selectableKeys.extend([x for x in range(48,57)])
         selectableKeys.extend([x for x in range(97,122)])
-        selectableKeys.extend([lang.gbs_io.GobstonesKeys.ARROW_LEFT,
-                               lang.gbs_io.GobstonesKeys.ARROW_UP,
-                               lang.gbs_io.GobstonesKeys.ARROW_RIGHT,
-                               lang.gbs_io.GobstonesKeys.ARROW_DOWN,])
+        selectableKeys.extend([gbs_io.GobstonesKeys.ARROW_LEFT,
+                               gbs_io.GobstonesKeys.ARROW_UP,
+                               gbs_io.GobstonesKeys.ARROW_RIGHT,
+                               gbs_io.GobstonesKeys.ARROW_DOWN,])
         for i in range(1,random.randrange(5, 20, 1)):
             keys.append(random.choice(selectableKeys))
         return keys

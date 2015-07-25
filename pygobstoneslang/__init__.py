@@ -1,10 +1,11 @@
+#!/usr/bin/python
 import common.utils
 import common.i18n as i18n
 from lang.gbs_board import Board
 from common.tools import tools
-import pygobstoneslang
 import logging
 from lang.gbs_api import GobstonesRun
+import __main__
 
 class GUIExecutionAPI(lang.ExecutionAPI):
 

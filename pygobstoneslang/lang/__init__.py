@@ -22,24 +22,22 @@ LangDir = os.path.dirname(__file__)
 GbsMacrosDir = os.path.join(LangDir, 'macros')
 
 
-import common.i18n as i18n
+import pygobstoneslang.common.i18n as i18n
 import json
-from common.utils import GobstonesException
+from pygobstoneslang.common.utils import GobstonesException
 
-import lang.gbs_io
-import lang.gbs_parser
-import lang.gbs_mexpl
-import lang.gbs_lint
-import lang.gbs_liveness
-import lang.gbs_vm
-import lang.gbs_pprint
-import lang.gbs_infer
-import lang.gbs_compiler
-import lang.gbs_board
-import lang.gbs_optimizer
-from lang.grammar import GbsGrammarFile, XGbsGrammarFile
-from lang.board.fmt_json import JsonBoardFormat
-from lang.gbs_api import GobstonesOptions, GobstonesRun, ExecutionAPI
+import gbs_io
+import gbs_parser
+import gbs_mexpl
+import gbs_lint
+import gbs_liveness
+import gbs_vm
+import gbs_pprint
+import gbs_infer
+import gbs_compiler
+import gbs_board
+from grammar import GbsGrammarFile, XGbsGrammarFile
+from gbs_api import GobstonesOptions, GobstonesRun, ExecutionAPI
 
 class Gobstones(object):
 
@@ -48,31 +46,31 @@ class Gobstones(object):
         self.options = options
 
         # Compiler pipeline methods
-        self.explode_macros = lang.gbs_mexpl.mexpl
-        self.lint = lang.gbs_lint.lint
-        self.check_live_variables = lang.gbs_liveness.check_live_variables
-        self.typecheck = lang.gbs_infer.typecheck
-        self.compile_program = lang.gbs_compiler.compile_program
+        self.explode_macros = gbs_mexpl.mexpl
+        self.lint = gbs_lint.lint
+        self.check_live_variables = gbs_liveness.check_live_variables
+        self.typecheck = gbs_infer.typecheck
+        self.compile_program = gbs_compiler.compile_program
 
         if self.options.jit:
-            self.make_runnable = lang.jit.gbs_jit.JitCompiledRunnable
+            self.make_runnable = jit.gbs_jit.JitCompiledRunnable
         else:
-            self.make_runnable = lang.gbs_vm.VmCompiledRunnable
+            self.make_runnable = gbs_vm.VmCompiledRunnable
 
 
     def _parse(self, program_text, filename):
         if program_text == "":
             raise GobstonesException(i18n.i18n("Cannot execute an empty program"))
 
-        return lang.gbs_parser.parse_string_try_prelude(program_text, filename, grammar_file=self.options.get_lang_grammar())
+        return gbs_parser.parse_string_try_prelude(program_text, filename, grammar_file=self.options.get_lang_grammar())
 
     @classmethod
     def random_board(cls, size=None):
         if size is None:
-            board = lang.gbs_board.Board()
+            board = gbs_board.Board()
             board.randomize_full()
         else:
-            board = lang.gbs_board.Board(size)
+            board = gbs_board.Board(size)
             board.randomize_contents()
         return board
 
@@ -87,7 +85,7 @@ class Gobstones(object):
         # self.typecheck(tree, self.options.check_types)
 
     def parse_names(self, filename, program_text):
-        return lang.gbs_parser.parse_names(program_text, filename, grammar_file=self.options.get_lang_grammar())
+        return gbs_parser.parse_names(program_text, filename, grammar_file=self.options.get_lang_grammar())
 
     def parse(self, filename, program_text):
         # Parse gobstones script
@@ -104,10 +102,6 @@ class Gobstones(object):
         tree = gbs_run.tree
         # Check semantics, liveness and types
         self.check(tree)
-        # Optimize program
-        if self.options.optimize:
-            self.api.log(i18n.i18n('Optimizing.')) #[TODO] i18n
-            lang.gbs_optimizer.optimize(tree)
         # Compile program
         self.api.log(i18n.i18n('Compiling.'))
         gbs_run.compiled_program = self.compile_program(tree)
@@ -129,6 +123,6 @@ class Gobstones(object):
 
 """ Utilities """
 
-GobstonesKeys = lang.gbs_io.GobstonesKeys
-Board = lang.gbs_board.Board
-pretty_print = lang.gbs_pprint.pretty_print
+GobstonesKeys = gbs_io.GobstonesKeys
+Board = gbs_board.Board
+pretty_print = gbs_pprint.pretty_print

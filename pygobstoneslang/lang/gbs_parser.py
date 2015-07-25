@@ -18,41 +18,41 @@
 import os
 import re
 
-import common.position
-import lang.bnf_parser
-import lang.ast
-import lang.gbs_builtins
-import common.i18n as i18n
-from common.utils import *
-import lang.grammar.i18n
-from lang.gbs_api import GobstonesOptions
-from lang.grammar import XGbsGrammarFile
+import pygobstoneslang.common.position as position
+import bnf_parser
+import ast
+import gbs_builtins
+import pygobstoneslang.common.i18n as i18n
+from pygobstoneslang.common.utils import *
+import grammar.i18n
+from gbs_api import GobstonesOptions
+from grammar import XGbsGrammarFile
 
 #### Parser of Gobstones programs.
 ####
 #### Complements gbs_grammar.bnf solving conflicts and
 #### checking for errors.
 
-class GbsParserException(lang.bnf_parser.ParserException):
+class GbsParserException(bnf_parser.ParserException):
     pass
 
 TOKEN_BUFFER_SIZE = 4
 
-class GbsLexer(lang.bnf_parser.Lexer):
+class GbsLexer(bnf_parser.Lexer):
     """Lexical analyzer that identifies common lexical errors in Gobstones
        source files and solves the conflictive situation in the LL(1) grammar
        by inserting an extra semicolon (;) in the appropiate case."""
 
     def __init__(self, tokens, reserved, *args, **kwargs):
-        lang.bnf_parser.Lexer.__init__(self, tokens, reserved, *args, **kwargs)
+        bnf_parser.Lexer.__init__(self, tokens, reserved, *args, **kwargs)
         self.reserved_lower = {}
         for x in reserved:
             self.reserved_lower[x.lower()] = x
-        for x in lang.gbs_builtins.get_correct_names():
+        for x in gbs_builtins.get_correct_names():
             self.reserved_lower[x.lower()] = x
 
     def _tokenize_solve_conflict(self, string, filename):
-        self.supertok = lang.bnf_parser.Lexer.tokenize(self, string, filename)
+        self.supertok = bnf_parser.Lexer.tokenize(self, string, filename)
         self.token_queue = []
         q = []
         try:
@@ -75,7 +75,7 @@ class GbsLexer(lang.bnf_parser.Lexer):
                     tok = self._read()
                     q.append(tok)
                     if tok.type == ':=': # insert a semicolon
-                        yield lang.bnf_parser.Token(';', ';', curr_tok.pos_begin, curr_tok.pos_end)
+                        yield bnf_parser.Token(';', ';', curr_tok.pos_begin, curr_tok.pos_end)
                     self.token_queue = q + self.token_queue
                     q = []
                 else:
@@ -103,16 +103,16 @@ class GbsLexer(lang.bnf_parser.Lexer):
         yield previous_token
         open_parens = []
         for tok in supertok:
-            area = common.position.ProgramAreaNear(tok)
+            area = position.ProgramAreaNear(tok)
             if tok.type in ['upperid', 'lowerid']:
                 self.warn_if_similar_to_reserved(tok.value, area)
 
             if tok.type == 'ERROR':
                 msg = i18n.i18n('Malformed input - unrecognized symbol')
-                raise GbsParserException(msg, common.position.ProgramAreaNear(tok))
+                raise GbsParserException(msg, position.ProgramAreaNear(tok))
             elif tok.type == 'string_start':
                 msg = i18n.i18n('Unterminated string')
-                raise GbsParserException(msg, common.position.ProgramAreaNear(tok))
+                raise GbsParserException(msg, position.ProgramAreaNear(tok))
 
             """ [TODO] Replace this checking by similar check for 'procedure lowerid.upperid' """
             if False and previous_token.type in ['procedure'] and tok.type not in ['upperid']:
@@ -150,13 +150,13 @@ class GbsLexer(lang.bnf_parser.Lexer):
                 # check if the opening token is of the right kind
                 opening = open_parens.pop()
                 if opening.type == '(' and tok.type != ')':
-                    open_area = common.position.ProgramAreaNear(opening)
+                    open_area = position.ProgramAreaNear(opening)
                     l1 = i18n.i18n('Found open "(" with no matching closing paren')
                     l2 = i18n.i18n('Maybe there is an extra "%s" at %s') % (
 								tok.type, tok.pos_begin.row_col(),)
                     raise GbsParserException(i18n.i18n('\n'.join([l1, l2])), open_area)
                 elif opening.type == '{' and tok.type != '}':
-                    open_area = common.position.ProgramAreaNear(opening)
+                    open_area = position.ProgramAreaNear(opening)
                     l1 = i18n.i18n('Found open "{" with no matching closing brace')
                     l2 = i18n.i18n('Maybe there is an extra "%s" at %s') % (
 										tok.type, tok.pos_begin.row_col(),)
@@ -165,7 +165,7 @@ class GbsLexer(lang.bnf_parser.Lexer):
             # check there are no open parens at EOF
             if tok.type == 'EOF' and len(open_parens) > 0:
                 opening = open_parens[-1]
-                open_area = common.position.ProgramAreaNear(opening)
+                open_area = position.ProgramAreaNear(opening)
                 if opening.type == '(':
                     msg = i18n.i18n('Found end of file but there are open parens yet')
                     raise GbsParserException(i18n.i18n(msg), open_area)
@@ -182,15 +182,15 @@ class GbsLexer(lang.bnf_parser.Lexer):
             raise GbsParserException(i18n.i18n('Found: %s\nMaybe should be: %s') % (
                                 value, self.reserved_lower[tl]), area)
 
-class GbsParser(lang.bnf_parser.Parser):
+class GbsParser(bnf_parser.Parser):
     "Parser that identifies common parsing errors in Gobstones source files."
 
     def __init__(self, syntax, *args, **kwargs):
-        lang.bnf_parser.Parser.__init__(self, syntax, *args, **kwargs)
+        bnf_parser.Parser.__init__(self, syntax, *args, **kwargs)
 
     def parse_error(self, nonterminal, previous_token, token):
         "Raises a GbstonesParserException describing a parse error."
-        area = common.position.ProgramAreaNear(token)
+        area = position.ProgramAreaNear(token)
         if previous_token.type == 'lowerid' and token.type == '(':
             raise GbsParserException(i18n.i18n('Cannot call a function here'), area)
         elif previous_token.type == 'upperid' and token.type == '(':
@@ -200,14 +200,14 @@ class GbsParser(lang.bnf_parser.Parser):
             raise GbsParserException(msg, area)
         elif token.type == 'EOF':
             raise GbsParserException(i18n.i18n('Premature end of input'), area)
-        lang.bnf_parser.Parser.parse_error(self, nonterminal, previous_token, token)
+        bnf_parser.Parser.parse_error(self, nonterminal, previous_token, token)
 
-class GbsAnalyzer(lang.bnf_parser.Analyzer):
+class GbsAnalyzer(bnf_parser.Analyzer):
     def __init__(self, grammar, warn=std_warn):
-        lang.bnf_parser.Analyzer.__init__(self, GbsLexer, GbsParser, bnf_contents=grammar, warn=warn)
+        bnf_parser.Analyzer.__init__(self, GbsLexer, GbsParser, bnf_contents=grammar, warn=warn)
 
 def create_analizer(grammar_file):
-    bnf = lang.grammar.i18n.translate(read_file(grammar_file))
+    bnf = grammar.i18n.translate(read_file(grammar_file))
     return GbsAnalyzer(bnf)
 
 def check_grammar_conflicts(grammar_file):
@@ -219,8 +219,8 @@ def parse_string(string, filename='...', toplevel_filename=None, grammar_file=XG
     "Parse a string and return an abstract syntax tree."
     analyzer = create_analizer(grammar_file)
     parsing_stream = analyzer.parse(string, filename)
-    start_pos = common.position.Position(string, filename)
-    tree = lang.ast.ASTBuilder(start_pos).build_ast_from(parsing_stream)
+    start_pos = position.Position(string, filename)
+    tree = ast.ASTBuilder(start_pos).build_ast_from(parsing_stream)
     tree.source_filename = filename
     if toplevel_filename is None:
         tree.toplevel_filename = tree.source_filename
@@ -263,11 +263,11 @@ def parse_string_try_prelude(string, filename, toplevel_filename=None, grammar_f
         prelude_barename = i18n.i18n('Prelude')
         pos = common.position.Position(string, filename)
         main_imports = main_program.children[1].children
-        main_imports.insert(0, lang.ast.ASTNode([
+        main_imports.insert(0, ast.ASTNode([
             'import',
-            lang.bnf_parser.Token('upperid', prelude_barename, pos, pos),
-            lang.ast.ASTNode([
-                lang.bnf_parser.Token('lowerid', '*', pos, pos),
+            bnf_parser.Token('upperid', prelude_barename, pos, pos),
+            ast.ASTNode([
+                bnf_parser.Token('lowerid', '*', pos, pos),
             ], pos, pos)
         ], pos, pos))
 

@@ -17,10 +17,10 @@
 
 import re
 
-import common.utils
-import common.i18n as i18n
-import lang.gbs_builtins
-import lang.board.basic
+import pygobstoneslang.common.utils as utils
+import pygobstoneslang.common.i18n as i18n
+import pygobstoneslang.lang.gbs_builtins as gbs_builtins
+import basic
 from math import log10, pow
 
 def prefix_notation(number):
@@ -31,10 +31,10 @@ def prefix_notation(number):
         12: "P",
     }
     target_power = int(log10(number))
-    surplus = int(number / pow(10, target_power)) 
+    surplus = int(number / pow(10, target_power))
     return str(surplus) + prefixes[target_power]
-    
-class GbtBoardFormat(lang.board.basic.BoardFormat):
+
+class GbtBoardFormat(basic.BoardFormat):
   "Classic GBT board format inherited from the Haskell implementation."
 
   def __init__(self, cell_w=9, cell_h=3, max_num_len=3):
@@ -141,22 +141,22 @@ class GbtBoardFormat(lang.board.basic.BoardFormat):
   def _cell_contents(self, cell):
     w, h = self.Cell_w, self.Cell_h
     out = [[' ' for i in range(w)] for j in range(h)]
-    for col in range(lang.gbs_builtins.NUM_COLORS):
+    for col in range(gbs_builtins.NUM_COLORS):
       count = cell.num_stones(col)
       if count == 0: continue
-      if col < 2: 
+      if col < 2:
         y = 0
       else:
         y = self.Cell_h - 1
-      if col % 2 == 0: 
+      if col % 2 == 0:
         x = self.Cell_w - 2
       else:
         x = self.Max_num_len
-      out[y][x] = lang.gbs_builtins.Color(col).name()[0]
+      out[y][x] = gbs_builtins.Color(col).name()[0]
       scount = str(count)
-      if len(scount) > self.Max_num_len:    
+      if len(scount) > self.Max_num_len:
         scount = prefix_notation(count)
-      for c in common.utils.seq_reversed(scount):
+      for c in utils.seq_reversed(scount):
         x -= 1
         out[y][x] = c
     return out
@@ -180,7 +180,7 @@ class GbtBoardFormat(lang.board.basic.BoardFormat):
     # [
     l = f.readline().strip(' \t\r\n')
     if l != '[':
-      raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed board'))
+      raise basic.BoardFormatException(i18n.i18n('Malformed board'))
     def is_separator(l):
       l = re.sub('[X-]', '', l)
       return l == '+' * (width + 1)
@@ -189,7 +189,7 @@ class GbtBoardFormat(lang.board.basic.BoardFormat):
     def number_header(l):
       l = re.sub(' +', ',', l).split(',')
       if l != [str(i) for i in range(len(l))]:
-        raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed board'))
+        raise basic.BoardFormatException(i18n.i18n('Malformed board'))
       return l
     # number header
     l = f.readline().strip(' \t\r\n",')
@@ -197,14 +197,14 @@ class GbtBoardFormat(lang.board.basic.BoardFormat):
     # first horizontal line
     l = f.readline().strip(' \t\r\n",')
     if not is_separator(l):
-      raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed board'))
+      raise basic.BoardFormatException(i18n.i18n('Malformed board'))
     row = 0
     while True:
       # read a board row, consisting of many file lines
       while True:
         l = f.readline()
         if l == '':
-          raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed board'))
+          raise basic.BoardFormatException(i18n.i18n('Malformed board'))
         l1 = l.strip(' \t\r\n",0123456789')
         if is_separator(l1):
           if head_starts_at_row(l1):
@@ -214,7 +214,7 @@ class GbtBoardFormat(lang.board.basic.BoardFormat):
           number_header(l.strip(' \t\r\n"')) # check
           l = f.readline().strip(' \t\r\n')
           if l != ']':
-            raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed board'))
+            raise basic.BoardFormatException(i18n.i18n('Malformed board'))
           yield 'HEAD', head_row, head_col
           yield 'SIZE', row, width
           return
@@ -224,7 +224,7 @@ class GbtBoardFormat(lang.board.basic.BoardFormat):
             head_col = l2.index('X')
           line_contents = l1.replace('X', '|').split('|')
           if line_contents[0] != '' or line_contents[-1] != '':
-            raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed board'))
+            raise basic.BoardFormatException(i18n.i18n('Malformed board'))
           line_contents = line_contents[1:-1]
           col = 0
           for cell in line_contents:
@@ -236,14 +236,13 @@ class GbtBoardFormat(lang.board.basic.BoardFormat):
 
   def _put_from_description(self, cell, description):
     coli = 0
-    for cn in lang.gbs_builtins.COLOR_NAMES:
+    for cn in gbs_builtins.COLOR_NAMES:
       if description[-1].lower() == cn[0].lower():
         count = description[:-1]
         for l in count:
           if l not in '0123456789':
-            raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed board'))
+            raise basic.BoardFormatException(i18n.i18n('Malformed board'))
         cell.put(coli, int(count))
         return
       coli += 1
-    raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed board'))
-
+    raise basic.BoardFormatException(i18n.i18n('Malformed board'))

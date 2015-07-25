@@ -15,7 +15,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import lang.board.basic
+import basic
 
 try:
   import PIL.Image
@@ -23,7 +23,7 @@ try:
 except ImportError:
   available = False
 
-class PngBoardFormat(lang.board.basic.BoardFormat):
+class PngBoardFormat(basic.BoardFormat):
   "Export to RGB image."
 
   def dump(self, board, f, **kwargs):
@@ -33,7 +33,7 @@ class PngBoardFormat(lang.board.basic.BoardFormat):
       for y in range(h):
         cell = {}
         for coli in range(4):
-          cant = board.cells[y][x].num_stones(coli) 
+          cant = board.cells[y][x].num_stones(coli)
           if cant == 0: continue
           col = lang.gbs_builtins.Color(coli).name()
           cell[col] = cant
@@ -44,4 +44,3 @@ class PngBoardFormat(lang.board.basic.BoardFormat):
 
         img.putpixel((x, y), (component('Rojo'), component('Verde'), component('Azul')))
     img.save(f, 'png')
-

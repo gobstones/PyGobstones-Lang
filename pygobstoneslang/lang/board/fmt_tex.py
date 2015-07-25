@@ -17,11 +17,11 @@
 
 import re
 
-import common.i18n as i18n
-import lang.gbs_builtins
-import lang.board.basic
+import pygobstoneslang.common.i18n as i18n
+import pygobstoneslang.lang.gbs_builtins as gbs_builtins
+import basic
 
-class TexBoardFormat(lang.board.basic.BoardFormat):
+class TexBoardFormat(basic.BoardFormat):
   "LaTeX board format."
 
   def dump(self, board, f, **kwargs):
@@ -34,9 +34,9 @@ class TexBoardFormat(lang.board.basic.BoardFormat):
     for x in range(w):
       for y in range(h):
         for coli in range(4):
-          cant = board.cells[y][x].num_stones(coli) 
+          cant = board.cells[y][x].num_stones(coli)
           if cant == 0: continue
-          col = lang.gbs_builtins.Color(coli).name()
+          col = gbs_builtins.Color(coli).name()
           f.write('  \\Gbstn%s{%i}{%i}{%i}\n' % (col, x, y, cant))
     y, x = board.head
     f.write('  \\GbstnCabezal{%i}{%i}\n' % (x, y))
@@ -47,26 +47,25 @@ class TexBoardFormat(lang.board.basic.BoardFormat):
     contents = f.read()
     sizes = list(re.findall('\\GbstnTamanho{([0-9]+)}{([0-9]+)}', contents))
     if len(sizes) != 1:
-      raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed tex board'))
+      raise basic.BoardFormatException(i18n.i18n('Malformed tex board'))
     width, height = board.size = int(sizes[0][0]), int(sizes[0][1])
     board.head = (0, 0)
     board._clear_board()
     for coli in range(4):
-      col = lang.gbs_builtins.Color(coli).name()
+      col = gbs_builtins.Color(coli).name()
       col_stones = re.findall('\\Gbstn' + col + '{([0-9]+)}{([0-9]+)}{([0-9]+)}' % (), contents)
       for x, y, count in col_stones:
         x, y, count = int(x), int(y), int(count)
         if x >= width or y >= height:
-          raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed tex board'))
+          raise basic.BoardFormatException(i18n.i18n('Malformed tex board'))
         board.cells[y][x].set_num_stones(coli, count)
     headers = list(re.findall('\\GbstnCabezal{([0-9]+)}{([0-9]+)}', contents))
     if len(headers) > 1:
-      raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed tex board'))
+      raise basic.BoardFormatException(i18n.i18n('Malformed tex board'))
     elif len(headers) == 1:
       x, y = int(headers[0][0]), int(headers[0][1])
       if x >= width or y >= height:
-        raise lang.board.basic.BoardFormatException(i18n.i18n('Malformed tex board'))
+        raise basic.BoardFormatException(i18n.i18n('Malformed tex board'))
 
       board.head = y, x
     board.clear_changelog()
-

@@ -15,11 +15,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import common.position
-import common.i18n as i18n
-from common.utils import *
+import pygobstoneslang.common.position as position
+import pygobstoneslang.common.i18n as i18n
+from pygobstoneslang.common.utils import *
 
-import lang.gbs_def_helper as def_helper
+import gbs_def_helper as def_helper
 
 #### Live variable analysis.
 
@@ -49,10 +49,10 @@ definitions with no associated use."""
         self.annotate_type_def(tree)
     else:
         self.annotate_routine_def(tree)
-  
+
   def annotate_type_def(self, tree):
       pass
-    
+
   def annotate_routine_def(self, tree):
     block = def_helper.get_def_body(tree)
     block.live_out = tokset_new()
@@ -268,7 +268,7 @@ modifies the current state of the analysis."""
         tree.live_gen = dispatch[exptype](tree)
     else:
         msg = i18n.i18n('Unknown expression: %s') % (exptype,)
-        area = common.position.ProgramAreaNear(tree)
+        area = position.ProgramAreaNear(tree)
         raise GbsLivenessException(msg, area)
     return tree.live_gen
 
@@ -276,7 +276,7 @@ modifies the current state of the analysis."""
     # this variable name
     tok = tree.children[1]
     return tokset_new_from_dict({tok.value: tok})
-  
+
   def gen_funcCall(self, tree):
     # union of all arguments
     return self.gen_tuple(tree.children[2])
@@ -346,12 +346,12 @@ modifies the current state of the analysis."""
   def check_unitialized(self, tree):
     params = [p.value for p in def_helper.get_def_params(tree)]
     block = def_helper.get_def_body(tree)
-        
+
     possibly_undef = tokset_difference(block.live_in, tokset_new(params))
     if not tokset_empty(possibly_undef):
       for var, tok in possibly_undef.items():
         msg = i18n.i18n('Variable "%s" possibly uninitialized') % (var,)
-        area = common.position.ProgramAreaNear(tok)
+        area = position.ProgramAreaNear(tok)
         raise GbsUninitializedVarException(msg, area)
 
   def check_unused_def(self, tree):
@@ -382,7 +382,7 @@ modifies the current state of the analysis."""
       var = tree.children[1].children[1]
     if var.value not in tree.live_out:
       msg = i18n.i18n('Variable "%s" defined but not used') % (var.value,)
-      area = common.position.ProgramAreaNear(tree)
+      area = position.ProgramAreaNear(tree)
       raise GbsUnusedVarException(msg, area)
 
   def check_unused_assignVarTuple1(self, tree):
@@ -398,7 +398,7 @@ modifies the current state of the analysis."""
       else:
         msg = i18n.i18n('Variables "(%s)" defined but not used') % (
                   ', '.join(varnames),)
-      area = common.position.ProgramAreaNear(tree)
+      area = position.ProgramAreaNear(tree)
       raise GbsUnusedVarException(msg, area)
 
   def check_unused_if(self, tree):
@@ -418,10 +418,10 @@ modifies the current state of the analysis."""
 
   def check_unused_repeat(self, tree):
     self.check_unused_block(tree.children[2])
-  
+
   def check_unused_foreach(self, tree):
     self.check_unused_block(tree.children[3])
-  
+
   def check_unused_repeatWith(self, tree):
     self.check_unused_block(tree.children[3])
 
@@ -432,4 +432,3 @@ def check_live_variables(tree):
   a = GbsLivenessAnalyzer()
   a.annotate_program(tree)
   a.check_program(tree)
-

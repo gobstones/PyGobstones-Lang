@@ -17,12 +17,13 @@
 
 import re
 
-import common.utils
-import common.i18n as i18n
+import pygobstoneslang.common.position as position
+import pygobstoneslang.common.utils as utils
+import pygobstoneslang.common.i18n as i18n
 
-import lang.gbs_vm
-import lang.gbs_builtins
-import lang.ast
+import gbs_vm
+import gbs_builtins
+import ast
 
 def external_programs(compiled_program):
   exts = {}
@@ -53,7 +54,7 @@ class Mangler(object):
     return self._rtns
 
   def mangle(self, compiled_program, rtn_name):
-    prf = compiled_program.module_prefix 
+    prf = compiled_program.module_prefix
     if rtn_name in compiled_program.builtins:
       return rtn_name
     elif rtn_name in compiled_program.routines:
@@ -97,7 +98,7 @@ Opcode_to_compact = {
  'entrypoint':   'E',
  'end':          'X',
 }
-Compact_to_opcode = {} 
+Compact_to_opcode = {}
 for k, v in Opcode_to_compact.items():
   Compact_to_opcode[v] = k
 
@@ -137,7 +138,7 @@ class CompactMangler(object):
     return res
 
   def mangle(self, compiled_program, rtn_name):
-    prf = compiled_program.module_prefix 
+    prf = compiled_program.module_prefix
     if rtn_name in compiled_program.builtins:
       return rtn_name
     elif rtn_name in compiled_program.routines and rtn_name == 'program':
@@ -181,7 +182,7 @@ class GbsVmWriter(object):
   def dump_program(self, compiled_program):
     self._f.write('GBO/1.0\n')
     rtns = self._mangler.mangle_routines(compiled_program)
-    rtns = common.utils.seq_sorted(rtns.items())
+    rtns = utils.seq_sorted(rtns.items())
     for mangled_name, (prog, rtn) in rtns:
       self.dump_routine(prog, rtn)
     self._f.write('%%\n')
@@ -233,7 +234,7 @@ class FakeAST(object):
   def __init__(self, filename='???'):
     self.source_filename = filename
     self._source = ''
-    self.pos_begin = self.pos_end = common.position.Position(self._source, filename=filename)
+    self.pos_begin = self.pos_end = position.Position(self._source, filename=filename)
   def source(self):
     return self._source
   def description(self):
@@ -243,7 +244,7 @@ class GbsVmReader(object):
   def __init__(self, f, filename='...'):
     self._f = f
     self._filename = filename
-    self._f_lines = common.utils.read_stripped_lines(f)
+    self._f_lines = utils.read_stripped_lines(f)
 
   def fail(self, msg):
     raise GbsObjectFormatException(i18n.i18n('Malformed gbo object') + '\n' +
@@ -268,7 +269,7 @@ class GbsVmReader(object):
     return Compact_to_opcode.get(opcode, opcode)
 
   def load_program(self):
-    code = lang.gbs_vm.GbsCompiledProgram(None)
+    code = gbs_vm.GbsCompiledProgram(None)
     hdr = self.line()
     if hdr != 'GBO/1.0':
       self.fail('Expected header line "GBO/1.0"')
@@ -290,7 +291,7 @@ class GbsVmReader(object):
     name = self.unmangle(decl[1])
     args = decl[2:]
     tree = FakeAST(filename=self._filename)
-    code = lang.gbs_vm.GbsCompiledCode(tree, prfn, name, args)
+    code = gbs_vm.GbsCompiledCode(tree, prfn, name, args)
     while True:
       l = self.line()
       if l in ['end', Opcode_to_compact['end']]:
@@ -317,7 +318,7 @@ class GbsVmReader(object):
     return code
 
   def _parse_constant(self, name):
-    val = lang.gbs_builtins.parse_constant(name)
+    val = gbs_builtins.parse_constant(name)
     if val is None:
       self.fail('Unknown constant %s' % (name,))
     return val
@@ -329,4 +330,3 @@ def dump(program, f, style='verbose'):
 def load(f, filename='...'):
   r = GbsVmReader(f, filename=filename)
   return r.load_program()
-

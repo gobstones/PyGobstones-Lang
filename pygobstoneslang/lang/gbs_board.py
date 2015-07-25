@@ -19,11 +19,9 @@
 
 import random
 
-import common.utils
-import common.i18n as i18n
-import lang.board.formats as formats
-from lang.board.BoardFormatException import BoardFormatException
-import lang.gbs_builtins
+import pygobstoneslang.common.utils as utils
+import pygobstoneslang.common.i18n as i18n
+import gbs_builtins
 
 class SelfDestructionException(Exception):
     """Base exception for board-related errors, such as moving the head
@@ -38,7 +36,7 @@ def stone_dist():
     num = random.randint(0, 999)
     dist = [(650, 0),
             (800, 1),
-            (900, 2), 
+            (900, 2),
             (950, 3),
             (970, 4)]
     for key, val in dist:
@@ -62,19 +60,19 @@ class Cell(object):
     def randomize(self):
         """Randomizes the cell, filling it with a random number of
         stones for each color."""
-        for i in range(lang.gbs_builtins.NUM_COLORS):
+        for i in range(gbs_builtins.NUM_COLORS):
             self.stones[i] = self.stones.get(i, 0) + stone_dist()
 
     def put(self, coli, count=1):
         """Add `count` stones of the given color index `coli`.
         Note that `coli` is a color index (ord), not an instance of
-        lang.gbs_builtins.Color."""
+        gbs_builtins.Color."""
         self.stones[coli] = self.stones.get(coli, 0) + count
 
     def take(self, coli, count=1):
         """Takes a stone of the given color index `coli`. Note
         that `coli` is a color index (ord), not an instance of
-        lang.gbs_builtins.Color. Raise a SelfDestructionException if
+        gbs_builtins.Color. Raise a SelfDestructionException if
         there are no stones of the given color."""
         cnt = self.stones.get(coli, 0)
         if cnt >= count:
@@ -91,13 +89,13 @@ class Cell(object):
     def set_num_stones(self, coli, count):
         """Set the number of stones of the given color index `coli`
         to `count`. Note that `coli` is a color index (ord), not an instance of
-        lang.gbs_builtins.Color."""
+        gbs_builtins.Color."""
         self.stones[coli] = count
 
     def num_stones(self, coli):
         """Return the number of stones of the given color index `coli`.
         Note that `coli` is a color index (ord), not an instance of
-        lang.gbs_builtins.Color."""
+        gbs_builtins.Color."""
         if self.parent is None:
             return self.stones.get(coli, 0)
         else:
@@ -158,7 +156,7 @@ class Cell(object):
         >>> cell['Rojo']
         returns the number of red stones in the current cell
         """
-        dic = lang.gbs_builtins.COLOR_NAME_TO_INDEX_DICT
+        dic = gbs_builtins.COLOR_NAME_TO_INDEX_DICT
         coli = dic[color_name]
         return self.num_stones(coli)
 
@@ -167,7 +165,7 @@ class Cell(object):
         >>> cell['Rojo'] = 3
         sets the number of red stones in the current cell to 3
         """
-        dic = lang.gbs_builtins.COLOR_NAME_TO_INDEX_DICT
+        dic = gbs_builtins.COLOR_NAME_TO_INDEX_DICT
         coli = dic[color_name]
         self.set_num_stones(coli, count)
 
@@ -194,7 +192,7 @@ class Cell(object):
             prop = property(fget=pget, fset=pset)
             setattr(Cell, colname, prop)
 
-        for colname, coli in lang.gbs_builtins.COLOR_NAME_TO_INDEX_DICT.items():
+        for colname, coli in gbs_builtins.COLOR_NAME_TO_INDEX_DICT.items():
             if not isinstance(colname, str):
                 continue
             init_col(colname, coli)
@@ -236,18 +234,18 @@ class Board(object):
         head_pos = self.head
         width, height = self.size
         y, x = self.head
-        delta_y, delta_x = direction.delta()        
-        
+        delta_y, delta_x = direction.delta()
+
         if delta_y > 0:
             y = height-1
         elif delta_y < 0:
             y = 0
-        
+
         if delta_x > 0:
             x = width-1
         elif delta_x < 0:
             x = 0
-        
+
         self.head = y, x
 
     def _clear_board(self):
@@ -261,7 +259,7 @@ class Board(object):
     def clear_board(self):
         """Clear the contents of the board"""
         self._clear_board()
-        
+
     def hard_clear_board(self):
         "Fully clear the contents of the board."
         width, height = self.size
@@ -348,15 +346,27 @@ class Board(object):
         "Randomize the board."
         self.randomize_contents()
 
-    def dump(self, f, fmt=formats.DefaultFormat, **kwargs):
+    def dump(self, f, fmt=None, **kwargs):
         "Dump the board to the file handle `f` in the given format."
+        import board.formats as formats
+        from board.BoardFormatException import BoardFormatException
+
+        if fmt is None:
+            fmt = formats.DefaultFormat
+
         if fmt in formats.AvailableFormats:
             formats.AvailableFormats[fmt]().dump(self, f, **kwargs)
         else:
             raise BoardFormatException('Board file format unrecognized: %s' % (fmt,))
 
-    def load(self, f, fmt=formats.DefaultFormat):
+    def load(self, f, fmt=None):
         "Load the board from the file handle `f` in the given format."
+        import board.formats as formats
+        from board.BoardFormatException import BoardFormatException
+
+        if fmt is None:
+            fmt = formats.DefaultFormat
+
         if fmt in formats.AvailableFormats:
             formats.AvailableFormats[fmt]().load(self, f)
         else:
@@ -376,11 +386,11 @@ class Board(object):
                 self.clear_board()
             else:
                 parent = self.parent
-            
+
             other_child = Board(self.size, parent)
             other_child.head = self.head
             return other_child
-            
+
     def clone_from(self, other):
         """Set the contents of this board to the contents of the other board."""
         self._restore_from(other)
@@ -429,6 +439,7 @@ class Board(object):
 def load_board_from(filename):
     """Load the board from the given filename, attempting to
     recognize the format by the file extension."""
+    import board.formats as formats
     fmt = formats.format_for(filename)
     board = Board((1, 1))
     f = open(filename, 'r')
@@ -439,8 +450,8 @@ def load_board_from(filename):
 def dump_board_to(board, filename, style='verbose'):
     """Dump the board into the given filename, attempting to
     recognize the format by the file extension."""
+    import board.formats as formats
     fmt = formats.format_for(filename)
     f = open(filename, 'w')
     board.dump(f, fmt, style=style)
     f.close()
-
