@@ -16,13 +16,15 @@ here = path.abspath(path.dirname(__file__))
 # Get the long description from the relevant file
 long_description = "Gobstones and XGobstones interpreter"
 
+VERSION = '1.5.0'
+
 setup(
     name='pygobstones-lang',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.4.1',
+    version=VERSION,
 
     description='A Gobstones and XGobstones interpreter',
     long_description=long_description,
@@ -98,6 +100,8 @@ setup(
     entry_points={
         'console_scripts': [
             'pygobstones-lang=pygobstoneslang.__main__:main',
+	    'pygobstones-lang%s=pygobstoneslang.__main__:main' % VERSION[:1],
+	    'pygobstones-lang%s=pygobstoneslang.__main__:main' % VERSION[:3],
         ],
     },
 )
