@@ -1,2 +1,3 @@
 include README.rst LICENCE.txt
 recursive-include docs *
+global-include gbs_grammar.bnf xgbs_grammar.bnf
