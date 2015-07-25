@@ -19,7 +19,7 @@ import re
 
 import pygobstoneslang.common.utils as utils
 import pygobstoneslang.common.i18n as i18n
-import pygobstoneslang.lang.gbs_builtins
+import pygobstoneslang.lang.gbs_builtins as gbs_builtins
 import basic
 
 def is_numeric(x):

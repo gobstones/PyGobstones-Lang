@@ -43,12 +43,12 @@ def report_program_error(errtype, msg, area):
 
 def get_initial_board(options):
     if options['from']:
-        format = options['from'].split('.')[-1].lower()
-        if format not in lang.board.formats.AvailableFormats:
-            fmt = lang.board.formats.DefaultFormat
+        format_ = options['from'].split('.')[-1].lower()
+        if format_ not in lang.board.formats.AvailableFormats:
+            format_ = lang.board.formats.DefaultFormat
         board_file = open(options['from'], 'r')
         board = lang.Board()
-        board.load(board_file, fmt=format)
+        board.load(board_file, fmt=format_)
         board_file.close()
     else:
         board = lang.Gobstones.random_board(options['size'])
@@ -265,16 +265,28 @@ def get_lang(options):
         lang_version = lang.GobstonesOptions.LangVersion.Gobstones
     return lang_version
 
+
 def run_filename(filename, options):
 
     if not options["language"] in ['gobstones', 'xgobstones']:
-        report_error("Options Error", "Language %s is not supported by this interpreter." % (options["language"],))
+        report_error(
+            "Options Error",
+            "Language %s is not supported by this interpreter." % (
+                options["language"],
+                )
+            )
         usage(2)
 
     lang_version = get_lang(options)
 
-    gbs_opts = lang.GobstonesOptions(lang_version, options['lint'], options['liveness'], options['typecheck'], options['jit'],
-                                     allow_recursion=options["recursion"])
+    gbs_opts = lang.GobstonesOptions(
+        lang_version,
+        options['lint'],
+        options['liveness'],
+        options['typecheck'],
+        options['jit'],
+        allow_recursion=options["recursion"]
+        )
     gobstones = lang.Gobstones(gbs_opts, ConsoleInteractiveAPI(options))
 
     if options['target'] == 'parse':
@@ -300,7 +312,7 @@ def run_filename(filename, options):
 def main():
     try:
         options = GbsOptions(sys.argv)
-	print options['recursion']
+
     except OptionsException as exception:
         if exception.msg != '':
             report_error(exception.error_type(), exception.msg)
@@ -336,6 +348,7 @@ def main():
 
             print_run(gbs_run, options)
             persist_run(gbs_run, options)
+
 
 if __name__ == '__main__':
     main()

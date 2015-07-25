@@ -261,7 +261,7 @@ def parse_string_try_prelude(string, filename, toplevel_filename=None, grammar_f
     prelude_filename = prelude_for_file(filename)
     if prelude_filename is not None:
         prelude_barename = i18n.i18n('Prelude')
-        pos = common.position.Position(string, filename)
+        pos = position.Position(string, filename)
         main_imports = main_program.children[1].children
         main_imports.insert(0, ast.ASTNode([
             'import',

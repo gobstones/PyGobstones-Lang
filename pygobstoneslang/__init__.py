@@ -1,9 +1,8 @@
 #!/usr/bin/python
 import pygobstoneslang.common.utils as utils
 import pygobstoneslang.common.i18n as i18n
-from pygobstoneslang.lang.gbs_board import Board
 from pygobstoneslang.common.tools import tools
-import logging
+import pygobstoneslang.lang as lang
 from pygobstoneslang.lang.gbs_api import GobstonesRun
 
 
@@ -15,7 +14,8 @@ class GUIExecutionAPI(lang.ExecutionAPI):
     def read(self):
         self.comm.send('READ_REQUEST')
         message = self.comm.receive()
-        if message.header != 'READ_DONE': assert False
+        if message.header != 'READ_DONE':
+            assert False
         return message.body
 
     def show(self, board):
@@ -24,19 +24,26 @@ class GUIExecutionAPI(lang.ExecutionAPI):
     def log(self, msg):
         self.comm.send('LOG', msg)
 
+
 class ProgramWorker(object):
+
     class RunMode:
         FULL = 'full'
         ONLY_CHECK = 'only_check'
         NAMES = 'names'
+
     def __init__(self, communicator):
         self.communicator = communicator
+
     def prepare(self):
         pass
+
     def start(self, filename, program_text, initial_board_string):
         pass
+
     def exit(self):
         pass
+
     def run(self):
         self.prepare()
         message = self.communicator.receive()
@@ -45,7 +52,13 @@ class ProgramWorker(object):
             self.exit()
             return
         filename, program_text, initial_board_string, run_mode, gobstones_version = message.body
-        self.start(filename, program_text, initial_board_string, run_mode, gobstones_version)
+        self.start(
+            filename,
+            program_text,
+            initial_board_string,
+            run_mode,
+            gobstones_version
+            )
 
 
 class GobstonesWorker(ProgramWorker):
@@ -53,10 +66,15 @@ class GobstonesWorker(ProgramWorker):
     def prepare(self):
         self.api = GUIExecutionAPI(self.communicator)
 
-    def start(self, filename, program_text, initial_board_string, run_mode, gobstones_version="xgobstones"):
+    def start(self, filename, program_text, initial_board_string,
+              run_mode, gobstones_version="xgobstones"):
 
         if run_mode == GobstonesWorker.RunMode.ONLY_CHECK:
-            options = lang.GobstonesOptions(lang_version=gobstones_version, check_liveness=True, lint_mode="strict")
+            options = lang.GobstonesOptions(
+                lang_version=gobstones_version,
+                check_liveness=True,
+                lint_mode="strict"
+                )
         else:
             options = lang.GobstonesOptions(lang_version=gobstones_version)
         self.gobstones = lang.Gobstones(options, self.api)
@@ -76,7 +94,10 @@ class GobstonesWorker(ProgramWorker):
             elif run_mode == GobstonesWorker.RunMode.NAMES:
                 self.success(self.gobstones.parse_names(filename, program_text))
             else:
-                raise Exception("There is no action associated with the given run mode.")
+                raise Exception(
+                    "There is no action associated " +
+                    "with the given run mode."
+                    )
         except Exception as exception:
             self.failure(exception)
 
@@ -84,7 +105,10 @@ class GobstonesWorker(ProgramWorker):
         if result is None:
             self.communicator.send('OK', (None, None))
         elif isinstance(result, GobstonesRun):
-            self.communicator.send('OK', (tools.board_format.to_string(result.final_board), result.result))
+            self.communicator.send('OK', (
+                tools.board_format.to_string(result.final_board),
+                result.result
+                ))
         elif isinstance(result, dict):
             self.communicator.send('OK', (result,))
         else:
@@ -92,8 +116,18 @@ class GobstonesWorker(ProgramWorker):
 
     def failure(self, exception):
         if hasattr(exception, 'area'):
-            self.communicator.send('FAIL', (exception.__class__, (exception.msg, exception.area)))
+            self.communicator.send(
+                'FAIL',
+                (exception.__class__,
+                (exception.msg, exception.area))
+                )
         elif hasattr(exception, 'msg'):
-            self.communicator.send('FAIL', (exception.__class__, (exception.msg, )))
+            self.communicator.send(
+                'FAIL',
+                (exception.__class__, (exception.msg, ))
+                )
         else:
-            self.communicator.send('FAIL', (utils.GobstonesException, (str(exception),)))
+            self.communicator.send(
+                'FAIL',
+                (utils.GobstonesException, (str(exception),))
+                )
