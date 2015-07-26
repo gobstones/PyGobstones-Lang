@@ -1,2 +1,3 @@
 include README.rst LICENCE.txt
 recursive-include docs *
+include pygobstoneslang/lang/grammar/*.bnf
