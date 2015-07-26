@@ -21,6 +21,7 @@ from gbs_type import build_types
 import gbs_vm
 import gbs_builtins
 import gbs_type
+import gbs_constructs
 import gbs_def_helper as def_helper
 import pygobstoneslang.common.i18n as i18n
 import pygobstoneslang.common.position as position

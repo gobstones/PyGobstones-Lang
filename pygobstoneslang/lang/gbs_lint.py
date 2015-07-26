@@ -16,10 +16,12 @@
 #
 
 import pygobstoneslang.common.position as position
+import pygobstoneslang.common.utils as utils
 import gbs_builtins
 import gbs_constructs
 import gbs_type
 import gbs_modules
+import bnf_parser
 from gbs_def_helper import *
 import pygobstoneslang.common.i18n as i18n
 from pygobstoneslang.common.utils import *

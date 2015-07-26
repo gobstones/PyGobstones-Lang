@@ -407,6 +407,7 @@ class Board(object):
                 self.cells[y][x] = other.cells[y][x].clone()
 
     def __repr__(self):
+        import board.formats as formats
         gbt_format = formats.AvailableFormats['gbt']()
         out = gbt_format.numbered_contents(self)
         return '\n'.join(out)

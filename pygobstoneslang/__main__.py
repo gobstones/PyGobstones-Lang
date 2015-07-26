@@ -30,26 +30,30 @@ from pygobstoneslang.common.utils import SourceException, GobstonesException
 
 LOGGER = logtools.get_logger('gbs-console')
 
+
 def report_error(errtype, msg):
     LOGGER.error('%s:\n' % (errtype,))
     LOGGER.error('%s\n' % (utils.indent(msg),))
+
 
 def report_program_error(errtype, msg, area):
     LOGGER.error('\n%s\n' % (area,))
     report_error(errtype, msg)
 
+
 def get_initial_board(options):
     if options['from']:
-        format = options['from'].split('.')[-1].lower()
-        if format not in lang.board.formats.AvailableFormats:
-            fmt = lang.board.formats.DefaultFormat
+        format_ = options['from'].split('.')[-1].lower()
+        if format_ not in lang.board.formats.AvailableFormats:
+            format_ = lang.board.formats.DefaultFormat
         board_file = open(options['from'], 'r')
         board = lang.Board()
-        board.load(board_file, fmt=format)
+        board.load(board_file, fmt=format_)
         board_file.close()
     else:
         board = lang.Gobstones.random_board(options['size'])
     return board
+
 
 def usage(ret=1):
     msg = i18n.i18n('I18N_gbs_usage')
@@ -57,12 +61,16 @@ def usage(ret=1):
     LOGGER.error(msg)
     sys.exit(ret)
 
+
 class OptionsException(Exception):
+
     def __init__(self, msg=''):
         super(OptionsException, self).__init__()
         self.msg = msg
+
     def error_type(self):
         return 'Error'
+
 
 class GbsOptions(object):
     SWITCHES = [
@@ -90,7 +98,6 @@ class GbsOptions(object):
         '--help',
         '--profile',
         '--silent',
-        '--optimize',
         '--interactive',
         '--output-type X',
         '--language X',
@@ -138,7 +145,6 @@ class GbsOptions(object):
                 raise OptionsException()
             else:
                 options['src'] = self.arguments[0]
-
         for k,v in options.items():
             if k == 'lint':
                 options[k] = self.maybe(options, k, 'strict')
@@ -177,9 +183,11 @@ class GbsOptions(object):
             if width < 1 or height < 1:
                 return False
         return True
+
     def check_file_exists(self, file):
         if not os.path.exists(file):
             raise OptionsException(i18n.i18n('File %s does not exist') % (file,))
+
 
 def print_run(gbs_run, options):
     if options['print-ast'] and options['output-type'] == 'json':
@@ -211,6 +219,7 @@ def print_run(gbs_run, options):
                 LOGGER.info(gbs.run.runnable.native_code())
                 LOGGER.info('## End of native code')
 
+
 def persist_run(gbs_run, options):
     if options['asm']:
         f = open(options['asm'], 'w')
@@ -227,21 +236,27 @@ def persist_run(gbs_run, options):
        board.dump(f, fmt=fmt, style=options['style'])
        f.close()
 
+
 class ConsoleInteractiveAPI(lang.ExecutionAPI):
+
     def __init__(self, options):
         self.options = options
+
     def read(self):
         if self.options['interactive']:
             char = utils.getch()
             return ord(char)
         else:
             return lang.GobstonesKeys.CTRL_D
+
     def show(self, board):
         utils.clear()
         self.log(board)
+
     def log(self, msg):
         if not self.options['silent']:
             LOGGER.info(msg)
+
 
 def get_lang(options):
     if options["language"] == 'xgobstones':
@@ -250,16 +265,28 @@ def get_lang(options):
         lang_version = lang.GobstonesOptions.LangVersion.Gobstones
     return lang_version
 
+
 def run_filename(filename, options):
 
     if not options["language"] in ['gobstones', 'xgobstones']:
-        report_error("Options Error", "Language %s is not supported by this interpreter." % (options["language"],))
+        report_error(
+            "Options Error",
+            "Language %s is not supported by this interpreter." % (
+                options["language"],
+                )
+            )
         usage(2)
 
     lang_version = get_lang(options)
 
-    gbs_opts = lang.GobstonesOptions(lang_version, options['lint'], options['liveness'], options['typecheck'], options['jit'], options['optimize'],
-                                     allow_recursion=options["recursion"])
+    gbs_opts = lang.GobstonesOptions(
+        lang_version,
+        options['lint'],
+        options['liveness'],
+        options['typecheck'],
+        options['jit'],
+        allow_recursion=options["recursion"]
+        )
     gobstones = lang.Gobstones(gbs_opts, ConsoleInteractiveAPI(options))
 
     if options['target'] == 'parse':
@@ -285,6 +312,7 @@ def run_filename(filename, options):
 def main():
     try:
         options = GbsOptions(sys.argv)
+
     except OptionsException as exception:
         if exception.msg != '':
             report_error(exception.error_type(), exception.msg)
@@ -320,6 +348,7 @@ def main():
 
             print_run(gbs_run, options)
             persist_run(gbs_run, options)
+
 
 if __name__ == '__main__':
     main()
