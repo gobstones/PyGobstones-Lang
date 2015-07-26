@@ -1,5 +1,5 @@
 from TestOperation import TestOperation
-from test_utils import combine_args
+from utils import combine_args
 import functools
 import re
 

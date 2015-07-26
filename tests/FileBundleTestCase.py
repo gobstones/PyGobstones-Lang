@@ -1,7 +1,7 @@
 from TestCase import TestCase
 import os
 from FileTestCase import FileTestCase
-from test_utils import parent_dir
+from utils import parent_dir
 
 
 class FileBundleTestCase(TestCase):

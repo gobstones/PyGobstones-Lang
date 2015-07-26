@@ -5,7 +5,7 @@ import os
 from AutoTestCase import AutoTestCase
 from TestOperation import TestOperation
 from TestScript import TestScript
-from test_utils import BINOPS, nats, tail, binop, head, isEmpty, COLORS,\
+from utils import BINOPS, nats, tail, binop, head, isEmpty, COLORS,\
     DIRS, BOOLS, randint, randomIntList, randomList, flatten, group, copy_file
 import unittest
 # Tests

@@ -1,5 +1,5 @@
 from TestCase import TestCase
-from test_utils import read_file_lines, module_dir
+from utils import read_file_lines, module_dir
 from GobstonesRunner import run_gobstones
 import os
 

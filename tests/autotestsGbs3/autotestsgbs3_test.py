@@ -1,6 +1,6 @@
 import unittest
 import os
-from test_utils import (
+from utils import (
     randomList,
     randomIntList,
     iceil,

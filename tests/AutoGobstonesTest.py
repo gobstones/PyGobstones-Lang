@@ -1,4 +1,4 @@
-from test_utils import unzip, temp_test_file
+from utils import unzip, temp_test_file
 from GobstonesRunner import run_gobstones
 import os
 from TestCase import TestCase

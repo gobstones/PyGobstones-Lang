@@ -1,6 +1,6 @@
 from AutoGobstonesTest import AutoGobstonesTest
 from TestCase import TestCase
-from test_utils import unzip, delete_files_in_dir, parent_dir
+from utils import unzip, delete_files_in_dir, parent_dir
 import os
 
 
