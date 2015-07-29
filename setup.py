@@ -16,7 +16,7 @@ here = path.abspath(path.dirname(__file__))
 # Get the long description from the relevant file
 long_description = "Gobstones and XGobstones interpreter"
 
-VERSION = '1.5.0'
+VERSION = '1.5.1'
 
 setup(
     name='pygobstones-lang',
