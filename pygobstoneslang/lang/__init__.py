@@ -19,7 +19,6 @@
 import os
 
 LangDir = os.path.dirname(__file__)
-GbsMacrosDir = os.path.join(LangDir, 'macros')
 
 
 import pygobstoneslang.common.i18n as i18n

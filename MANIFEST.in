@@ -1,3 +1,4 @@
 include README.md LICENCE.txt
 recursive-include docs *
 include pygobstoneslang/lang/grammar/*.bnf
+include pygobstoneslang/lang/macros/*.gbs

@@ -27,6 +27,7 @@ import pygobstoneslang.lang as lang
 import logging
 import json
 from pygobstoneslang.common.utils import SourceException, GobstonesException
+from pygobstoneslang.lang.gbs_vm import NullInteractiveAPI
 
 LOGGER = logtools.get_logger('gbs-console')
 
@@ -243,15 +244,23 @@ class ConsoleInteractiveAPI(lang.ExecutionAPI):
         self.options = options
 
     def read(self):
-        if self.options['interactive']:
-            char = utils.getch()
-            return ord(char)
-        else:
-            return lang.GobstonesKeys.CTRL_D
+        char = utils.getch()
+        return ord(char)
 
     def show(self, board):
         utils.clear()
         self.log(board)
+
+    def log(self, msg):
+        if not self.options['silent']:
+            LOGGER.info(msg)
+
+
+class ConsoleNullInteractiveAPI(NullInteractiveAPI):
+
+    def __init__(self, options):
+        super(ConsoleNullInteractiveAPI, self).__init__()
+        self.options = options
 
     def log(self, msg):
         if not self.options['silent']:
@@ -287,7 +296,12 @@ def run_filename(filename, options):
         options['jit'],
         allow_recursion=options["recursion"]
         )
-    gobstones = lang.Gobstones(gbs_opts, ConsoleInteractiveAPI(options))
+    
+    if options['interactive']:
+        api = ConsoleInteractiveAPI(options)
+    else:        
+        api = ConsoleNullInteractiveAPI(options)
+    gobstones = lang.Gobstones(gbs_opts, api)
 
     if options['target'] == 'parse':
         gbs_run = gobstones.parse(filename, open(filename).read())

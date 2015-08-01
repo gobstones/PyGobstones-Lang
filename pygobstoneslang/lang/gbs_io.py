@@ -30,18 +30,25 @@ class GobstonesKeys(object):
 """ Interactive API """
 
 class InteractiveApi(object):
+    
     """Provides a common interface for I/O"""
     def read(self):
         "Returns an integer representing a keycode"
         return GobstonesKeys.CTRL_D
+    
     def show(self, board):
         pass
+    
     def write(self, str):
         pass
+    
     def read_line(self):
         "Returns a String of characters"
         pass
-
+    
+    def log(self, message):
+        "Logs a message produced by the language"
+        pass
 
 
 """ Cross-Platform API Adapter and Helper Classes"""
