@@ -15,6 +15,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import pygobstoneslang.common.i18n as i18n
+
+
+def get_key_set():
+    return KeyBuilder().build()
+    
 
 """ Gosbtones Keycodes """
 
@@ -24,7 +30,6 @@ class GobstonesKeys(object):
     ARROW_RIGHT = 1003
     ARROW_LEFT = 1004
     CTRL_D = 4
-
     
 
 """ Interactive API """
@@ -49,6 +54,7 @@ class InteractiveApi(object):
     def log(self, message):
         "Logs a message produced by the language"
         pass
+
 
 
 """ Cross-Platform API Adapter and Helper Classes"""
@@ -80,10 +86,12 @@ class KeyBuffer(object):
             if self._buffer[i] == combination[0] and self._buffer[i:i+len(combination)] == combination:
                 return combination
     
+    
 class SpecialKey(object):
     def __init__(self, combination, gbs_value):
         self.combination = combination
         self.gbs_value = gbs_value
+    
     
 class CrossPlatformApiAdapter(InteractiveApi):
     def __init__(self, adapted_api):
@@ -113,3 +121,50 @@ class CrossPlatformApiAdapter(InteractiveApi):
         return self.adapted_api.write(str)
     def read_line(self):
         return self.adapted_api.read_line();    
+
+
+#### Key constants
+class KeyBuilder(object):
+    
+    def build_key(self, keyname, value):
+        return (keyname, value)        
+
+    def build_ascii_key_in_range(self, prefix, min, max, name_builder=None):
+        keys = []
+        if name_builder is None:
+            name_builder = lambda ascii_code:chr(ascii_code)
+        for ascii_code in range(min, max + 1):
+            keys.append(self.build_key(prefix + '_' + str.upper(name_builder(ascii_code)), ascii_code))
+        return keys
+
+    def build_ascii_key(self):
+        keys = []
+        # Build C_0 .. C_9 key constants
+        keys.extend(self.build_ascii_key_in_range("K", 48, 57))
+        # Build C_A .. C_Z key constants
+        keys.extend(self.build_ascii_key_in_range("K", 97, 122))
+        # Build SHILF_A .. SHIFT_Z key constants
+        keys.extend(self.build_ascii_key_in_range("K_SHIFT", 65, 90))
+
+        keys.extend(self.build_ascii_key_in_range("K_CTRL", 1, 26, lambda ascii_code: chr(ascii_code + 96)))
+        return keys
+
+    def build_special_key(self):
+        return [
+                self.build_key(i18n.i18n("K_ARROW_LEFT"), GobstonesKeys.ARROW_LEFT),
+                self.build_key(i18n.i18n("K_ARROW_UP"), GobstonesKeys.ARROW_UP),
+                self.build_key(i18n.i18n("K_ARROW_RIGHT"), GobstonesKeys.ARROW_RIGHT),
+                self.build_key(i18n.i18n("K_ARROW_DOWN"), GobstonesKeys.ARROW_DOWN),
+                self.build_key('K_ENTER', 13),
+                self.build_key('K_SPACE', 32),
+                self.build_key('K_DELETE', 46),
+                self.build_key('K_BACKSPACE', 8),
+                self.build_key('K_TAB', 9),
+                self.build_key('K_ESCAPE', 27),
+                ]
+
+    def build(self):
+        keys = []
+        keys.extend(self.build_ascii_key())
+        keys.extend(self.build_special_key())
+        return keys;

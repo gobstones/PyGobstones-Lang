@@ -537,6 +537,8 @@ Otros usos:
   <PROG> entrada.gbo [opciones]
 ''',
   'Wrote %s': 'Se escribió el archivo %s',
+  "Interactive program key set: %s":
+    "Conjunto de teclas del programa interactivo: %s",
 
 ## GUI
 

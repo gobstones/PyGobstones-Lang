@@ -25,6 +25,7 @@ import pygobstoneslang.common.utils as utils
 import pygobstoneslang.common.logtools as logtools
 import pygobstoneslang.lang as lang
 import pygobstoneslang.lang.board as board
+from pygobstoneslang.lang.gbs_io import get_key_set
 import logging
 import json
 from pygobstoneslang.common.utils import SourceException, GobstonesException
@@ -102,7 +103,8 @@ class GbsOptions(object):
         '--output-type X',
         '--language X',
         '--recursion',
-        '--names'
+        '--names',
+        '--keyset'
     ]
 
     def __init__(self, argv):
@@ -333,8 +335,11 @@ def main():
     elif options['license']:
         LOGGER.info(utils.read_file(LICENSE_FILE))
         sys.exit(0)
-
-    if options['src']:
+    elif options['keyset']:
+        key_set = ["%s (%s)" % kv for kv in get_key_set()]
+        LOGGER.info(i18n.i18n("Interactive program key set: %s") % (
+                       "\n\t" + "\n\t".join(key_set),))
+    elif options['src']:
         if options['names']:
             gobstones = lang.Gobstones(lang.GobstonesOptions(get_lang(options)))
             print json.dumps(gobstones.parse_names(options['src'], open(options['src']).read()))
@@ -354,7 +359,8 @@ def main():
 
             print_run(gbs_run, options)
             persist_run(gbs_run, options)
-
+    else:
+        usage()
 
 if __name__ == '__main__':
     main()

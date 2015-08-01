@@ -21,7 +21,7 @@ import sys
 import functools
 import pygobstoneslang.common.utils as utils
 from gbs_type import UserDefinedTypes, GbsVariantType
-from gbs_io import GobstonesKeys
+from gbs_io import KeyBuilder
 from sets import Set
 
 explicit_builtins = True
@@ -1314,49 +1314,11 @@ BUILTINS = [
 ]
 
 #### Key constants
-class KeyConstantBuilder:
-    def build_key_constant(self, keyname, value):
+class KeyConstantBuilder(KeyBuilder):
+    
+    def build_key(self, keyname, value):
         return BuiltinConstant(keyname, GbsIntType(), value)
-
-    def build_ascii_key_constants_in_range(self, prefix, min, max, name_builder=None):
-        keys = []
-        if name_builder is None:
-            name_builder = lambda ascii_code:chr(ascii_code)
-        for ascii_code in range(min, max + 1):
-             keys.append(self.build_key_constant(prefix + '_' + str.upper(name_builder(ascii_code)), ascii_code))
-        return keys
-
-    def build_ascii_key_constants(self):
-        keys = []
-        # Build C_0 .. C_9 key constants
-        keys.extend(self.build_ascii_key_constants_in_range("K", 48, 57))
-        # Build C_A .. C_Z key constants
-        keys.extend(self.build_ascii_key_constants_in_range("K", 97, 122))
-        # Build SHILF_A .. SHIFT_Z key constants
-        keys.extend(self.build_ascii_key_constants_in_range("K_SHIFT", 65, 90))
-
-        keys.extend(self.build_ascii_key_constants_in_range("K_CTRL", 1, 26, lambda ascii_code: chr(ascii_code + 96)))
-        return keys
-
-    def build_special_key_constants(self):
-        return [
-                self.build_key_constant(i18n.i18n("K_ARROW_LEFT"), GobstonesKeys.ARROW_LEFT),
-                self.build_key_constant(i18n.i18n("K_ARROW_UP"), GobstonesKeys.ARROW_UP),
-                self.build_key_constant(i18n.i18n("K_ARROW_RIGHT"), GobstonesKeys.ARROW_RIGHT),
-                self.build_key_constant(i18n.i18n("K_ARROW_DOWN"), GobstonesKeys.ARROW_DOWN),
-                self.build_key_constant('K_ENTER', 13),
-                self.build_key_constant('K_SPACE', 32),
-                self.build_key_constant('K_DELETE', 46),
-                self.build_key_constant('K_BACKSPACE', 8),
-                self.build_key_constant('K_TAB', 9),
-                self.build_key_constant('K_ESCAPE', 27),
-                ]
-
-    def build(self):
-        keys = []
-        keys.extend(self.build_ascii_key_constants())
-        keys.extend(self.build_special_key_constants())
-        return keys;
+    
 
 BUILTINS.extend(KeyConstantBuilder().build())
 
