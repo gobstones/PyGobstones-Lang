@@ -1,0 +1,3 @@
+interactive program {
+    _ -> { Poner(Azul) }
+}
