@@ -559,9 +559,14 @@ class ASTBuilder(object):
         params list."""
 
         if isinstance(subtrees[1], bnf_parser.Token) and subtrees[1].value == 'interactive':
-            epvar = subtrees[2]
-            epname = subtrees[1]
-            body = subtrees[5]
+            if len(subtrees) == 6: # We are parsing XGobstones
+                epvar = subtrees[2]
+                epname = subtrees[1]
+                body = subtrees[5]
+            else: # We are parsing Gobstones
+                epvar = None
+                epname = subtrees[1]
+                body = subtrees[4]
         else:
             if len(subtrees) == 5: # We are parsing XGobstones
                 epvar = subtrees[1]

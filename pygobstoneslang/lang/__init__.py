@@ -19,7 +19,6 @@
 import os
 
 LangDir = os.path.dirname(__file__)
-GbsMacrosDir = os.path.join(LangDir, 'macros')
 
 
 import pygobstoneslang.common.i18n as i18n
@@ -52,10 +51,7 @@ class Gobstones(object):
         self.typecheck = gbs_infer.typecheck
         self.compile_program = gbs_compiler.compile_program
 
-        if self.options.jit:
-            self.make_runnable = jit.gbs_jit.JitCompiledRunnable
-        else:
-            self.make_runnable = gbs_vm.VmCompiledRunnable
+        self.make_runnable = gbs_vm.VmCompiledRunnable
 
 
     def _parse(self, program_text, filename):

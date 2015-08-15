@@ -18,6 +18,10 @@
 import functools
 import os
 import gbs_def_helper as defhelper
+import gbs_parser
+
+LangDir = os.path.dirname(__file__)
+GbsMacrosDir = os.path.join(LangDir, 'macros')
 
 #### Macro exploding of Gobstones programs.
 

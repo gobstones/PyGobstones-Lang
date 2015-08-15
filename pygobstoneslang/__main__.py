@@ -24,11 +24,15 @@ import pygobstoneslang.common.i18n as i18n
 import pygobstoneslang.common.utils as utils
 import pygobstoneslang.common.logtools as logtools
 import pygobstoneslang.lang as lang
+import pygobstoneslang.lang.board as board
+from pygobstoneslang.lang.gbs_io import get_key_set
 import logging
 import json
 from pygobstoneslang.common.utils import SourceException, GobstonesException
+from pygobstoneslang.lang.gbs_vm import NullInteractiveAPI
 
 LOGGER = logtools.get_logger('gbs-console')
+LICENSE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "LICENSE.txt")
 
 
 def report_error(errtype, msg):
@@ -44,15 +48,15 @@ def report_program_error(errtype, msg, area):
 def get_initial_board(options):
     if options['from']:
         format_ = options['from'].split('.')[-1].lower()
-        if format_ not in lang.board.formats.AvailableFormats:
-            format_ = lang.board.formats.DefaultFormat
+        if format_ not in board.formats.AvailableFormats:
+            format_ = board.formats.DefaultFormat
         board_file = open(options['from'], 'r')
-        board = lang.Board()
-        board.load(board_file, fmt=format_)
+        initial_board = lang.Board()
+        initial_board.load(board_file, fmt=format_)
         board_file.close()
     else:
-        board = lang.Gobstones.random_board(options['size'])
-    return board
+        initial_board = lang.Gobstones.random_board(options['size'])
+    return initial_board
 
 
 def usage(ret=1):
@@ -88,9 +92,6 @@ class GbsOptions(object):
         '--lint X',
         '--asm X',
         '--src X',
-        '--jit',
-        '--print-jit',
-        '--print-native',
         '--style X',
         '--version',
         '--license',
@@ -102,7 +103,8 @@ class GbsOptions(object):
         '--output-type X',
         '--language X',
         '--recursion',
-        '--names'
+        '--names',
+        '--keyset'
     ]
 
     def __init__(self, argv):
@@ -111,7 +113,8 @@ class GbsOptions(object):
         opts = utils.parse_options(GbsOptions.SWITCHES, argv)
         if not opts:
             raise OptionsException()
-        self.arguments, self.options = opts
+        self.arguments = opts[0]
+        self.options = opts[1]
         self.options = self.build(self.options)
 
     def __getitem__(self, i):
@@ -184,9 +187,9 @@ class GbsOptions(object):
                 return False
         return True
 
-    def check_file_exists(self, file):
-        if not os.path.exists(file):
-            raise OptionsException(i18n.i18n('File %s does not exist') % (file,))
+    def check_file_exists(self, filename):
+        if not os.path.exists(filename):
+            raise OptionsException(i18n.i18n('File %s does not exist') % (filename,))
 
 
 def print_run(gbs_run, options):
@@ -211,30 +214,23 @@ def print_run(gbs_run, options):
                     LOGGER.info('%s -> %s' % (var, val))
                 if not options['print-board']:
                     LOGGER.info('OK')
-        if options['jit']:
-            if options['print-jit']:
-                LOGGER.info(gbs_run.runnable.jit_code())
-            if options['print-native']:
-                LOGGER.info('## Native code')
-                LOGGER.info(gbs.run.runnable.native_code())
-                LOGGER.info('## End of native code')
 
 
 def persist_run(gbs_run, options):
     if options['asm']:
         f = open(options['asm'], 'w')
         w = lang.gbs_vm_serializer.dump(gbs_run.compiled_program, f, style=options['style'])
+        f.write(w)
         f.close()
 
     if options['to'] and gbs_run.final_board:
-       f = open(options['to'], 'w')
-       fmt = options['to'].split('.')[-1]
-       fmt = fmt.lower()
-       if fmt not in lang.board.formats.AvailableFormats:
-           fmt = lang.board.formats.DefaultFormat
-       board = gbs_run.final_board
-       board.dump(f, fmt=fmt, style=options['style'])
-       f.close()
+        f = open(options['to'], 'w')
+        fmt = options['to'].split('.')[-1]
+        fmt = fmt.lower()
+        if fmt not in board.formats.AvailableFormats:
+            fmt = board.formats.DefaultFormat
+        gbs_run.final_board.dump(f, fmt=fmt, style=options['style'])
+        f.close()
 
 
 class ConsoleInteractiveAPI(lang.ExecutionAPI):
@@ -243,15 +239,23 @@ class ConsoleInteractiveAPI(lang.ExecutionAPI):
         self.options = options
 
     def read(self):
-        if self.options['interactive']:
-            char = utils.getch()
-            return ord(char)
-        else:
-            return lang.GobstonesKeys.CTRL_D
+        char = utils.getch()
+        return ord(char)
 
-    def show(self, board):
+    def show(self, partial_board):
         utils.clear()
-        self.log(board)
+        self.log(partial_board)
+
+    def log(self, msg):
+        if not self.options['silent']:
+            LOGGER.info(msg)
+
+
+class ConsoleNullInteractiveAPI(NullInteractiveAPI):
+
+    def __init__(self, options):
+        super(ConsoleNullInteractiveAPI, self).__init__()
+        self.options = options
 
     def log(self, msg):
         if not self.options['silent']:
@@ -284,10 +288,14 @@ def run_filename(filename, options):
         options['lint'],
         options['liveness'],
         options['typecheck'],
-        options['jit'],
         allow_recursion=options["recursion"]
         )
-    gobstones = lang.Gobstones(gbs_opts, ConsoleInteractiveAPI(options))
+    
+    if options['interactive']:
+        api = ConsoleInteractiveAPI(options)
+    else:        
+        api = ConsoleNullInteractiveAPI(options)
+    gobstones = lang.Gobstones(gbs_opts, api)
 
     if options['target'] == 'parse':
         gbs_run = gobstones.parse(filename, open(filename).read())
@@ -302,7 +310,7 @@ def run_filename(filename, options):
         gbs_run = gobstones.run_object_code(compiled_program, get_initial_board(options))
     elif options['asm']:
         gbs_run = gobstones.compile(filename, open(filename).read())
-    elif lang.board.formats.is_board_filename(filename):
+    elif board.formats.is_board_filename(filename):
         gbs_run = lang.GobstonesRun()
         gbs_run.final_board = lang.gbs_board.load_board_from(filename)
     else:
@@ -325,10 +333,13 @@ def main():
     elif options['help']:
         usage(0)
     elif options['license']:
-        LOGGER.info(utils.read_file(LicenseFile))
+        LOGGER.info(utils.read_file(LICENSE_FILE))
         sys.exit(0)
-
-    if options['src']:
+    elif options['keyset']:
+        key_set = ["%s (%s)" % kv for kv in get_key_set()]
+        LOGGER.info(i18n.i18n("Interactive program key set: %s") % (
+                       "\n\t" + "\n\t".join(key_set),))
+    elif options['src']:
         if options['names']:
             gobstones = lang.Gobstones(lang.GobstonesOptions(get_lang(options)))
             print json.dumps(gobstones.parse_names(options['src'], open(options['src']).read()))
@@ -348,7 +359,8 @@ def main():
 
             print_run(gbs_run, options)
             persist_run(gbs_run, options)
-
+    else:
+        usage()
 
 if __name__ == '__main__':
     main()

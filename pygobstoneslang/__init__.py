@@ -47,7 +47,8 @@ class ProgramWorker(object):
     def run(self):
         self.prepare()
         message = self.communicator.receive()
-        assert message.header in ['START', 'EXIT']
+        while not message.header in ['START', 'EXIT']:
+            print("Lang got an unexpected message '%s:%s'" %  (message.header, message.body)) 
         if message.header == 'EXIT':
             self.exit()
             return

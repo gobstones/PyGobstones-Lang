@@ -4,7 +4,7 @@ import os
 class GobstonesRunner(object):
 
     def lang_path(self):
-        return os.path.dirname(__file__) + "/../pygobstoneslang/__main__.py"
+        return os.path.dirname(__file__) + "/../pygobstoneslang.py"
         #return "pygobstones-lang"
 
     def base_parameters(self):
