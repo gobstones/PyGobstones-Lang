@@ -18,8 +18,20 @@ long_description = "Gobstones and XGobstones interpreter"
 
 VERSION = '1.5.1'
 
+ENVIRONMENT = 'prod'
+
+PACKAGE_NAME = 'pygobstones-lang'
+
+
+def get_name():
+    if ENVIRONMENT in ['prod']:
+        return PACKAGE_NAME
+    else:
+        return "%s-%s" % (PACKAGE_NAME, ENVIRONMENT)
+
+
 setup(
-    name='pygobstones-lang',
+    name=get_name(),
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
@@ -102,9 +114,9 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'pygobstones-lang=pygobstoneslang.__main__:main',
-	    'pygobstones-lang%s=pygobstoneslang.__main__:main' % VERSION[:1],
-	    'pygobstones-lang%s=pygobstoneslang.__main__:main' % VERSION[:3],
+            '%s=pygobstoneslang.__main__:main' % (get_name(),),
+	    '%s%s=pygobstoneslang.__main__:main' % (get_name(), VERSION[:1]),
+	    '%s%s=pygobstoneslang.__main__:main' % (get_name(), VERSION[:3]),
         ],
     },
 )
