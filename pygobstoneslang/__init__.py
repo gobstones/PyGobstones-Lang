@@ -1,9 +1,34 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 import pygobstoneslang.common.utils as utils
 import pygobstoneslang.common.i18n as i18n
 from pygobstoneslang.common.tools import tools
 import pygobstoneslang.lang as lang
 from pygobstoneslang.lang.gbs_api import GobstonesRun
+import logging
+import os
+import traceback
+
+def setup_logger():
+    pygbs_path = os.path.join(os.path.expanduser("~"), ".pygobstones")
+
+    logger = logging.getLogger("lang")
+    formatter = logging.Formatter('[%(asctime)s][%(levelname)s][%(name)s] %(message)s')
+
+    if not os.path.exists(pygbs_path):
+        os.mkdir(pygbs_path)
+
+    filehandler = logging.FileHandler(os.path.join(pygbs_path, "pygobstones-lang.log"))
+    filehandler.setFormatter(formatter)
+
+    consolehandler = logging.StreamHandler()
+    consolehandler.setFormatter(formatter)
+
+    logger.addHandler(filehandler)
+    logger.addHandler(consolehandler)
+    logger.setLevel(logging.WARNING)
+
+setup_logger()
 
 
 class GUIExecutionAPI(lang.ExecutionAPI):
@@ -48,7 +73,7 @@ class ProgramWorker(object):
         self.prepare()
         message = self.communicator.receive()
         while not message.header in ['START', 'EXIT']:
-            print("Lang got an unexpected message '%s:%s'" %  (message.header, message.body)) 
+            print("Lang got an unexpected message '%s:%s'" %  (message.header, message.body))
         if message.header == 'EXIT':
             self.exit()
             return
@@ -101,6 +126,9 @@ class GobstonesWorker(ProgramWorker):
                     )
         except Exception as exception:
             self.failure(exception)
+            logging.getLogger("lang").error(
+                "%s\n%s" % (exception, traceback.format_exc())
+                )
 
     def success(self, result=None):
         if result is None:
