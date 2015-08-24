@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011-2013 Pablo Barenbaum <foones@gmail.com>,
 #                         Ary Pablo Batista <arypbatista@gmail.com>
@@ -290,10 +291,10 @@ def run_filename(filename, options):
         options['typecheck'],
         allow_recursion=options["recursion"]
         )
-    
+
     if options['interactive']:
         api = ConsoleInteractiveAPI(options)
-    else:        
+    else:
         api = ConsoleNullInteractiveAPI(options)
     gobstones = lang.Gobstones(gbs_opts, api)
 
