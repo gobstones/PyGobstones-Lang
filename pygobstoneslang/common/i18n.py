@@ -1,4 +1,4 @@
-# coding:utf-8:
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
 #
@@ -72,6 +72,12 @@ ES = {
     'Se llegó al final del archivo pero todavía hay paréntesis abiertos',
   'Found end of file but there are open braces yet':
     'Se llegó al final del archivo pero todavía hay llaves abiertas',
+
+#
+  'a command' :
+    'un comando',
+  'an expression':
+    'una expresión',
 
 # parser errors
   'Syntax error':
@@ -751,8 +757,7 @@ Language = ES
 
 def i18n(s):
   # return the original string if no translation is found
-  translation = Language.get(s, s)
-  return translation if isinstance(translation, unicode) else translation.decode("utf-8")
+  return Language.get(s, s)
 
 Token_type_descriptions = {
   'EOF': i18n('end of input'),

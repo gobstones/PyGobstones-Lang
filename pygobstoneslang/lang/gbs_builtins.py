@@ -476,7 +476,7 @@ def poly_typeof(value):
         return 'Int'
     elif isinstance(value, list):
         return 'List'
-    elif isinstance(value, str) or isinstance(value, unicode):
+    elif isinstance(value, str):
         return 'String'
     elif isinstance(value, GbsObject):
         return value.type
@@ -1315,10 +1315,10 @@ BUILTINS = [
 
 #### Key constants
 class KeyConstantBuilder(KeyBuilder):
-    
+
     def build_key(self, keyname, value):
         return BuiltinConstant(keyname, GbsIntType(), value)
-    
+
 
 BUILTINS.extend(KeyConstantBuilder().build())
 

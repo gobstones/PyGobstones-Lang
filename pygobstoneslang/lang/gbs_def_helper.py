@@ -75,13 +75,13 @@ def get_def_type_decl(def_):
 
 def find_def(defs, satisfies):
     "Searchs for a definition that satisfies some criteria (satisfies is a Function)"
-    def_tree = None
-
+    found = None
+    
     for def_ in defs.children:
         if satisfies(def_):
-            def_tree = def_
+            found = def_
 
-    return def_tree
+    return found
 
 def recursive_find_node(tree, satisfies):
   for node in tree.children:

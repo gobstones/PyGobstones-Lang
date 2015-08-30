@@ -370,10 +370,12 @@ class GbsSemanticChecker(object):
         self.types += gbs_type.build_types(tree)
 
     def check_program(self, tree, loaded_modules=[], is_main_program=True):
-        self.setup(tree)
-
         self.loaded_modules = loaded_modules
         self.is_main_program = is_main_program
+
+        self.check_not_empty(tree)
+        self._check_EntryPoint(tree)
+        self.setup(tree)
 
         self.module_handler = tree.module_handler = gbs_modules.GbsModuleHandler(tree.source_filename, tree.toplevel_filename)
         self.imported_rtns = {}
@@ -455,22 +457,20 @@ class GbsSemanticChecker(object):
                     if construct.type() == "type":
                         self.types += filter(lambda x: x.name == construct.name(), mdl_lint.types)
 
+    def check_not_empty(self, tree):
+        if len(tree.children) == 0 and self.is_main_program:
+            pos = position.ProgramAreaNear(tree)
+            raise GbsLintException(i18n.i18n('Empty program'), pos)
+
     def check_defs(self, tree):
-        if len(tree.children) == 0:
-            if self.is_main_program:
-                pos = position.ProgramAreaNear(tree)
-                raise GbsLintException(i18n.i18n('Empty program'), pos)
-        else:
-            self._check_EntryPoint(tree)
+        for def_ in tree.children:
+            self.check_definition1(def_)
 
-            for def_ in tree.children:
-                self.check_definition1(def_)
-
-            for def_ in tree.children:
-               self.check_definition2(def_)
+        for def_ in tree.children:
+           self.check_definition2(def_)
 
     def _check_EntryPoint(self, tree):
-        if not self._check_ProgramEntryPoint(tree) and self.is_main_program:
+        if self.is_main_program and not self._check_ProgramEntryPoint(tree.children[2]):
             pos = position.ProgramAreaNear(tree.children[-1])
             raise GbsLintException(i18n.i18n('There should be an entry point (Main procedure or program block).'), pos)
 
