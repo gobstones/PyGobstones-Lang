@@ -73,6 +73,12 @@ ES = {
   'Found end of file but there are open braces yet':
     'Se llegó al final del archivo pero todavía hay llaves abiertas',
 
+#
+  'a command' :
+    'un comando',
+  'an expression':
+    'una expresión',
+
 # parser errors
   'Syntax error':
     'Error de sintaxis',

@@ -529,10 +529,13 @@ class ASTBuilder(object):
             content[2].annotations['explicit_board'] = True
             return content[2]
         else:
-            return ASTNode(
+            node = ASTNode(
                 content,
                 self._pos_begin(subtrees),
                 self._pos_end(subtrees))
+            if node.children[3] is None:
+                raise bnf_parser.ParserException(i18n.i18n('Found: %s\nExpected: %s') % (i18n.i18n('an expression'), i18n.i18n('a command')), position.ProgramAreaNear(node))
+            return node
 
     def _expand_action_procedure_def(self, subtrees, _):
         """Expands a procedure definition inserting inout parameter to
