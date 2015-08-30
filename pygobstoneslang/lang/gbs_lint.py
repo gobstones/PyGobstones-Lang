@@ -470,7 +470,7 @@ class GbsSemanticChecker(object):
            self.check_definition2(def_)
 
     def _check_EntryPoint(self, tree):
-        if self.is_main_program and not self._check_ProgramEntryPoint(tree):
+        if self.is_main_program and not self._check_ProgramEntryPoint(tree.children[2]):
             pos = position.ProgramAreaNear(tree.children[-1])
             raise GbsLintException(i18n.i18n('There should be an entry point (Main procedure or program block).'), pos)
 
