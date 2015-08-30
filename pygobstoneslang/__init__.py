@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 import pygobstoneslang.common.utils as utils
 import pygobstoneslang.common.i18n as i18n
 from pygobstoneslang.common.tools import tools
@@ -158,5 +157,5 @@ class GobstonesWorker(ProgramWorker):
         else:
             self.communicator.send(
                 'FAIL',
-                (utils.GobstonesException, (unicode(exception),))
+                (utils.GobstonesException, (str(exception),))
                 )

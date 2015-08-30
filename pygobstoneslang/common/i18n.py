@@ -1,4 +1,3 @@
-# coding:utf-8:
 #
 # Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
 #
@@ -751,8 +750,7 @@ Language = ES
 
 def i18n(s):
   # return the original string if no translation is found
-  translation = Language.get(s, s)
-  return translation if isinstance(translation, unicode) else translation.decode("utf-8")
+  return Language.get(s, s)
 
 Token_type_descriptions = {
   'EOF': i18n('end of input'),
