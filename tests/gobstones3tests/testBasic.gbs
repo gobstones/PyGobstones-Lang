@@ -1,0 +1,10 @@
+#!assert
+#!board=boards/square.gbb
+
+program {
+  Sacar(Negro)
+  Mover(Norte)
+  Poner(Negro)
+  Sacar(Verde)
+  return(not hayBolitas(Verde), hayBolitas(Negro))
+}
