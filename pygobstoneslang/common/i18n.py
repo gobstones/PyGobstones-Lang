@@ -757,8 +757,8 @@ Language = ES
 
 def i18n(s):
   # return the original string if no translation is found
-  return Language.get(s, s)
-
+  # TODO: Proper use of unicode strings
+  return Language.get(s, s).decode("utf8")
 Token_type_descriptions = {
   'EOF': i18n('end of input'),
   'BOF': i18n('beggining of input'),
