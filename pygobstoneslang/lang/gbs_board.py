@@ -81,7 +81,7 @@ class Cell(object):
             if self.parent is None:
                 raise SelfDestructionException(i18n.i18n('Cannot take stones'))
             else:
-                self.clone_from(self.parent)
+                self.merge_with(self.parent)
                 self.parent = None
                 cnt = self.stones.get(coli, 0)
                 self.stones[coli] = cnt - count
@@ -126,8 +126,16 @@ class Cell(object):
                 sum[col] = sum.get(col,0) + count
             return sum.items()
 
-    def clone_from(self, other):
+
+    def merge_with(self, other):
         """Set the contents of this cell to be equal to the contents of
+        the other cell."""
+        for col, count in other.all_stones_count():
+            self.put(col, count)
+        
+
+    def clone_from(self, other):
+        """!!DEPRECATED!! Set the contents of this cell to be equal to the contents of
         the other cell."""
         for col, count in other.all_stones_count():
             self.set_num_stones(col, count)
