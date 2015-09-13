@@ -104,7 +104,8 @@ class GbsOptions(object):
         '--language X',
         '--recursion',
         '--names',
-        '--keyset'
+        '--keyset',
+        '--test-suite'
     ]
 
     def __init__(self, argv):
@@ -288,7 +289,8 @@ def run_filename(filename, options):
         options['lint'],
         options['liveness'],
         options['typecheck'],
-        allow_recursion=options["recursion"]
+        allow_recursion=options['recursion'],
+        test_suite=options['test-suite']
         )
 
     if options['interactive']:
@@ -347,13 +349,16 @@ def main():
             try:
                 gbs_run = run_filename(options['src'], options)
             except SourceException as exception:
-                report_program_error(exception.error_type(), exception.msg, exception.area)
+                report_program_error(exception.error_type(),
+                    exception.msg, exception.area)
                 sys.exit(1)
             except GobstonesException as exception:
-                report_error(i18n.i18n("%s Error") % ("Gobstones",), exception.msg)
+                report_error(i18n.i18n("%s Error") % ("Gobstones",),
+                    exception.msg)
                 sys.exit(4)
             except Exception as exception:
-                report_error(i18n.i18n("%s Error") % ("Python",), "Failed to execute %s file." % (options['src'],))
+                report_error(i18n.i18n("%s Error") % ("Python",),
+                    "Failed to execute %s file." % (options['src'],))
                 logging.exception(str(exception))
                 sys.exit(3)
 

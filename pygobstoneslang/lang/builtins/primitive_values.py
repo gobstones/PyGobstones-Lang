@@ -1,5 +1,6 @@
 #
-# Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
+# Copyright (C) 2011, 2015 Pablo Barenbaum <foones@gmail.com>,
+#                          Ary Pablo Batista <arypbatista@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,20 +15,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-import pygobstoneslang.common.utils as utils
 
-class BoardFormat(object):
-    def to_string(self, board, **kwargs):
-        out = utils.StringIO()
-        self.dump(board, out, **kwargs)
-        res = out.getvalue()
-        out.close()
-        return res
-    def from_string(self, s, board=None):
-        if board is None:
-            import pygobstoneslang.lang.gbs_board as gbs_board
-            board = gbs_board.Board()
-        f = utils.StringIO(s)
-        self.load(board, f)
-        f.close()
-        return board
+from pygobstoneslang.common.i18n import i18n
+
+GBS_ENUM_TYPES = ['Dir', 'Color']
+
+#### Directions
+
+DIRECTION_NAMES = [
+    i18n('North'),
+    i18n('East'),
+    i18n('South'),
+    i18n('West'),
+]
+
+DIRECTION_DELTA = {
+    0: (1, 0),
+    1: (0, 1),
+    2: (-1, 0),
+    3: (0, -1),
+}
+
+
+#### Colors
+
+NUM_COLORS = 4
+
+COLOR_NAMES = [
+    i18n('Color0'),
+    i18n('Color1'),
+    i18n('Color2'),
+    i18n('Color3'),
+]

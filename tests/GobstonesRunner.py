@@ -8,12 +8,12 @@ class GobstonesRunner(object):
         #return "pygobstones-lang"
 
     def base_parameters(self):
-        return "--no-print-board --silent"
+        return "--no-print-board --silent --test-suite"
 
     def run(self, filename, board_file, parameters=""):
         command = (self.lang_path() + " %s %s %s %s") % (
             filename, board_file, self.base_parameters(), parameters)
-
+        
         process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,

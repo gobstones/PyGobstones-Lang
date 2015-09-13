@@ -35,8 +35,8 @@ import gbs_pprint
 import gbs_infer
 import gbs_compiler
 import gbs_board
-from grammar import GbsGrammarFile, XGbsGrammarFile
 from gbs_api import GobstonesOptions, GobstonesRun, ExecutionAPI
+
 
 class Gobstones(object):
 
@@ -60,6 +60,7 @@ class Gobstones(object):
 
         return gbs_parser.parse_string_try_prelude(program_text, filename, grammar_file=self.options.get_lang_grammar())
 
+
     @classmethod
     def random_board(cls, size=None):
         if size is None:
@@ -73,7 +74,9 @@ class Gobstones(object):
     def check(self, tree):
         # Check semantics
         self.api.log(i18n.i18n('Performing semantic checks.'))
-        self.lint(tree, strictness=self.options.lint_mode, allow_recursion=self.options.allow_recursion)
+        self.lint(tree, strictness=self.options.lint_mode,
+            allow_recursion=self.options.allow_recursion,
+            test_suite=self.options.test_suite)
         # Check liveness
         if self.options.check_liveness:
             self.check_live_variables(tree)
@@ -108,8 +111,8 @@ class Gobstones(object):
         runnable = self.make_runnable(compiled_program)
         # Run
         self.api.log(i18n.i18n('Starting program execution.'))
-        rtn_vars, final_board = runnable.run(initial_board.clone(), self.api)
-        gbs_run = GobstonesRun().initialize(None, compiled_program, initial_board, final_board.value, runnable, rtn_vars)
+        rtn_vars, final_board, assertions = runnable.run(initial_board.clone(), self.api)
+        gbs_run = GobstonesRun().initialize(None, compiled_program, initial_board, final_board.value, runnable, rtn_vars, assertions=assertions)
         return gbs_run
 
     def run(self, filename, program_text, initial_board):

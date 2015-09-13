@@ -347,7 +347,8 @@ class GbsSemanticChecker(object):
     """Checks semantic correction of Gobstones programs and
     subprograms, given an abstract syntax tree."""
 
-    def __init__(self, strictness='lax', warn=std_warn, explicit_board=None, allow_recursion=True):
+    def __init__(self, strictness='lax', warn=std_warn, explicit_board=None,
+            allow_recursion=True, test_suite=False):
         self.warn = warn
         self.strictness = strictness
         self.symbol_table = SymbolTableManager(normalize_id=NORMALIZE_ID[strictness])
@@ -355,6 +356,7 @@ class GbsSemanticChecker(object):
         self.explicit_board = explicit_board
         self.allow_recursion = allow_recursion
         self.invocation_graph = InvocationGraph()
+        self.test_suite = test_suite
         self.types = []
 
     def setup(self, tree):
@@ -363,6 +365,8 @@ class GbsSemanticChecker(object):
             self.explicit_board = len(entrypoint_tree.children[2].children) != 0
 
         gbs_builtins.explicit_builtins = self.explicit_board
+        gbs_builtins.test_suite = self.test_suite
+
         for b in gbs_builtins.get_builtins():
             self.symbol_table.add(b)
         for name, type in gbs_type.BasicTypes.items():
@@ -974,7 +978,8 @@ class GbsSemanticChecker(object):
             raise GbsLintException('\n'.join([l1, l2]), area)
 
 # strictness in ['lax', 'strict']
-def lint(tree, strictness='lax', allow_recursion=True):
-    checker = GbsSemanticChecker(strictness=strictness, allow_recursion=allow_recursion)
+def lint(tree, strictness='lax', allow_recursion=True, test_suite=False):
+    checker = GbsSemanticChecker(strictness=strictness,
+        allow_recursion=allow_recursion, test_suite=test_suite)
     checker.check_program(tree)
     gbs_type.set_user_defined_types(checker.types)

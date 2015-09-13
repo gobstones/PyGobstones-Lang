@@ -1,5 +1,6 @@
 #
-# Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
+# Copyright (C) 2011, 2015 Pablo Barenbaum <foones@gmail.com>,
+#                          Ary Pablo Batista <arypbatista@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,8 +24,10 @@ import pygobstoneslang.common.utils as utils
 from gbs_type import UserDefinedTypes, GbsVariantType
 from gbs_io import KeyBuilder
 from sets import Set
+from builtins.primitive_values import GBS_ENUM_TYPES, DIRECTION_NAMES, DIRECTION_DELTA, NUM_COLORS, COLOR_NAMES
 
 explicit_builtins = True
+test_suite = False
 
 from gbs_type import (
     BasicTypes,
@@ -376,21 +379,6 @@ class GbsEnum(object):
 
 #### Directions
 
-DIRECTION_NAMES = [
-    i18n.i18n('North'),
-    i18n.i18n('East'),
-    i18n.i18n('South'),
-    i18n.i18n('West'),
-]
-
-DIRECTION_DELTA = {
-    0: (1, 0),
-    1: (0, 1),
-    2: (-1, 0),
-    3: (0, -1),
-}
-
-GBS_ENUM_TYPES = ['Dir', 'Color']
 
 class Direction(GbsEnum):
     "Represents a Gobstones direction."
@@ -410,19 +398,12 @@ class Direction(GbsEnum):
     def __repr__(self):
         return DIRECTION_NAMES[self.ord()]
 
+
 NORTH = Direction(0)
 EAST  = Direction(1)
 SOUTH = Direction(2)
 WEST  = Direction(3)
 
-#### Colors
-
-COLOR_NAMES = [
-    i18n.i18n('Color0'),
-    i18n.i18n('Color1'),
-    i18n.i18n('Color2'),
-    i18n.i18n('Color3'),
-]
 
 class Color(GbsEnum):
     "Represents a Gobstones color."
@@ -442,11 +423,12 @@ class Color(GbsEnum):
     def __repr__(self):
         return self.name()
 
-NUM_COLORS = 4
+
 COLOR0 = Color(0)
 COLOR1 = Color(1)
 COLOR2 = Color(2)
 COLOR3 = Color(3)
+
 
 def isinteger(value):
     "Return True iff the given Python value is integral."
@@ -1728,6 +1710,78 @@ BUILTINS += RECORD_BUILTINS
 
 
 
+###############
+## Test Suite
+###############
+
+def testsuite_assert(global_state, value, message):
+    global_state.add_assertion(message, value)
+
+def testsuite_assert_equal(global_state, actual, expected, message):
+    global_state.add_assertion(
+        message,
+        poly_equal(actual, expected),
+        i18n.i18n('<%s> was expected but <%s> found') % (expected, actual)
+    )
+
+TESTSUITE_IMPLICIT_BOARD = [
+    BuiltinProcedure(
+        i18n.i18n('Assert'),
+        GbsProcedureType(GbsTupleType([GbsBoolType(), GbsStringType()])),
+        testsuite_assert
+    ),
+    BuiltinProcedure(
+        i18n.i18n('Deny'),
+        GbsProcedureType(GbsTupleType([GbsBoolType(), GbsStringType()])),
+        lambda
+            global_state,
+            value,
+            message: testsuite_assert(global_state, not value, message)
+    ),
+    BuiltinProcedure(
+        i18n.i18n('AssertEqual'),
+        GbsForallType([TYPEVAR_X],
+            GbsProcedureType(GbsTupleType([TYPEVAR_X, TYPEVAR_X, GbsStringType()]))),
+        testsuite_assert_equal
+    ),
+]
+
+TESTSUITE_EXPLICIT_BOARD = [
+    BuiltinProcedure(
+        i18n.i18n('Assert'),
+        GbsProcedureType(GbsTupleType([
+            GbsBoolType(),
+            GbsBoolType(),
+            GbsStringType()
+        ])),
+        lambda global_state, accumulator, value, message:
+            (accumulator and value) or testsuite_assert
+    ),
+    BuiltinProcedure(
+        i18n.i18n('Deny'),
+        GbsProcedureType(GbsTupleType([
+            GbsBoolType(),
+            GbsBoolType(),
+            GbsStringType()
+        ])),
+        lambda global_state, accumulator, value, message:
+            (accumulator and not value) or testsuite_assert(global_state, not value, message)
+    ),
+    BuiltinProcedure(
+        i18n.i18n('AssertEqual'),
+        GbsForallType([TYPEVAR_X],
+            GbsProcedureType(GbsTupleType([
+                GbsBoolType(),
+                TYPEVAR_X,
+                TYPEVAR_X,
+                GbsStringType()
+            ]))
+        ),
+        lambda global_state, accumulator, actualValue, expectedValue, message:
+            (accumulator and poly_equal(actualValue, expectedValue)) or testsuite_assert_equal(global_state, actualValue, expectedValue,
+                                   message)
+    ),
+]
 
 
 ###############
@@ -1958,10 +2012,19 @@ def parse_constant(string):
 # Builtins getters
 
 def get_builtins():
+    builtins_ = []
+    builtins_.extend(BUILTINS)
     if explicit_builtins:
-        return BUILTINS + BUILTINS_EXPLICIT_BOARD
+        builtins_.extend(BUILTINS_EXPLICIT_BOARD)
+        if test_suite:
+            builtins_.extend(TESTSUITE_EXPLICIT_BOARD)
     else:
-        return BUILTINS + BUILTINS_IMPLICIT_BOARD
+        builtins_.extend(BUILTINS_IMPLICIT_BOARD)
+        if test_suite:
+            builtins_.extend(TESTSUITE_IMPLICIT_BOARD)
+
+    return builtins_
+
 
 BUILTINS_NAMES = []
 def get_builtins_names():

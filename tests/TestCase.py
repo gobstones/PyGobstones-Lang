@@ -1,23 +1,23 @@
 class TestCase(object):
-        
+
     def name(self):
         return self.__class__.__name__
 
     def __repr__(self):
         return "TestCase: %s, " % self.name
-    
+
     def get_gobstones_tests(self):
         "Get Test Case's tests"
         return []
-    
+
     def prepare(self):
         "Prepare the testcase to run."
         pass
-    
+
     def gobstones_parameters(self):
         "Parameters for language implementation"
-        return ""
-    
+        return "--test-suite"
+
     def testCases(self):
         print "\n-- %s" % (self.name(),)
         test_cases = self.get_gobstones_tests()
@@ -28,9 +28,9 @@ class TestCase(object):
 
     def setUp(self):
         pass
-        
+
     def tearDown(self):
         pass
-    
+
     def cleanup(self):
         pass

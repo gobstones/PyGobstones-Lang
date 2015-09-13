@@ -1,14 +1,13 @@
-#!assert
 #!board=boards/empty_small.gbb
 
 # Test 0
 function test0(tablero) {
 	t:= tablero
-	
+
 	t.RecDepth3()
 	t.IrAlBorde(Norte)
-	t.RecDepth3()	
-	
+	t.RecDepth3()
+
 	return(True)
 }
 
@@ -29,12 +28,12 @@ procedure t.RecDepth3() {
 function test1(tablero) {
 	t := tablero
 	passed := True
-	
+
 	anchoTablero := medirTablero(t, ancho())
 	altoTablero := medirTablero(t, alto())
 	t.LlenarConBolitas(Verde, 2)
 	cuenta := contarBolitas(t, Verde)
-	
+
 	passed.Assert(cuenta == anchoTablero * altoTablero * 2)
 	return(passed)
 }
@@ -43,33 +42,33 @@ function test1(tablero) {
 function test2(tablero) {
 	t := tablero
 	passed := True
-	
+
 	i := 1
 	foreach c in [minColor()..maxColor()] {
 		t.LlenarConBolitas(Verde, 2 * i)
 		i := i + 1
 	}
-	
+
 	foreach c in [Rojo, Azul, Negro] {
 		t.ReemplazarColorEnTablero(c, Verde)
-	}	
-		
+	}
+
 	foreach c in [Rojo, Azul, Negro] {
 		passed.Assert(contarBolitas(t, c) == 0)
 	}
-	
+
 	cantVerdes := contarBolitas(t, Verde)
 	anchoTablero := medirTablero(t, ancho())
 	altoTablero := medirTablero(t, alto())
-	cantEsperada := anchoTablero * altoTablero  * 20	
-	
+	cantEsperada := anchoTablero * altoTablero  * 20
+
 	passed.Assert(cantVerdes  ==  cantEsperada)
 	return(passed)
 }
 
 function testDimensiones(t) {
 	dim := dimensionTablero(t)
-	return(filas(dim) == columnas(dim) && filas(dim) == 4) 
+	return(filas(dim) == columnas(dim) && filas(dim) == 4)
 }
 
 # Main

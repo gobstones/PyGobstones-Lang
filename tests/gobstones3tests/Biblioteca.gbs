@@ -9,43 +9,22 @@ procedure IrAlOrigen() {
 }
 
 procedure TestingStart() {
-    VaciarTablero()
-    IrAlOrigen()
-    MoverTablero()
+  # REMOVE
 }
 
 procedure TestSetup() {
-    VaciarTablero()
+  # REMOVE
 }
 
 procedure TestingEnd() {
-    passed := 0;
-    failed := 0;
-    while (puedeMoverTableroInv()) {
-        passed := passed + nroBolitas(colorPassed())
-        failed := failed + nroBolitas(colorFailed())
-        MoverTableroInv()
-    }
-    PonerN(colorPassed(), passed)
-    PonerN(colorFailed(), failed)
+  # REMOVE
 }
 
-procedure Deny(b) {
-    Assert(not b)
-}
 
-procedure Assert(b) {
-    if (b) {
-        Poner(colorPassed())
-    } else {
-        Poner(colorFailed())
-    }
-    MoverTablero()
-}
 
 function getTestData(c) {
-    IrAlOrigen()
-    return(nroBolitas(c))
+    # REMOVE
+    return(0)
 }
 
 function failedCount() {
@@ -90,7 +69,7 @@ function nroBolitasTotalTablero() {
 function medirTablero(unaDireccion) {
     IrAlBorde(opuesto(unaDireccion))
     count := 1
-    while (puedeMover(unaDireccion)) {          
+    while (puedeMover(unaDireccion)) {
         Mover(unaDireccion)
         count := count + 1
     }
@@ -199,7 +178,6 @@ function aplicarNumOps(n, m) {
 function aplicarLogOps(p, q) {
     res := (p && q)
     res := (p || q)
-    res := not p 
+    res := not p
     return(not q || res)
 }
-

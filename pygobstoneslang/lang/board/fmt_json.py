@@ -21,7 +21,7 @@ import json
 
 import pygobstoneslang.common.utils as utils
 import pygobstoneslang.common.i18n as i18n
-import pygobstoneslang.lang.gbs_builtins as gbs_builtins
+from pygobstoneslang.lang.builtins.primitive_values import COLOR_NAMES
 import basic
 
 def is_numeric(x):
@@ -75,7 +75,7 @@ class JsonBoardFormat(basic.BoardFormat):
         for coli in range(4):
           cant = board.cells[y][x].num_stones(coli)
           if cant == 0: continue
-          col = gbs_builtins.Color(coli).name()
+          col = COLOR_NAMES[coli]
           cell.update({col : cant})
         if cell == {}: continue
 
