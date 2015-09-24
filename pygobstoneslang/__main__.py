@@ -41,7 +41,7 @@ def report_error(errtype, msg):
 
 
 def report_program_error(errtype, msg, area):
-    LOGGER.error('\n%s\n' % (area,))
+    LOGGER.error('\n%s\n' % area)
     report_error(errtype, msg)
 
 

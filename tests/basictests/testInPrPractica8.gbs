@@ -23,7 +23,7 @@ function columnaCoord(c) {
 }
 
 function eqCoord(c1, c2) {
-    return(filaCoord(c1) == filaCoord(c2) && 
+    return(filaCoord(c1) == filaCoord(c2) &&
            columnaCoord(c1) == columnaCoord(c2))
 }
 
@@ -74,19 +74,19 @@ function testEjercicio1(tablero) {
     passed := True
     t := tablero
     t.IrACoord(mkOrigen())
-    passed.Deny(puedeMover(t, Sur) || puedeMover(t, Oeste))
+    passed.Deny(puedeMover(t, Sur) || puedeMover(t, Oeste), "It should can move")
     t.Mover(Este)
     t.IrACoord(reflejo(coordActual(t)))
-    passed.Deny(puedeMover(t, Oeste))
+    passed.Deny(puedeMover(t, Oeste), "It should can move")
     t.IrACoord(mkUltima(t))
-    passed.Deny(puedeMoverT(t, Norte, Este))
-    t.Mover(Sur)    
-    passed.Assert(gtCoord(mkUltima(t), coordActual(t)) && 
-                  gtCoord(coordActual(t), mkOrigen()))
+    passed.Deny(puedeMoverT(t, Norte, Este), "It should can move")
+    t.Mover(Sur)
+    passed.Assert(gtCoord(mkUltima(t), coordActual(t)) &&
+                  gtCoord(coordActual(t), mkOrigen()), "Actual coordinate is expected to ve less than the last coordinate but greater than the origin")
     t.IrAlBorde(Oeste)
-    
-    passed.Assert(sobreLaDiagonal(coordActual(t)))    
-    passed.Deny(sobreLaDiagonal(reflejo(coordActual(t))))
+
+    passed.Assert(sobreLaDiagonal(coordActual(t)), "Coordinate is over the diagonal")
+    passed.Deny(sobreLaDiagonal(reflejo(coordActual(t))), "The reflected coordinate is not over the diagional")
     return(passed)
 }
 
@@ -100,7 +100,7 @@ type Cell is record {
 }
 
 function mkCelda(azules, negros, rojos, verdes) {
-    return(Cell(nAzul <- azules, 
+    return(Cell(nAzul <- azules,
                  nNegro <- negros,
                  nRojo <- rojos,
                  nVerde <- verdes))
@@ -138,7 +138,7 @@ procedure t.IntercambiarCelda(crd1, crd2) {
     t.IrACoord(crdActual)
 }
 
-procedure t.ReflejarCelda(crd) {    
+procedure t.ReflejarCelda(crd) {
     t.IntercambiarCelda(crd, reflejo(crd))
 }
 
@@ -148,7 +148,7 @@ procedure t.MoverT(dir1, dir2) {
     } else {
         t.IrAlBorde(opuesto(dir1))
         t.Mover(dir2)
-    }    
+    }
 }
 
 procedure t.ReflejarTablero() {
@@ -158,12 +158,12 @@ procedure t.ReflejarTablero() {
         if (sobreLaDiagonal(crdAct)) {
             t.ReflejarCelda(crdAct)
         }
-        
+
         t.MoverT(Este, Norte)
-    }    
+    }
 }
 
-function celdaEqActual(t, celda) {    
+function celdaEqActual(t, celda) {
     return(eqCelda(mkCeldaActual(t), celda))
 }
 
@@ -189,30 +189,30 @@ procedure t.MoverDiagonal(d1, d2) {
 function diagonalesIguales(tablero1, tablero2) {
     t1 := tablero1
     t2 := tablero2
-    
+
     t1.IrAlOrigen()
     t2.IrAlOrigen()
-    
+
     passed := True
     cellT1 := mkCeldaActual(t1)
     cellT2 := mkCeldaActual(t2)
     while (puedeMoverT(t1, Este, Norte)) {
-        passed.Assert(eqCelda(cellT1, cellT2))     
+        passed.Assert(eqCelda(cellT1, cellT2), "Cells should be equal")
         t1.MoverDiagonal(Este, Norte)
         t2.MoverDiagonal(Este, Norte)
         cellT1 := mkCeldaActual(t1)
         cellT2 := mkCeldaActual(t2)
     }
-    passed.Assert(eqCelda(cellT1, cellT2))  
+    passed.Assert(eqCelda(cellT1, cellT2), "Cells should be equal")
     return (passed)
 }
 
 function tablerosInversos(tablero1, tablero2) {
     // Precondición: Ambos tableros son de nxn celdas
-    
+
     t1 := tablero1
     t2 := tablero2
-    
+
     t1.IrAlOrigen()
     t2.IrAlOrigen()
     passed := True
@@ -220,48 +220,48 @@ function tablerosInversos(tablero1, tablero2) {
     cellT2 := mkCeldaActual(t2)
     while (puedeMoverT(t1, Este, Norte) && passed) {
         if (not enDiagonal(coordActual(t1))) {
-            passed.Assert(eqCelda(cellT1, cellT2))        
+            passed.Assert(eqCelda(cellT1, cellT2), "Cells should be equal")
         }
         t1.MoverT(Este, Norte)
         t2.MoverT(Norte, Este)
         cellT1 := mkCeldaActual(t1)
         cellT2 := mkCeldaActual(t2)
-    }    
-    passed.Assert(eqCelda(mkCeldaActual(t1), mkCeldaActual(t2)))
-    
-    passed.Assert(diagonalesIguales(t1, t2))
+    }
+    passed.Assert(eqCelda(mkCeldaActual(t1), mkCeldaActual(t2)), "Cells should be equal")
+
+    passed.Assert(diagonalesIguales(t1, t2), "Diagonals should be equal")
     return(passed)
 }
 
 function testEjercicio2(tablero) {
     t := tablero
     passed := True
-    
+
     celda := mkCeldaActual(t)
-    passed.Assert(celdaEqActual(t, celda))
-    
+    passed.Assert(celdaEqActual(t, celda), "Cell should be equal to actual")
+
     t.VaciarCelda()
     t.VolcarCelda(celda)
-    passed.Assert(celdaEqActual(t, celda))
-    
+    passed.Assert(celdaEqActual(t, celda), "Cell should be equal to actual")
+
     t.IrACoord(mkCoord(0,1))
     celda := mkCeldaActual(t)
-    t.ReflejarCelda(coordActual(t))    
-    t.IrACoord(reflejo(coordActual(t)))       
-    passed.Assert(celdaEqActual(t, celda))
-    
+    t.ReflejarCelda(coordActual(t))
+    t.IrACoord(reflejo(coordActual(t)))
+    passed.Assert(celdaEqActual(t, celda), "Cell should be equal to actual")
+
     t2 := t
-    t2.ReflejarTablero()            
-    passed.Assert(tablerosInversos(t, t2))
-    
+    t2.ReflejarTablero()
+    passed.Assert(tablerosInversos(t, t2), "Cell should be equal to actual")
+
     return(passed)
 }
 
 # Test program
 
-t.program {    
+t.program {
     passed := True
-	passed.Assert(testEjercicio1(t))
-    passed.Assert(testEjercicio2(t))
+	passed.Assert(testEjercicio1(t), "testEjercicio1")
+    passed.Assert(testEjercicio2(t), "testEjercicio2")
 	return(passed)
 }

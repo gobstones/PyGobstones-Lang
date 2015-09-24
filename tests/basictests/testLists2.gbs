@@ -3,7 +3,7 @@
 
 procedure t.LlenarTablero() {
 	foreach c in [minColor()..maxColor()] {
-		t.LlenarFilaConBolitas(c, 2)		
+		t.LlenarFilaConBolitas(c, 2)
 	}
 }
 
@@ -12,7 +12,7 @@ function naturales(n) {
 	res := []
 	foreach ni in [0..n] {
 		res := res ++ [ni]
-	} 
+	}
 	return(res)
 }
 
@@ -37,8 +37,8 @@ function sumarNWhile(n) {
 function testSumarForeachWhile() {
 	passed := True
 	foreach n in [22, 11, 7] {
-		passed.Assert(sumarNForeach(n) == sumarNWhile(n))
-	}	
+		passed.AssertEqual(sumarNForeach(n), sumarNWhile(n), "Sums must be equal")
+	}
 	return(passed)
 }
 
@@ -51,18 +51,18 @@ function testOpsSobreLista() {
 	}
 	return(suma)
 }
- 
+
 function testGeneratorRepeat(n) {
 	rpns := []
 	count := 1
-	repeat (n) { 
+	repeat (n) {
 		rpns := rpns ++ [count]
 		count := count + 1
 	}
-	
-	return(eqLists(rpns, [1,1..n])) 
+
+	return(eqLists(rpns, [1,1..n]))
 }
- 
+
 t.program {
 	passed := testSumarForeachWhile()
 	result := testOpsSobreLista()

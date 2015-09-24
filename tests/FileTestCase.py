@@ -39,6 +39,18 @@ class FileTestCase(TestCase):
                     self.name(), index)
                 )
 
+    def check_result(self, results):
+        failed = False
+        for k,v in results:
+            if k == 'passed':
+                print '-- Passed: %s' % v
+            elif k == 'failed':
+                print "-- Failed: %s" % v
+                failed = v > 0
+                
+        if failed:
+            self.fail("Test failed.")
+
     def run(self):
         if "board" in self.annotations.keys():
             if not self.annotations["board"].value is None:
@@ -59,6 +71,8 @@ class FileTestCase(TestCase):
         if results[0] == "OK":
             if self.annotation_present("assert"):
                 self.check_assert(results[1])
+            else:
+                self.check_result(results[1])
         elif results[0] == "ERROR":
             print "Error running test. Parameters: %s" % (run_params,)
             self.fail(results[1])

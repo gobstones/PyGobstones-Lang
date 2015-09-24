@@ -10,7 +10,7 @@ function testEqualityListsWithMin(prev, rMin) {
 	prev2 := prev
 	foreach rMax in [20, 33..101] {
 		(passedInt, prev2) := testEqualityListsWithMax(prev2, rMin, rMax)
-		passed.Assert(passedInt)
+		passed.Assert(passedInt, "Equality")
 	}
 	return(passed, prev2)
 }
@@ -20,10 +20,10 @@ function testEqualityListsWithMax(prev, rMin, rMax) {
 	prev2 := prev
 	foreach rStep in [1,2,3,4,5,10,11,13] {
 		xs := rangeS(rMin, rMax, rStep)
-		passed.Assert(xs == rangeS(rMin, rMax, rStep))
-		prev2 := prev2 ++ [0]				
-		passed.Assert(xs /= prev2)
-		prev2 := xs  
+		passed.AssertEqual(xs, rangeS(rMin, rMax, rStep), "List are not equal")
+		prev2 := prev2 ++ [0]
+		passed.AssertNotEqual(xs, prev2, "Values should not be equal")
+		prev2 := xs
 	}
 	return(passed, prev2)
 }
@@ -33,8 +33,8 @@ function testEqualityLists() {
 	prev := [1, 1]
 	foreach rMin in [1, 4, 10, 13, 20] {
 		(passedInt, prev) := testEqualityListsWithMin(prev, rMin)
-		passed.Assert(passedInt)
-	}	
+		passed.Assert(passedInt, "Value should be true")
+	}
 	return(passed)
 }
 
@@ -55,11 +55,11 @@ function mkTuple(first, second) {
 function testEqRecsWithN(prev, n) {
 	passed := True
 	prev2 := prev
-	foreach d in [minDir()..maxDir()] {			
+	foreach d in [minDir()..maxDir()] {
 		tp1 := mkTuple(n, d)
-		passed.Assert(tp1 == mkTuple(n, d))			
+		passed.AssertEqual(tp1, mkTuple(n, d), "Records should be equal")
 		prev2.first := first(prev) + 100
-		passed.Assert(tp1 /= prev2)						
+		passed.AssertNotEqual(tp1, prev2, "Records should be equal")
 		prev2 := tp1
 	}
 	return(passed, prev2)
@@ -69,8 +69,8 @@ function testEqRecs() {
 	prev := mkTuple(0, Este)
 	passed := True
 	foreach n in [1,7..101] {
-		 (p, prev) := testEqRecsWithN(prev, n)		
-		 passed.Assert(p)
+		 (p, prev) := testEqRecsWithN(prev, n)
+		 passed.Assert(p, "Records should be equal")
 	}
 	return(passed)
 }
@@ -90,24 +90,24 @@ function mkTupleT(first, second) {
 
 function testSameFieldsRecsWithN(n) {
 	passed := True
-	foreach d in [minDir()..maxDir()] {						
-		passed.Deny(mkTupleT(n, d) == mkTuple(n, d))										
-	}		 
+	foreach d in [minDir()..maxDir()] {
+		passed.AssertNotEqual(mkTupleT(n, d), mkTuple(n, d), "Records are expected to differ")
+	}
 	return(passed)
 }
 
 function testSameFieldRecs() {
 	passed := True
 	foreach n in [1,7..101] {
-		passed.Assert(testSameFieldsRecsWithN(n))		
+		passed.Assert(testSameFieldsRecsWithN(n), "Records should have the same fields")
 	}
 	return(passed)
 }
 
 t.program {
-	passed := True		
-	passed.Assert(testSameFieldRecs())
-	passed.Assert(testEqualityLists())	
-	passed.Assert(testEqRecs())	
+	passed := True
+	passed.Assert(testSameFieldRecs(), "testSameFieldrecs")
+	passed.Assert(testEqualityLists(), "testEqualityLists")
+	passed.Assert(testEqRecs(), "testEqRecs")
 	return(passed)
 }

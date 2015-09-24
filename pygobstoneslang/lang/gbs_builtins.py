@@ -1322,6 +1322,73 @@ class KeyConstantBuilder(KeyBuilder):
 
 BUILTINS.extend(KeyConstantBuilder().build())
 
+
+#### Testing
+
+def none_(v):
+    pass
+
+def gbs_assert_equal(global_state, actual, expected, message):
+    return gbs_assert(global_state, poly_equal(global_state, actual, expected), message + ": " + "%s was expected but %s found" % (expected, actual))
+
+def gbs_assert_not_equal(global_state, actual, expected, message):
+    return gbs_assert(global_state, not poly_equal(global_state, actual, expected), message + ": " + "%s was expected but %s found" % (expected, actual))
+
+def gbs_assert(global_state, value, message):
+    if not value:
+        raise GbsRuntimeException(global_state.backtrace(message), global_state.area())
+    return True
+
+TESTING_BUILTINS_IMPLICIT = [
+    BuiltinProcedure(
+        i18n.i18n('AssertEqual'),
+        GbsForallType([TYPEVAR_X, TYPEVAR_Y], GbsProcedureType(GbsTupleType([TYPEVAR_X, TYPEVAR_X, GbsStringType()]))),
+        lambda gs, v1, v2, s : none_(gbs_assert_equal(gs, v1, v2, s))
+    ),
+    BuiltinProcedure(
+        i18n.i18n('AssertNotEqual'),
+        GbsForallType([TYPEVAR_X, TYPEVAR_Y], GbsProcedureType(GbsTupleType([TYPEVAR_X, TYPEVAR_X, GbsStringType()]))),
+        lambda gs, v1, v2, s : none_(gbs_assert_not_equal(gs, v1, v2, s))
+    ),
+    BuiltinProcedure(
+        i18n.i18n('Assert'),
+        GbsProcedureType(GbsTupleType([GbsBoolType(), GbsStringType()])),
+        lambda gs, b, s : none_(gbs_assert(gs, b, s))
+    ),
+    BuiltinProcedure(
+        i18n.i18n('Deny'),
+        GbsProcedureType(GbsTupleType([GbsBoolType(), GbsStringType()])),
+        lambda gs, b, s : none_(gbs_assert(gs, not b, s))
+    ),
+]
+
+TESTING_BUILTINS_EXPLICIT = [
+    BuiltinProcedure(
+        i18n.i18n('AssertEqual'),
+        GbsForallType([TYPEVAR_X, TYPEVAR_Y], GbsProcedureType(GbsTupleType([GbsBoolType(), TYPEVAR_X, TYPEVAR_X, GbsStringType()]))),
+        lambda gs, prevB, v1, v2, s : gbs_assert_equal(gs, v1, v2, s) and prevB
+    ),
+    BuiltinProcedure(
+        i18n.i18n('AssertNotEqual'),
+        GbsForallType([TYPEVAR_X, TYPEVAR_Y], GbsProcedureType(GbsTupleType([GbsBoolType(), TYPEVAR_X, TYPEVAR_X, GbsStringType()]))),
+        lambda gs, prevB, v1, v2, s : gbs_assert_not_equal(gs, v1, v2, s) and prevB
+    ),
+    BuiltinProcedure(
+        i18n.i18n('Assert'),
+        GbsProcedureType(GbsTupleType([GbsBoolType(), GbsBoolType(), GbsStringType()])),
+        lambda gs, prevB, b, s : gbs_assert(gs, b, s) and prevB
+    ),
+    BuiltinProcedure(
+        i18n.i18n('Deny'),
+        GbsProcedureType(GbsTupleType([GbsBoolType(), GbsBoolType(), GbsStringType()])),
+        lambda gs, prevB, b, s : gbs_assert(gs, not b, s) and prevB
+    ),
+]
+
+
+BUILTINS_IMPLICIT_BOARD += TESTING_BUILTINS_IMPLICIT
+BUILTINS_EXPLICIT_BOARD += TESTING_BUILTINS_EXPLICIT
+
 #### List functions
 
 TYPE_NIL = GbsForallType(

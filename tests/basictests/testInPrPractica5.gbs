@@ -11,17 +11,17 @@
 
 function testEjercicio1(tablero) {
 	t := tablero
-	
+
 	crd := posicionActual(t)
 	dim := dimensionTablero(t)
-	
+
 	pasosFila := 37
 	pasosColumna := 21
-	
+
 	t.MoverNRotativo(pasosColumna, Este)
 	t.MoverNRotativo(pasosFila, Norte)
-	
-	crdEsperada := Coordenada(fila <- (pasosFila + crd.fila) mod dim.filas, 
+
+	crdEsperada := Coordenada(fila <- (pasosFila + crd.fila) mod dim.filas,
 							  columna <- (pasosColumna + crd.columna) mod dim.columnas)
 	crd := posicionActual(t)
 
@@ -41,9 +41,9 @@ procedure t.MoverNRotativo(n, d) {
 # Ejercicio 2
 
 function testEjercicio2(tablero) {
-    t := tablero    
+    t := tablero
     t.IrAlOrigen()
-    celdas := medirTablero(t, Este)    
+    celdas := medirTablero(t, Este)
     t.VaciarTablero()
     t.PonerSalteado(3, Rojo, Este)
     nBolitas := contarBolitas(t, Rojo)
@@ -86,30 +86,30 @@ procedure t.MoverT(d1, d2) {
 function testEjercicio3Dir(tablero, d) {
     t := tablero
     passed := True
-    t.IrAlInicio'(d, siguiente(d))    
-    passed.Deny(puedeMoverT(t, opuesto(d), opuesto(siguiente(d))))
+    t.IrAlInicio'(d, siguiente(d))
+    passed.Deny(puedeMoverT(t, opuesto(d), opuesto(siguiente(d))), "It should can move")
     while (puedeMover(t, d)) {
         t.MoverT(d, siguiente(d))
     }
-    passed.Assert(puedeMoverT(t, d, siguiente(d)))    
+    passed.Assert(puedeMoverT(t, d, siguiente(d)), "It should can move")
     t.MoverT(d, siguiente(d))
-    passed.Deny(puedeMover(t, opuesto(d)))
-    passed.Assert(puedeMover(t, opuesto(siguiente(d))))
+    passed.Deny(puedeMover(t, opuesto(d)), "It should can move")
+    passed.Assert(puedeMover(t, opuesto(siguiente(d))), "It should can move")
     return(passed)
 }
 
 function testEjercicio3(t) {
     passed := True
     foreach d in [minDir()..maxDir()] {
-        passed.Assert(testEjercicio3Dir(t, d))
-    } 
+        passed.Assert(testEjercicio3Dir(t, d), "testEj3")
+    }
     return(passed)
 }
 
-t.program {    
+t.program {
     passed := True
-	passed.Assert(testEjercicio1(t))
-    passed.Assert(testEjercicio2(t))
-    passed.Assert(testEjercicio3(t))
+	passed.Assert(testEjercicio1(t), "testEjercicio1")
+    passed.Assert(testEjercicio2(t), "testEjercicio2")
+    passed.Assert(testEjercicio3(t), "testEjercicio3")
 	return(passed)
 }

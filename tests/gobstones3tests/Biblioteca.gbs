@@ -30,19 +30,6 @@ procedure TestingEnd() {
     PonerN(colorFailed(), failed)
 }
 
-procedure Deny(b) {
-    Assert(not b)
-}
-
-procedure Assert(b) {
-    if (b) {
-        Poner(colorPassed())
-    } else {
-        Poner(colorFailed())
-    }
-    MoverTablero()
-}
-
 function getTestData(c) {
     IrAlOrigen()
     return(nroBolitas(c))

@@ -1,0 +1,27 @@
+procedure AssertNext(a, b) {
+	AssertEqual(siguiente(a), b, "The next of the actual value should be equal to the next value")
+}
+
+procedure AssertPrev(a, b) {
+	AssertEqual(a, previo(b), "The previous of the next value should be equal to the actual value")
+}
+
+procedure AssertNextPrev(a, b) {
+	AssertNext(a,b)
+	AssertPrev(a,b)
+}
+
+procedure TestNext() {
+	AssertNextPrev(Azul, Negro)
+	AssertNextPrev(Negro, Rojo)
+	AssertNextPrev(Rojo, Verde)
+	AssertNextPrev(Verde, Azul)
+}
+
+program {
+  TestingStart()
+
+  TestNext()
+
+  TestingEnd()
+}

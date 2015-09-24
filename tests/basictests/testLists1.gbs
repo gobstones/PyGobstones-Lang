@@ -3,7 +3,7 @@
 
 procedure t.LlenarTablero() {
 	foreach c in [minColor()..maxColor()] {
-		t.LlenarFilaConBolitas(c, 2)		
+		t.LlenarFilaConBolitas(c, 2)
 	}
 }
 
@@ -52,15 +52,15 @@ t.program {
 	passed := True
 	t.VaciarTablero()
 	t.LlenarTablero()
-	
+
 	cantidadesFila := filaALista(t)
-	
+
 	anchoTablero := medirTablero(t, ancho())
-	passed.Assert(sumarElementos(cantidadesFila) == 2 * 4 * anchoTablero)
-	
+	passed.AssertEqual(sumarElementos(cantidadesFila), 2 * 4 * anchoTablero, "The sum should be equal to 2*4*width")
+
 	foreach i in [] {}
-	
+
 	passed := passed && countTrue(manyBool(20)) == 10
-	
+
 	return(passed)
 }

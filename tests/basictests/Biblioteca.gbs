@@ -1,24 +1,3 @@
-# Test suite
-
-function debugMode() {
-    return (False)
-}
-
-procedure b.Assert(aBool) {
-	b := b && aBool
-    if (debugMode() && not b) {
-        THROW_ERROR("Assert Failed")
-    }
-}
-
-procedure b.Deny(aBool) {
-	b := b && not aBool
-    if (debugMode() && not b) {
-        THROW_ERROR("Deny Failed")
-    }
-}
-
-
 #########################
 # Coordenada			#
 #########################
@@ -41,12 +20,12 @@ function eqLists(xs, ys) {
 	xs_rec := xs
 	equal := True
 	while (not isEmpty(xs_rec) && not isEmpty(ys_rec)) {
-		equal.Assert(head(xs_rec) == head(ys_rec))
+		equal.AssertEqual(head(xs_rec), head(ys_rec), "Lists should have the same values in the same positions")
 		xs_rec := tail(xs_rec)
 		ys_rec := tail(ys_rec)
 	}
-	equal.Assert(isEmpty(xs_rec))
-	equal.Assert(isEmpty(ys_rec))
+	equal.Assert(isEmpty(xs_rec), "List was expected to be empty")
+	equal.Assert(isEmpty(ys_rec), "List was expected to be empty")
 	return(equal)
 }
 
@@ -101,7 +80,7 @@ procedure t.IrAlFin() {
 }
 
 procedure t.MoverN(unaDireccion, unaCantidad) {
-    repeat (unaCantidad) { 
+    repeat (unaCantidad) {
         t.Mover(unaDireccion)
     }
 }
@@ -119,7 +98,7 @@ function puedeMoverN(tablero, unaDireccion, unaCantidad) {
 function medirHacia(t, unaDireccion) {
 	trec := t
 	count := 1
-	while (puedeMover(trec, unaDireccion)) {			
+	while (puedeMover(trec, unaDireccion)) {
 		trec.Mover(unaDireccion)
 		count := count + 1
 	}
@@ -222,6 +201,6 @@ function aplicarNumOps(n, m) {
 function aplicarLogOps(p, q) {
 	res := (p && q)
 	res := (p || q)
-	res := not p 
+	res := not p
 	return(not q || res)
 }
