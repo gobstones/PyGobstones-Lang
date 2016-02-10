@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2013 Pablo Barenbaum <foones@gmail.com>, Ary Pablo Batista <arypbatista@gmail.com>
 #
@@ -20,7 +21,7 @@ import pygobstoneslang.common.i18n as i18n
 
 def get_key_set():
     return KeyBuilder().build()
-    
+
 
 """ Gosbtones Keycodes """
 
@@ -30,27 +31,27 @@ class GobstonesKeys(object):
     ARROW_RIGHT = 1003
     ARROW_LEFT = 1004
     CTRL_D = 4
-    
+
 
 """ Interactive API """
 
 class InteractiveApi(object):
-    
+
     """Provides a common interface for I/O"""
     def read(self):
         "Returns an integer representing a keycode"
         return GobstonesKeys.CTRL_D
-    
+
     def show(self, board):
         pass
-    
+
     def write(self, str):
         pass
-    
+
     def read_line(self):
         "Returns a String of characters"
         pass
-    
+
     def log(self, message):
         "Logs a message produced by the language"
         pass
@@ -85,14 +86,14 @@ class KeyBuffer(object):
         for i in range(len(self._buffer)):
             if self._buffer[i] == combination[0] and self._buffer[i:i+len(combination)] == combination:
                 return combination
-    
-    
+
+
 class SpecialKey(object):
     def __init__(self, combination, gbs_value):
         self.combination = combination
         self.gbs_value = gbs_value
-    
-    
+
+
 class CrossPlatformApiAdapter(InteractiveApi):
     def __init__(self, adapted_api):
         self.adapted_api = adapted_api
@@ -120,14 +121,14 @@ class CrossPlatformApiAdapter(InteractiveApi):
     def write(self, str):
         return self.adapted_api.write(str)
     def read_line(self):
-        return self.adapted_api.read_line();    
+        return self.adapted_api.read_line();
 
 
 #### Key constants
 class KeyBuilder(object):
-    
+
     def build_key(self, keyname, value):
-        return (keyname, value)        
+        return (keyname, value)
 
     def build_ascii_key_in_range(self, prefix, min, max, name_builder=None):
         keys = []

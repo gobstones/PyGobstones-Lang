@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
 #
@@ -132,7 +133,7 @@ class Cell(object):
         the other cell."""
         for col, count in other.all_stones_count():
             self.put(col, count)
-        
+
 
     def clone_from(self, other):
         """!!DEPRECATED!! Set the contents of this cell to be equal to the contents of

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 import pygobstoneslang.common.utils as utils
 import pygobstoneslang.common.i18n as i18n
 from pygobstoneslang.common.tools import tools

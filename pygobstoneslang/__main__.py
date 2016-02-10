@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011-2013 Pablo Barenbaum <foones@gmail.com>,
 #                         Ary Pablo Batista <arypbatista@gmail.com>

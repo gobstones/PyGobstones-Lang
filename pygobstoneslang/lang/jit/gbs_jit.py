@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
 #
@@ -43,8 +44,8 @@ class JitCompiler(object):
     self._arch = instruction_set()
     self._mangler = lang.gbs_vm_serializer.Mangler()
     self._program = self._arch.Program()
-  
-  def compile(self, compiled_program): 
+
+  def compile(self, compiled_program):
     "Takes a compiled program (gbs_vm.py) and translates it into native code."
     rtns = self._mangler.mangle_routines(compiled_program)
     rtns = common.utils.seq_sorted(rtns.items())
@@ -73,7 +74,7 @@ class JitCompiler(object):
       elif typ == 'param':
         nargs += 1
       else:
-        assert False 
+        assert False
 
     nretvals = 0
     for op in rtn.ops:
@@ -276,4 +277,3 @@ class JitInterpreter(object):
     return 'END', res
   def current_area(self):
     return lang.bnf_parser.fake_bof()
-

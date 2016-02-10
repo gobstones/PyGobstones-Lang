@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011-2015 Pablo Barenbaum <foones@gmail.com>,
 #                         Ary Pablo Batista <arypbatista@gmail.com>
@@ -34,7 +35,7 @@ class GobstonesOptions(object):
         self.lint_mode = lint_mode
         self.check_liveness = check_liveness
         self.check_types = check_types
-        self.jit = jit        
+        self.jit = jit
         self.lang_version = lang_version
         self.allow_recursion = allow_recursion
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
 #
@@ -163,17 +164,17 @@ class SourceProblemBundle(ProblemBundle):
     def problems(self):
         return self._problem_list
 
-    def options(self, problem): 
+    def options(self, problem):
         assert problem in self._problem_list
         f = open(os.path.join(self._path, problem, 'problem_type.txt'))
         opts = read_dict_file(f)
         f.close()
         return opts
 
-    def solution_path_for(self, problem): 
+    def solution_path_for(self, problem):
         return os.path.join(self._path, problem, 'Solution.gbs')
 
-    def solution_for(self, problem): 
+    def solution_for(self, problem):
         return common.utils.read_file(self.solution_path_for(problem))
 
     def test_cases_for(self, problem):
@@ -277,7 +278,7 @@ class GbzProblemBundle(ProblemBundle):
         zf.close()
         self._problem_list = problem_tree_to_list(self._problem_tree)
 
-    def options(self, problem): 
+    def options(self, problem):
         zf = zipfile.ZipFile(self._fn)
         f = zipfile_stream(zf, zip_path_join(problem, 'problem_type.txt'))
         opts = read_dict_file(f)
@@ -291,7 +292,7 @@ class GbzProblemBundle(ProblemBundle):
     def problem_tree(self):
         return self._problem_tree
 
-    def problem_statement(self, problem): 
+    def problem_statement(self, problem):
         zf = zipfile.ZipFile(self._fn)
         f = zipfile_stream(zf, zip_path_join(problem, 'problem.html'))
         statement = f.read()
@@ -519,4 +520,3 @@ def solutions_equal(options, sol1, sol2):
         if keyval1 != keyval2:
             return False
     return True
-

@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
+
 class BNFLanguage:
     def __init__(self, dictionary):
-        self.dictionary = dictionary    
+        self.dictionary = dictionary
     def translate(self, bnf_string):
-        output_bnf = ""        
-        
+        output_bnf = ""
+
         for line in iter(bnf_string.splitlines()):
             line = line + "\n"
             if not line.startswith("#"):
@@ -15,29 +17,29 @@ class BNFLanguage:
             else:
                 output_bnf += line
         return output_bnf
-    
+
 ES = {
   'interactive': 'interactivo',
   'program': 'programa',
-  
+
   'procedure': 'procedimiento',
   'function': 'funcion',
   'return': 'retornar',
   'not': 'no',
-  
+
   'repeat': 'repetir',
   'repeatWith': 'repetirCon',
   'in': 'en',
-  
+
   'if': 'si',
   'else': 'sino',
   'while': 'mientras',
   'case': 'caso',
   'of': 'de',
-  
+
   'from': 'desde',
   'import': 'importar',
-  
+
   'Skip': 'Saltear',
 }
 

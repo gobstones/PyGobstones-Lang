@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
 #
@@ -16,10 +17,10 @@
 #
 
 from gbs_builtins import (clone_value, get_builtins,
-    GbsObject, 
-    typecheck_vals, 
-    unwrap_values, 
-    unwrap_value, 
+    GbsObject,
+    typecheck_vals,
+    unwrap_values,
+    unwrap_value,
     poly_typeof,
     polyname_name
     )
@@ -30,10 +31,10 @@ import pygobstoneslang.common.position as position
 import pygobstoneslang.common.i18n as i18n
 import random
 from pygobstoneslang.common.utils import (
-    DynamicException, 
+    DynamicException,
     seq_sorted,
-    seq_reversed, 
-    indent, 
+    seq_reversed,
+    indent,
     show_string
     )
 
@@ -71,7 +72,7 @@ class GbsVmException(DynamicException):
 
 
 class GbsCompiledProgram(object):
-    
+
     def __init__(self, tree, module_prefix=''):
         self.tree = tree
         self.module_prefix = module_prefix
@@ -221,28 +222,28 @@ class ActivationRecord(object):
 
 
 class GlobalState(object):
-    
+
     def __init__(self, interpreter, board):
         self.interpreter = interpreter
         self.board_states = []
         self.board = board
-    
+
     def push(self):
         self.board_states.append(self.board)
         self.board = self.board.clone()
-    
+
     def pop(self):
         self.board = self.board_states.pop()
-    
+
     def backtrace(self, msg):
         return self.interpreter.backtrace(msg)
-    
+
     def area(self):
         return self.interpreter.current_area()
 
 
 class GbsVmInterpreter(object):
-   
+
     def __init__(self, toplevel_filename=None):
         self.toplevel_filename = toplevel_filename
         self.interactive_api = None
@@ -367,24 +368,24 @@ class GbsVmInterpreter(object):
         elif opcode == 'pushFrom':
             self.push_stack(self.get_binding(op[1]))
             self.ar.ip += 1
-    
+
         elif opcode == 'delVar':
             assert op[1] in self.ar.bindings
             self.ar.unset_binding(op[1])
             if self.ar.is_immutable(op[1]):
                 self.ar.unset_immutable(op[1])
             self.ar.ip += 1
-    
+
         elif opcode == 'setImmutable':
             assert op[1] in self.ar.bindings
             self.ar.set_immutable(op[1])
             self.ar.ip += 1
-    
+
         elif opcode == 'unsetImmutable':
             assert op[1] in self.ar.bindings and self.ar.is_immutable(op[1])
             self.ar.unset_immutable(op[1])
             self.ar.ip += 1
-    
+
         elif opcode == 'popTo':
             assert len(self.stack) > 0
             val = self.pop_stack()
@@ -393,7 +394,7 @@ class GbsVmInterpreter(object):
                 typecheck_vals(self.global_state, self.ar.get_binding(varname), val)
             self.ar.set_binding(varname, clone_value(val))
             self.ar.ip += 1
-    
+
         elif opcode == 'call':
             funcName = op[1]
             nargs = op[2]
@@ -404,13 +405,13 @@ class GbsVmInterpreter(object):
                 args = []
                 for _ in range(nargs):
                     args.insert(0, self.pop_stack())
-        
+
                 #unwrap args
                 if isinstance(builtin, gbs_constructs.BuiltinProcedure) and len(args) > 1:
                     args = [args[0]] + unwrap_values(args[1:])
                 elif isinstance(builtin, gbs_constructs.BuiltinFunction):
                     args = unwrap_values(args)
-        
+
                 res = builtin.primitive()(self.global_state, *args)
                 # [TODO] Remove : if builtin.type() == 'function':
                 if not res is None: # [TODO] Remove hack for _SetRefValue
@@ -432,36 +433,36 @@ class GbsVmInterpreter(object):
             else:
                 raise GbsVmException(i18n.i18n('function "%s" is not defined') % (
                                      funcName,), self.current_area())
-    
+
         elif opcode == 'THROW_ERROR':
             msg = i18n.i18n('Self destruction:')
             msg = '\n'.join([msg, show_string(op[1])])
             msg = self.backtrace(msg)
             area = self.current_area()
             raise GbsVmException(msg, area)
-    
+
         elif opcode == 'label':
             self.ar.ip += 1
-    
+
         elif opcode == 'jump':
             dest = id(op[1])
             assert dest in self.ar.routine.label_table
             self.ar.ip = self.ar.routine.label_table[dest]
-    
+
         elif opcode == 'jumpIfFalse':
             dest = id(op[1])
             assert dest in self.ar.routine.label_table
             assert len(self.stack) > 0
             val = self.pop_stack()
             val = unwrap_value(val)
-    
+
             if poly_typeof(val) != 'Bool':
                 raise GbsVmException(i18n.i18n('Condition should be a boolean'), self.current_area())
             if not val:
                 self.ar.ip = self.ar.routine.label_table[dest]
             else:
                 self.ar.ip += 1
-    
+
         elif opcode == 'jumpIfNotIn':
             dest = id(op[2])
             assert dest in self.ar.routine.label_table
@@ -472,15 +473,15 @@ class GbsVmInterpreter(object):
                 self.ar.ip = self.ar.routine.label_table[dest]
             else:
                 self.ar.ip += 1
-    
+
         elif opcode == 'enter':
             self.global_state.push()
             self.ar.ip += 1
-    
+
         elif opcode == 'leave':
             self.global_state.pop()
             self.ar.ip += 1
-    
+
         elif opcode == 'return':
             assert len(self.callstack) > 0
             nvals = op[1]
@@ -488,7 +489,7 @@ class GbsVmInterpreter(object):
             self.ar = self.callstack.pop()
             self.ar.ip += 1
             self.program = self.ar.program
-    
+
         elif opcode == 'returnVars':
             nvals = op[1]
             if len(self.callstack) == 0:
@@ -498,10 +499,10 @@ class GbsVmInterpreter(object):
                 #else:
                 #  return_vars = [x.children[1].value
                 #                    for x in self.ar.routine.tree.children[3].children[-1].children[1].children]
-        
+
                 # TODO: Result to str mapping should be done in a later stage, not here.
                 return_vals = map(repr, self.stack[-len(return_vars):])
-    
+
                 if self.explicit_board:
                     return 'END', list(zip(return_vars, return_vals)), self.get_binding(self.ar.routine.params[0])
                 else:
@@ -514,7 +515,7 @@ class GbsVmInterpreter(object):
                 self.ar = self.callstack.pop()
                 self.ar.ip += 1
                 self.program = self.ar.program
-    
+
         ## DEBUG
         #print(op)
         #print(self.show_state())
@@ -536,7 +537,7 @@ def interp(compiled_program, board, interactive_api=None):
 
 
 class VmCompiledRunnable(gbs_runnable.GbsRunnable):
-    
+
     def __init__(self, compiled_program):
         self._prog = compiled_program
 
@@ -545,13 +546,13 @@ class VmCompiledRunnable(gbs_runnable.GbsRunnable):
 
 
 class NullInteractiveAPI(gbs_io.InteractiveApi):
-    
+
     def __init__(self):
         self.key_sequence = self.build_key_sequence()
-    
+
     def read(self):
         return self.key_sequence.pop()
-    
+
     def build_key_sequence(self):
         keys = [4]
         selectableKeys = [x for x in range(65,90)]

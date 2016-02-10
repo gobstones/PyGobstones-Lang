@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
 #
@@ -112,7 +113,7 @@ class FailedTestReport(object):
     out.write('  <body onload="show(\'test_case\')">\n')
 
     out.write('  <h1>%s</h1>\n' % (tit,))
-    self._tabmenu(out) 
+    self._tabmenu(out)
     self._input_board(out)
     if self._options['provide_expected_result']:
       self._expected_result(out)
@@ -189,4 +190,3 @@ class FailedTestReport(object):
 
   def display(self):
     common.utils.open_temp_html(self._test_case.run_name(), self.render())
-

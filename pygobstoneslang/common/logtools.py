@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import logging
 import sys
 
@@ -11,7 +13,7 @@ class SingleLevelFilter(logging.Filter):
             return (record.levelno != self.passlevel)
         else:
             return (record.levelno == self.passlevel)
-        
+
 def default_handlers():
     handlers = []
     error_handler = logging.StreamHandler(sys.stderr)
@@ -20,7 +22,7 @@ def default_handlers():
     out_handler = logging.StreamHandler(sys.stdout)
     out_handler.addFilter(SingleLevelFilter(logging.INFO, False))
     handlers.append(out_handler)
-    return handlers        
+    return handlers
 
 def get_logger(name, handlers=None):
     logger = logging.getLogger(name)
@@ -28,5 +30,5 @@ def get_logger(name, handlers=None):
     if not handlers:
         handlers = default_handlers()
     for handler in handlers:
-        logger.addHandler(handler)        
+        logger.addHandler(handler)
     return logger

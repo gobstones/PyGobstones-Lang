@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
 #
@@ -299,7 +300,7 @@ Inline = {
 
   i18n.i18n('PutStone'): _primitive_PutStone(),
 
-  i18n.i18n('TakeStone'): _primitive_TakeStone(), 
+  i18n.i18n('TakeStone'): _primitive_TakeStone(),
 
   i18n.i18n('Move'): _primitive_Move(),
 
@@ -537,4 +538,3 @@ Undo_builtins = {
   'enter': _primitive_undo_enter(),
   'leave': _primitive_undo_leave(),
 }
-

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
 #
@@ -460,7 +461,7 @@ class ReturnVars(Instruction):
 class BeginMainRoutine(Instruction):
   def code(self):
     res = ''.join([
-    
+
 #      '\x53',     # push rbx
 #      '\x56',     # push rsi
 #      '\x57',     # push rdi
@@ -593,9 +594,8 @@ class Program(object):
         s = '\n' + s
       else:
         s = '  ' + s
-      res.append(s) 
+      res.append(s)
     return '\n'.join(res)
 
   def native_function(self):
     return NativeFunc(self.code())
-

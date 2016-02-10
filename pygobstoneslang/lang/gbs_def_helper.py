@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011, 2012 Pablo Barenbaum <foones@gmail.com>
 #
@@ -76,7 +77,7 @@ def get_def_type_decl(def_):
 def find_def(defs, satisfies):
     "Searchs for a definition that satisfies some criteria (satisfies is a Function)"
     found = None
-    
+
     for def_ in defs.children:
         if satisfies(def_):
             found = def_
