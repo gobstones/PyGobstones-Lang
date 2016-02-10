@@ -84,6 +84,10 @@ class EntryPointConstruct(ProgramConstruct):
         "Returns the kind of this construct."
         return 'entrypoint'
 
+    def type(self):
+        "Returns the type of this construct."
+        return 'entrypoint'
+
 class AtomicConstruct(ProgramConstruct):
     """Represents an atomic construct, which is not a collection
 and cannot be called.
@@ -97,15 +101,11 @@ and cannot be called.
 
 class ProgramEntryPoint(EntryPointConstruct):
     """Represents a Gobstones program block"""
-    def type(self):
-        "Returns the type of this construct."
-        return 'program'
+    pass
 
 class InteractiveEntryPoint(EntryPointConstruct):
     """Represents a Gobstones interactive program block"""
-    def type(self):
-        "Returns the type of this construct."
-        return 'interactive'
+    pass
 
 class Procedure(CallableConstruct):
     "Represents a Gobstones procedure."

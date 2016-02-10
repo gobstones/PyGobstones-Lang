@@ -151,6 +151,7 @@ ES = {
   'variable "%s" already defined %s': 'La variable "%s" ya está definida %s',
   'parameter "%s" already defined %s': 'El parámetro "%s" ya está definido %s',
   'index "%s" already defined %s': 'El índice "%s" ya está definido %s',
+  'entrypoint "%s" already defined %s': 'El punto de entrada "%s" ya está definido %s',
   # is too similar
   '"%s" is too similar to type "%s", defined %s': '"%s" se parece al tipo "%s"\nya definido %s',
   '"%s" is too similar to procedure "%s", defined %s': '"%s" se parece al procedimiento "%s"\nya definido %s',
